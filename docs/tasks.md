@@ -249,15 +249,47 @@ acertar por acaso.
 Tokens, tipografia, formas e componentes base conforme [design.md](design.md).
 
 **Pronto quando**
-- [ ] Antonio e Inter empacotadas em `res/font/` — nenhuma Downloadable Font
-- [ ] `SlushColors` com `paper`/`ink`; contorno inverte junto com o tema, sem condicional nas telas
-- [ ] `ContrastTest` recalcula da paleta e falha se um sticker virar cor de texto
-- [ ] `TypographyTest` exige `lineHeight ≤ 0.85.em` e `includeFontPadding = false` nos três estilos display
-- [ ] detekt proíbe `Color(0x` fora de `core/ui/theme/`, elevação ≠ 0 e `Brush.*Gradient`
-- [ ] `Card`, `Button`, `FAB` e `Surface` com elevação e `tonalElevation` zerados explicitamente
-- [ ] Componentes base nascem com alvo ≥ 48dp via `minimumInteractiveComponentSize()`
-- [ ] `MoneyText` centraliza formatação, sinal e `tnum` — nenhuma tela formata dinheiro à mão
-- [ ] Duas renderizações WebP da fita 3D, ≤ 120KB cada, em `nodpi`
+- [x] Antonio e Inter empacotadas em `res/font/` — nenhuma Downloadable Font.
+      As duas são **variáveis**, um arquivo por família: `FontVariation.weight`
+      tira W500 e W700 de Inter do mesmo arquivo, e dois estáticos custariam o
+      dobro de APK pelo mesmo resultado. `ManifestTest` guarda o flanco
+- [x] `SlushColors` com `paper`/`ink`; contorno inverte junto com o tema, sem
+      condicional nas telas
+- [x] `ContrastTest` recalcula da paleta e falha se um sticker virar cor de
+      texto. A afirmação que ele fixa é a que justifica a regra: **nenhum**
+      sticker passa em 4.5:1 nos dois temas — sobre branco só o Violet passa,
+      sobre papel escuro é justamente o Violet que reprova
+- [x] `TypographyTest` exige `lineHeight ≤ 0.85.em`, `includeFontPadding = false`
+      e `Trim.Both` nos três estilos display
+- [x] `Color(0x` fora de `core/ui/theme/`, elevação ≠ 0 e `Brush.*Gradient`
+      proibidos — por **`TokenLintTest`**, não por detekt: `ForbiddenMethodCall`
+      exige resolução de tipos, e não existe regra de "este padrão não pode
+      aparecer fora deste pacote". Mesma escolha que a T-002 fez para o Art. 6.
+      O teste inclui um caso que prova que a varredura achou arquivos — sem ele,
+      um `walkTopDown` no diretório errado passaria calado.
+      Guarda exercida: `Color(0xFFFF0000)` e `defaultElevation = 4.dp` reprovam
+- [x] Sexto caso fecha o furo que a varredura não pega: as cores das categorias
+      semeadas são ARGB `Int` em `Seed.kt` (porque `data/` não importa Compose),
+      e o teste confere que elas são as mesmas seis do tema
+- [x] `Card`, `Button`, `FAB` e `Surface` com elevação e `tonalElevation` zerados
+      explicitamente, uma vez, em `core/ui/component/Slush.kt`
+- [x] Componentes base nascem com alvo ≥ 48dp via `minimumInteractiveComponentSize()`
+- [x] `MoneyText` centraliza formatação, sinal e `tnum` — nenhuma tela formata
+      dinheiro à mão
+- [ ] Duas renderizações WebP da fita 3D, ≤ 120KB cada, em `nodpi` — **não
+      feito.** É arte, não código: são renders 3D da fita, e não há como
+      produzi-los aqui sem inventar outra coisa no lugar. Bloqueia a T-012
+      (onboarding é o único pôster completo) e o estado vazio da T-014
+
+**Dívida deixada**
+
+- `ponytail:` em `Type.kt` — Inter variável completa pesa 876KB, não os ~350KB
+  que o design.md §3 estimou, e subsetar para latin + latin-ext derrubaria para
+  ~120KB. Exige `fontTools`, que não instala nesta máquina (o `pip` do Python do
+  msys2 não sobe). Fazer no CI ou noutra máquina.
+- `CategorySticker` (design.md §6.2) fica para a T-013: ele precisa de
+  `colorArgb` no modelo de domínio de categoria, e é a T-013 que define qual
+  campo de apresentação sobe para o domínio.
 
 ### T-011 — Navegação
 **Fase** F0 · **Depende de** T-010 · **REQ** REQ-UI-001

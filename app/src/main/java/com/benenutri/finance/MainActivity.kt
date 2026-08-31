@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,14 +15,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.benenutri.finance.core.ui.component.MoneyText
+import com.benenutri.finance.core.ui.theme.DisplaySm
+import com.benenutri.finance.core.ui.theme.MoneyLg
+import com.benenutri.finance.core.ui.theme.Slush
+import com.benenutri.finance.core.ui.theme.SlushTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MaterialTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { insets ->
+            SlushTheme {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    containerColor = Slush.paper,
+                ) { insets ->
                     Placeholder(Modifier.padding(insets))
                 }
             }
@@ -32,8 +41,9 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * Andaime da T-001. A navegação real é a T-011 e o tema Slush é a T-010 —
- * `MaterialTheme` aqui é temporário e some quando a T-010 fechar.
+ * Andaime. A navegação real é a T-011; o que está aqui é o mínimo para o tema da
+ * T-010 ser exercido de verdade — display type esmagado e um valor por
+ * [MoneyText], que é o caminho por onde todo dinheiro do app passa.
  */
 @Composable
 private fun Placeholder(modifier: Modifier = Modifier) {
@@ -42,13 +52,19 @@ private fun Placeholder(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("mobile-finance", style = MaterialTheme.typography.headlineMedium)
-        Text("T-001 — andaime", style = MaterialTheme.typography.bodyMedium)
+        Text("SLUSH", style = DisplaySm, color = Slush.ink)
+        MoneyText(cents = -1_850, style = MoneyLg)
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun PlaceholderPreview() {
-    MaterialTheme { Placeholder() }
+    SlushTheme { Placeholder() }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF111111)
+@Composable
+private fun PlaceholderDarkPreview() {
+    SlushTheme(dark = true) { Placeholder() }
 }
