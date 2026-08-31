@@ -1,12 +1,17 @@
 package com.benenutri.finance
 
 import android.app.Application
+import dagger.hilt.android.HiltAndroidApp
 
 /**
  * Ponto de entrada do processo.
  *
- * Fica vazia de propósito. Hilt entra na T-009 (`@HiltAndroidApp`), o banco na
- * T-004 e a geração de recorrências na T-031 — cada um na sua task, não aqui
- * "por enquanto".
+ * `@HiltAndroidApp` é a única coisa aqui, e é o suficiente: o banco vem do
+ * `DatabaseModule`, construído sob demanda na primeira injeção. Abrir o banco no
+ * `onCreate` atrasaria o start de todo lançamento do app para um trabalho que a
+ * primeira tela já dispara.
+ *
+ * A geração de recorrências entra na T-031, como Worker — não aqui.
  */
+@HiltAndroidApp
 class FinanceApp : Application()

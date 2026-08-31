@@ -28,6 +28,16 @@ style:
     maxLineLength: 120
   UnusedPrivateMember:
     ignoreAnnotated: ['Preview']
+  ForbiddenImport:
+    # arquitetura.md §3, regra 1: `domain/` e Kotlin puro. E o que torna toda
+    # regra de dinheiro testavel em JVM, em milissegundos, sem emulador. No dia
+    # em que a fronteira vazar, o teste fica lento -- e teste lento deixa de ser
+    # rodado. A guarda so faz sentido aqui: fora de `domain/` o import e normal.
+    active: true
+    includes: ['**/domain/**']
+    imports:
+      - 'android.*'
+      - 'androidx.*'
 
 naming:
   FunctionNaming:

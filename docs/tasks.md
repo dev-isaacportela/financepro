@@ -220,9 +220,28 @@ elas são **palavra-chave**, não descrição inteira — o extrato traz
 
 Repositórios expondo `Flow`, módulos Hilt, `Application`.
 
+**Só leitura.** Cada escrita nasce com a tela que a chama — T-012 cria conta,
+T-013 cria transação, T-016 mexe em categoria. É a tela que decide quais colunas
+de apresentação (`colorArgb`, `iconKey`, `sortOrder`) sobem para o modelo de
+domínio; escrever os `upsert` agora seria adivinhar essa assinatura três vezes e
+acertar por acaso.
+
 **Pronto quando**
-- [ ] Nenhum repositório tem interface (Art. 10)
-- [ ] Nenhum arquivo em `domain/` importa `android.*` ou `androidx.*` — verificado por detekt
+- [x] Nenhum repositório tem interface (Art. 10). Não existe segunda
+      implementação, e para trocar por fake em teste o Hilt substitui o módulo
+      inteiro — a interface custaria um arquivo por repositório, para sempre
+- [x] Nenhum arquivo em `domain/` importa `android.*` ou `androidx.*` —
+      `ForbiddenImport` do detekt, restrito a `**/domain/**`. Guarda exercida:
+      um `import android.util.Log` em `Models.kt` reprova o build
+- [x] `@HiltAndroidApp` na `FinanceApp`, e nada além disso lá: o banco é
+      construído na primeira injeção, não no `onCreate`, para não atrasar o start
+      de todo lançamento por trabalho que a primeira tela já dispara
+- [x] Módulo Hilt mora em `data/db/`, não num pacote `di/`. Um pacote só de
+      módulos vira índice remoto do resto do app, para manter em sincronia sem
+      ganhar nada. Repositórios nem aparecem nele — têm `@Inject constructor`
+- [x] `RepositoryTest` leva o resultado do repositório até `balanceOf`: se o
+      mapeamento perdesse `cleared` ou `counterAccountId`, o saldo daria outro
+      número. A conversão `LocalDate` ↔ `epochDay` é de borda e tem teste próprio
 
 ### T-010 — Sistema visual Slush ⇉
 **Fase** F0 · **Depende de** T-001 · **REQ** REQ-UI-007, REQ-A11Y-002, REQ-A11Y-005, REQ-DS-001, REQ-DS-002, REQ-DS-003, REQ-DS-004, REQ-DS-005, REQ-DS-006, REQ-DS-007, REQ-DS-008, REQ-DS-009, REQ-DS-010
