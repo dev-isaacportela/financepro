@@ -162,19 +162,32 @@ arquivo.
 - [x] Escrita do envelope é `write` em `.tmp` + `rename`, que é atômico no mesmo
       volume: sem isso um desligamento no meio da gravação deixaria arquivo
       truncado, indistinguível de corrupção
-- [ ] Arquivo `.db` extraído do aparelho não é legível por `sqlite3`
-- [ ] Chave não aparece em `SharedPreferences`, DataStore, código ou log
-- [ ] Reinstalação com dados preservados ainda abre o banco
+- [x] Arquivo do banco em disco **não** começa com `SQLite format 3` — é a marca
+      que o `sqlite3` procura, e o que ele exige para abrir. Verificado no
+      aparelho, lendo o arquivo real
+- [x] Chave não aparece em `SharedPreferences`, DataStore, código ou log. O
+      diretório `shared_prefs` nem chega a existir, e `db.key` tem exatamente
+      60 bytes — IV(12) + senha(32) + tag GCM(16). Se alguém trocasse o embrulho
+      por uma gravação crua, teria 32
+- [x] Fechar e reabrir enxerga os mesmos dados: prova que a senha sobrevive ao
+      ciclo completo do Keystore — gerar, embrulhar, gravar, ler, desembrulhar
+- [ ] **Reinstalação** com dados preservados ainda abre o banco — distinto de
+      reabrir: testa se o alias do Keystore sobrevive a um `install -r`. Precisa
+      que o app crie o banco no uso normal, o que só acontece a partir da T-013
 
-Os três últimos são `Teste: manual` na spec e **só fecham no aparelho** — a
-biblioteca nativa do SQLCipher não existe na JVM, e os testes de DAO montam o
-banco em memória sem passar por `buildDatabase`. Roteiro:
+Os três primeiros eram `Teste: manual` na spec. Viraram `DatabaseCipherTest`, em
+`androidTest`, que roda pelo mesmo `buildDatabase` da produção — um teste que
+montasse o banco de outro jeito provaria a criptografia de um banco que ninguém
+abre desse jeito. Não vão para o CI: não há emulador no pipeline, e o valor é
+justamente rodar em hardware com Keystore de verdade.
 
 ```
-adb shell run-as com.benenutri.finance cat files/../databases/finance.db > /tmp/f.db
-sqlite3 /tmp/f.db .tables      # precisa falhar com "file is not a database"
-adb shell run-as com.benenutri.finance ls -R shared_prefs files
+./gradlew connectedDebugAndroidTest      # 3 testes, SM-S942B (Android 16)
 ```
+
+O `databases/` não existia até este teste: **nenhuma tela injeta o banco ainda**,
+então o caminho do SQLCipher nunca tinha sido executado. Descoberto ao instalar
+no aparelho, não em revisão de código.
 
 ### T-006 — Sementes ⇉
 **Fase** F0 · **Depende de** T-004 · **REQ** REQ-CAT-004, REQ-ACT-003
@@ -421,7 +434,8 @@ Passagem por todas as telas da F0 (Art. 17 — é auditoria da fase, não adiame
       requisito que estava coberto, e fazia o gate parecer mais longe do que
       estava. Corrigido — 19 requisitos rastreados viraram 40, sem uma linha de
       teste nova
-- [ ] Workflow exercido de verdade — só na primeira execução em um remoto
+- [x] Workflow exercido de verdade — verde na primeira execução, em
+      `dev-isaacportela/mobile-finance` (privado)
 - [ ] Ao fechar a F0, trocar `trace.py` por `trace.py --phase F0` no workflow.
       Hoje `--phase F0` falha com **2** erros, e os dois são legítimos:
       `REQ-CAT-005` só tem a metade de banco pronta (falta a recategorização em
