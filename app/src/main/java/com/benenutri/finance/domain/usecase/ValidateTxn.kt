@@ -58,43 +58,9 @@ fun validateTxn(
         origem.archived -> erro(ValidationError.Campo.CONTA, "Conta arquivada")
     }
 
-    when (txn.type) {
-        // REQ-TXN-003 e REQ-TXN-004
-        TxnType.TRANSFER -> {
-            val destino = txn.counterAccountId
-            when {
-                destino == null || destino == txn.accountId ->
-                    erro(
-                        ValidationError.Campo.CONTA_DESTINO,
-                        "Escolha uma conta de destino diferente",
-                    )
-                contas[destino] == null ->
-                    erro(ValidationError.Campo.CONTA_DESTINO, "Conta não encontrada")
-                contas.getValue(destino).archived ->
-                    erro(ValidationError.Campo.CONTA_DESTINO, "Conta arquivada")
-            }
-            // categoryId nulo em transferência é sanitizado, não exibido:
-            // transferência não é receita nem despesa, e contá-la como tal
-            // duplicaria o valor nos relatórios.
-        }
-
-        // REQ-TXN-005 e REQ-CAT-003
-        TxnType.INCOME, TxnType.EXPENSE -> {
-            val categoria = txn.categoryId?.let { categorias[it] }
-            val esperado =
-                if (txn.type == TxnType.INCOME) CategoryKind.INCOME else CategoryKind.EXPENSE
-            when {
-                txn.categoryId == null ->
-                    erro(ValidationError.Campo.CATEGORIA, "Escolha uma categoria")
-                categoria == null ->
-                    erro(ValidationError.Campo.CATEGORIA, "Categoria não encontrada")
-                categoria.kind != esperado ->
-                    erro(
-                        ValidationError.Campo.CATEGORIA,
-                        "Categoria de receita em uma despesa",
-                    )
-            }
-        }
+    erros += when (txn.type) {
+        TxnType.TRANSFER -> validarDestino(txn, contas)
+        TxnType.INCOME, TxnType.EXPENSE -> validarCategoria(txn, categorias)
     }
 
     // REQ-TXN-013
@@ -103,6 +69,42 @@ fun validateTxn(
     }
 
     return erros
+}
+
+/**
+ * REQ-TXN-003 e REQ-TXN-004 — destino de transferência.
+ *
+ * `categoryId` nulo aqui não gera erro: é sanitizado por [sanitize]. Transferência
+ * não é receita nem despesa, e contá-la como tal duplicaria o valor nos relatórios.
+ */
+private fun validarDestino(txn: Txn, contas: Map<Long, Account>): List<ValidationError> {
+    val campo = ValidationError.Campo.CONTA_DESTINO
+    val destino = txn.counterAccountId
+    val mensagem = when {
+        destino == null || destino == txn.accountId -> "Escolha uma conta de destino diferente"
+        contas[destino] == null -> "Conta não encontrada"
+        contas.getValue(destino).archived -> "Conta arquivada"
+        else -> return emptyList()
+    }
+    return listOf(ValidationError(campo, mensagem))
+}
+
+/** REQ-TXN-005 e REQ-CAT-003 — categoria obrigatória e compatível com o tipo. */
+private fun validarCategoria(
+    txn: Txn,
+    categorias: Map<Long, Category>,
+): List<ValidationError> {
+    val campo = ValidationError.Campo.CATEGORIA
+    val categoria = txn.categoryId?.let { categorias[it] }
+    val esperado =
+        if (txn.type == TxnType.INCOME) CategoryKind.INCOME else CategoryKind.EXPENSE
+    val mensagem = when {
+        txn.categoryId == null -> "Escolha uma categoria"
+        categoria == null -> "Categoria não encontrada"
+        categoria.kind != esperado -> "Categoria de receita em uma despesa"
+        else -> return emptyList()
+    }
+    return listOf(ValidationError(campo, mensagem))
 }
 
 /** Remove o que não faz sentido para o tipo, antes de gravar. REQ-TXN-004. */

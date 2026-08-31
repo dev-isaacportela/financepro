@@ -70,13 +70,7 @@ fun parseCents(input: String): Long? {
     if (body.isEmpty()) return null
     if (body.any { !it.isDigit() && it !in SEPARATORS }) return null
 
-    val lastSeparator = body.lastIndexOfAny(SEPARATORS)
-    val trailingDigits = if (lastSeparator >= 0) body.length - lastSeparator - 1 else 0
-    val decimal = lastSeparator >= 0 && trailingDigits in 1..FRACTION_DIGITS
-
-    val wholeText = if (decimal) body.take(lastSeparator) else body
-    val fractionText = if (decimal) body.substring(lastSeparator + 1) else ""
-
+    val (wholeText, fractionText) = splitDecimal(body)
     val wholeDigits = wholeText.filter { it.isDigit() }
     if (wholeDigits.isEmpty() && fractionText.isEmpty()) return null
 
@@ -85,6 +79,26 @@ fun parseCents(input: String): Long? {
     val value = (whole + fraction).toLongOrNull() ?: return null
 
     return if (negative) -value else value
+}
+
+/**
+ * Separa o corpo numérico em (parte inteira, parte fracionária).
+ *
+ * Aqui mora a regra que desfaz a ambiguidade entre `1.234,56` e `1,234.56`:
+ * **o último separador é o decimal quando vem seguido de 1 ou 2 dígitos**.
+ * Caso contrário todos os separadores são de milhar, e a fração é vazia — que
+ * é como `1.234` vira mil duzentos e trinta e quatro reais.
+ */
+private fun splitDecimal(body: String): Pair<String, String> {
+    val lastSeparator = body.lastIndexOfAny(SEPARATORS)
+    if (lastSeparator < 0) return body to ""
+
+    val trailingDigits = body.length - lastSeparator - 1
+    return if (trailingDigits in 1..FRACTION_DIGITS) {
+        body.take(lastSeparator) to body.substring(lastSeparator + 1)
+    } else {
+        body to ""
+    }
 }
 
 /**

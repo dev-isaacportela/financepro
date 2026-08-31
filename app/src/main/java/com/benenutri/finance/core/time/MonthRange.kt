@@ -3,6 +3,9 @@ package com.benenutri.finance.core.time
 import java.time.LocalDate
 import java.time.YearMonth
 
+/** Maior dia que qualquer mês pode ter. */
+private const val MAX_DAY_OF_MONTH = 31
+
 /**
  * Período mensal do app. REQ-CORE-003.
  *
@@ -40,8 +43,8 @@ data class MonthRange(
  * o usuário legitimamente escolhe 31.
  */
 fun monthRange(month: YearMonth, monthStartDay: Int = 1): MonthRange {
-    require(monthStartDay in 1..31) {
-        "monthStartDay deve estar entre 1 e 31, recebido $monthStartDay"
+    require(monthStartDay in 1..MAX_DAY_OF_MONTH) {
+        "monthStartDay deve estar entre 1 e $MAX_DAY_OF_MONTH, recebido $monthStartDay"
     }
     val start = periodStart(month, monthStartDay)
     val nextStart = periodStart(month.plusMonths(1), monthStartDay)

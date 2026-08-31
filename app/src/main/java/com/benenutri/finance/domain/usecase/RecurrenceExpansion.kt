@@ -15,6 +15,10 @@ import java.time.YearMonth
  * testável sem banco, e é onde estão os erros difíceis.
  */
 
+private const val MAX_DAY_OF_MONTH = 31
+private const val MONTHS_PER_YEAR = 12
+private const val DAYS_PER_WEEK = 7
+
 enum class Frequency { DAILY, WEEKLY, MONTHLY, YEARLY }
 
 /**
@@ -39,8 +43,8 @@ data class RecurrenceSpec(
 ) {
     init {
         require(interval >= 1) { "interval deve ser >= 1, recebido $interval" }
-        dayOfMonth?.let { require(it in 1..31) { "dayOfMonth inválido: $it" } }
-        monthOfYear?.let { require(it in 1..12) { "monthOfYear inválido: $it" } }
+        dayOfMonth?.let { require(it in 1..MAX_DAY_OF_MONTH) { "dayOfMonth inválido: $it" } }
+        monthOfYear?.let { require(it in 1..MONTHS_PER_YEAR) { "monthOfYear inválido: $it" } }
         endDate?.let {
             require(it >= startDate) { "endDate ($it) antes de startDate ($startDate)" }
         }
@@ -87,7 +91,8 @@ private fun weekly(spec: RecurrenceSpec): Sequence<LocalDate> {
     val alvo = spec.weekday ?: spec.startDate.dayOfWeek
     // Primeira ocorrência: o próprio startDate se já cair no dia certo, senão
     // o próximo dia da semana alvo.
-    val diasAte = ((alvo.value - spec.startDate.dayOfWeek.value) + 7) % 7
+    val diasAte =
+        ((alvo.value - spec.startDate.dayOfWeek.value) + DAYS_PER_WEEK) % DAYS_PER_WEEK
     val primeira = spec.startDate.plusDays(diasAte.toLong())
     return generate { n -> primeira.plusWeeks(n * spec.interval) }
 }

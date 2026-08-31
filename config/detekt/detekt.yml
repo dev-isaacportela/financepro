@@ -22,6 +22,8 @@ style:
     # Valores de layout e de token visual são literais por definição.
     ignoreAnnotated: ['Composable', 'Preview']
     ignoreNumbers: ['-1', '0', '1', '2', '100']
+    # `val CARD_DAY_RANGE = 1..28` já se explica pelo nome da propriedade.
+    ignorePropertyDeclaration: true
   MaxLineLength:
     maxLineLength: 120
   UnusedPrivateMember:
@@ -31,8 +33,9 @@ naming:
   FunctionNaming:
     # Composable é PascalCase por convenção oficial.
     ignoreAnnotated: ['Composable']
-  TopLevelPropertyNaming:
-    constantPattern: '[A-Z][A-Za-z0-9]*'
+  # Sem override de TopLevelPropertyNaming: o padrão do detekt
+  # ('[A-Z][_A-Z0-9]*') é o SCREAMING_SNAKE_CASE do Kotlin. O override que
+  # estava aqui proibia underscore e reprovava GROUP_SIZE e FRACTION_DIGITS.
 
 # Sem bloco `formatting`: aquele ruleset vem do plugin detekt-formatting
 # (wrapper do ktlint), que não está instalado — e configurá-lo sem o plugin
