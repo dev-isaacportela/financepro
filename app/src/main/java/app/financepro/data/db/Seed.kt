@@ -16,18 +16,21 @@ import app.financepro.domain.model.CategoryKind
  * concatenados: nome de categoria com apóstrofo quebraria a query montada à mão.
  */
 val SeedCallback = object : RoomDatabase.Callback() {
+    // `arrayOf<Any>` explícito: sem ele o Kotlin infere a interseção de
+    // Comparable e Serializable, avisa que vai virar erro, e o `execSQL` só quer
+    // Any mesmo.
     override fun onCreate(db: SupportSQLiteDatabase) {
         CATEGORIAS_PADRAO.forEach { c ->
             db.execSQL(
                 "INSERT INTO category (id, name, kind, parentId, iconKey, colorArgb, archived, useCount) " +
                     "VALUES (?, ?, ?, NULL, ?, ?, 0, 0)",
-                arrayOf(c.id, c.nome, c.kind.name, c.iconKey, c.corArgb),
+                arrayOf<Any>(c.id, c.nome, c.kind.name, c.iconKey, c.corArgb),
             )
         }
         REGRAS_PADRAO.forEach { (chave, categoriaId) ->
             db.execSQL(
                 "INSERT INTO payee_rule (normalizedKey, categoryId, hitCount) VALUES (?, ?, 1)",
-                arrayOf(chave, categoriaId),
+                arrayOf<Any>(chave, categoriaId),
             )
         }
     }
@@ -64,18 +67,29 @@ internal data class CategoriaPadrao(
  * O `id` é explícito porque [REGRAS_PADRAO] aponta para ele. Deixar o
  * AUTOINCREMENT decidir daria os mesmos números hoje e um bug silencioso no dia
  * em que alguém inserisse uma categoria antes destas.
+ *
+ * **As cores são distribuídas pela ordem alfabética, não pelo id.** São seis
+ * stickers para dez categorias, então repetir é inevitável — o que dá para
+ * escolher é *onde* repete. Enquanto todo `useCount` é zero, o grid sai em
+ * ordem alfabética, que é exatamente o que o usuário novo vê; percorrendo essa
+ * ordem em ciclo pela paleta, duas categorias da mesma cor ficam sempre seis
+ * posições distantes e nunca vizinhas.
+ *
+ * A versão anterior atribuía por id e punha Salário e Saúde, lado a lado no
+ * grid, com o mesmo Mint Pop. `SeedTest` agora falha se isso voltar.
  */
 internal val CATEGORIAS_PADRAO = listOf(
-    CategoriaPadrao(1, "Alimentação", CategoryKind.EXPENSE, "utensils", EMBER),
-    CategoriaPadrao(2, "Transporte", CategoryKind.EXPENSE, "car", ELECTRIC_BLUE),
-    CategoriaPadrao(3, "Moradia", CategoryKind.EXPENSE, "home", SUNBURST),
+    CategoriaPadrao(1, "Alimentação", CategoryKind.EXPENSE, "utensils", ELECTRIC_BLUE),
+    CategoriaPadrao(2, "Transporte", CategoryKind.EXPENSE, "car", LAVENDER),
+    CategoriaPadrao(3, "Moradia", CategoryKind.EXPENSE, "home", VOLTAGE_VIOLET),
     CategoriaPadrao(4, "Saúde", CategoryKind.EXPENSE, "cross", MINT_POP),
-    CategoriaPadrao(5, "Lazer", CategoryKind.EXPENSE, "confetti", LAVENDER),
-    CategoriaPadrao(6, "Educação", CategoryKind.EXPENSE, "book", VOLTAGE_VIOLET),
-    CategoriaPadrao(7, "Compras", CategoryKind.EXPENSE, "bag", EMBER),
-    CategoriaPadrao(8, "Assinaturas", CategoryKind.EXPENSE, "repeat", ELECTRIC_BLUE),
-    CategoriaPadrao(9, "Salário", CategoryKind.INCOME, "cash", MINT_POP),
-    CategoriaPadrao(10, "Outros", CategoryKind.EXPENSE, "dots", LAVENDER),
+    CategoriaPadrao(5, "Lazer", CategoryKind.EXPENSE, "confetti", SUNBURST),
+    CategoriaPadrao(6, "Educação", CategoryKind.EXPENSE, "book", EMBER),
+    CategoriaPadrao(7, "Compras", CategoryKind.EXPENSE, "bag", LAVENDER),
+    CategoriaPadrao(8, "Assinaturas", CategoryKind.EXPENSE, "repeat", MINT_POP),
+    // Sozinha no grid de receita: vizinhança não é problema dela.
+    CategoriaPadrao(9, "Salário", CategoryKind.INCOME, "cash", SUNBURST),
+    CategoriaPadrao(10, "Outros", CategoryKind.EXPENSE, "dots", ELECTRIC_BLUE),
 )
 
 /**

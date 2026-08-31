@@ -54,6 +54,12 @@ DataStore, detekt.
       reinício. `GRADLE_OPTS` também não basta, porque não alcança o worker de
       teste, que é forkado com args próprios
 - [x] Version catalog é a única fonte de versões — nenhuma versão literal em `build.gradle.kts`
+- [x] Plataforma subida de uma vez para `compileSdk 37`, AGP 9.3.2 e Gradle
+      9.5.0, depois de a **quarta** dependência seguida exigir isso. `targetSdk`
+      fica em 36: é decisão separada, e liga comportamento de runtime.
+      O `distributionSha256Sum` do wrapper foi trocado pelo checksum **publicado
+      pelo Gradle**, conferido contra o que baixou — não pelo que a máquina
+      calculou, que não provaria nada
 - [x] `room.schemaLocation` aponta para `app/schemas/`
 - [x] `.gitattributes` força LF em `gradlew` — sem isso o CI Linux falha com
       "bad interpreter", erro que não parece ter relação com fim de linha

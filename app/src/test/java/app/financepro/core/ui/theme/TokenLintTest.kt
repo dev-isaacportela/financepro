@@ -88,13 +88,17 @@ class TokenLintTest {
 
         /** Sobe até achar `app/src/main/java`, para o teste não depender do cwd. */
         fun srcMain(): File {
-            var dir: File? = File(System.getProperty("user.dir")).absoluteFile
+            // `user.dir` sempre existe num JVM de teste, mas o Kotlin passou a
+            // enxergar o retorno como anulável — checar aqui dá uma mensagem
+            // melhor do que um NPE lá dentro.
+            val cwd = requireNotNull(System.getProperty("user.dir")) { "user.dir não definido" }
+            var dir: File? = File(cwd).absoluteFile
             while (dir != null) {
                 File(dir, "src/main/java").takeIf { it.isDirectory }?.let { return it }
                 File(dir, "app/src/main/java").takeIf { it.isDirectory }?.let { return it }
                 dir = dir.parentFile
             }
-            error("não achei src/main/java a partir de ${System.getProperty("user.dir")}")
+            error("não achei src/main/java a partir de $cwd")
         }
     }
 }

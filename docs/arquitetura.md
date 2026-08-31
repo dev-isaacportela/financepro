@@ -5,9 +5,19 @@
 ```
 minSdk 26        // java.time nativo, sem core library desugaring
 targetSdk 36
-compileSdk 36
+compileSdk 37
 JVM target 17
 ```
+
+`compileSdk` e `targetSdk` **não** andam juntos de propósito. O primeiro decide
+contra qual API se compila; o segundo liga comportamentos novos de runtime.
+Subir o primeiro é o que destrava biblioteca nova; subir o segundo pede uma
+passada de teste própria, e vira decisão à parte.
+
+Quatro dependências seguidas — Compose BOM, sqlcipher, navigation e
+hilt-navigation-compose — exigiram `compileSdk 37` e AGP ≥ 9.1. Segurar cada uma
+numa linha atrasada era imposto cobrado a cada task nova, então a plataforma
+subiu de uma vez: AGP 9.3.2 sobre Gradle 9.5.0.
 
 `minSdk 26` (Android 8.0) cobre >97% dos aparelhos ativos e elimina a
 dependência de desugaring só para ter `LocalDate`. Um problema a menos.

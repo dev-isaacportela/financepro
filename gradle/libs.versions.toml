@@ -1,42 +1,35 @@
 # Fonte única de versões (T-001).
 # Nenhuma versão literal em build.gradle.kts — se aparecer, a revisão rejeita.
-# Versões elevadas pelo Android Studio no primeiro sync (AGP 8.13 -> 9.0), e
-# validadas por ele. Minha pesquisa original filtrou a linha 9.x por engano e
-# fixou uma major atrasada.
+#
+# Quatro dependências seguidas exigiram `compileSdk 37` e AGP >= 9.1 — Compose
+# BOM, sqlcipher, navigation e hilt-navigation-compose. Segurar cada uma numa
+# linha atrasada estava virando imposto recorrente, cobrado toda vez que uma
+# task nova precisava de uma biblioteca. Subimos a plataforma de uma vez.
+#
+# `targetSdk` continua em 36 de propósito: `compileSdk` só decide contra qual
+# API se compila, enquanto `targetSdk` liga comportamentos novos de runtime.
+# São decisões separadas, e a segunda merece uma passada de teste própria.
 
 [versions]
-agp = "9.0.1"
+agp = "9.3.2"
 kotlin = "2.2.10"
 ksp = "2.3.2"                # KSP2: versionamento independente do Kotlin,
                              # diferente do KSP1, que usava <kotlin>-<ksp>
 detekt = "1.23.8"
 
 # --- em uso a partir da T-001 ---
-#
-# ATENÇÃO ao atualizar: as três versões abaixo estão DELIBERADAMENTE uma
-# linha atrás da última. Compose BOM 2026.08.00, core-ktx 1.19.0 e
-# lifecycle 2.11.0 exigem `compileSdk 37` e AGP 9.1+, e o build quebra com
-# 28 erros de metadados de AAR. Subir só estas versões não funciona: exige
-# também compileSdk 37, AGP >= 9.1 e a plataforma android-37 instalada.
-composeBom = "2026.06.01"
-coreKtx = "1.18.0"
+composeBom = "2026.08.00"
+coreKtx = "1.19.0"
 activityCompose = "1.13.0"
-lifecycle = "2.10.0"
+lifecycle = "2.11.0"
 
 # --- declarados aqui, aplicados nas suas próprias tasks ---
-navigationCompose = "2.9.8"    # T-011 — terceira dependência a exigir
-                             # compileSdk 37 na última linha (2.10.0). A 2.9.8
-                             # declara minCompileSdk=35 e passa
+navigationCompose = "2.10.0"   # T-011
 serialization = "1.9.0"        # rotas type-safe do Navigation (T-011)
 room = "2.8.4"                 # T-004
-sqlcipher = "4.17.0"           # T-005 — uma linha atrás da última de
-                             # propósito: a 4.18.0 declara minCompileSdk=37
-                             # e reprova o build no checkAarMetadata, pelo
-                             # mesmo motivo do bloco de Compose acima
+sqlcipher = "4.18.0"           # T-005
 hilt = "2.60.1"                # T-009
-hiltNavigationCompose = "1.3.0"  # a 1.4.0 exige compileSdk 37 e arrasta
-                                 # lifecycle 2.11.0 junto — quarta dependência
-                                 # a bater na mesma parede
+hiltNavigationCompose = "1.4.0"
 datastore = "1.2.1"            # T-009
 work = "2.11.2"                # T-031
 biometric = "1.1.0"            # T-018

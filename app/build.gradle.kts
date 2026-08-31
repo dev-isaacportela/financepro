@@ -9,11 +9,13 @@ plugins {
 
 android {
     namespace = "app.financepro"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "app.financepro"
         minSdk = 26          // java.time nativo, sem desugaring (arquitetura.md §1)
+        // 36, não 37: compileSdk decide contra qual API se compila; targetSdk
+        // liga comportamentos novos de runtime, e isso pede teste próprio.
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
