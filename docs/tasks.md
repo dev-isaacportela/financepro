@@ -331,6 +331,13 @@ Bottom bar de 4 destinos, rotas type-safe.
       eles, ir e voltar entre abas empilha destinos e o botão voltar vira labirinto
 - [x] `MainActivity` fica só com tema e grafo — tela dentro da `Activity` é tela
       que nenhuma rota alcança
+- [x] Barra respeita `WindowInsets.navigationBars`. Com `enableEdgeToEdge` o
+      Scaffold entrega o slot colado na borda física, e quem usa três botões em
+      vez de gestos veria a barra atrás deles. **Só apareceu rodando no
+      aparelho** — no emulador de gestos o erro é de poucos dp e passa batido
+- [x] Verificado na S26 (SM-S942B, Android 16): navegação entre abas funciona, e
+      o contorno `ink` inverte junto com o papel nos dois temas sem nenhuma
+      condicional nas telas — que era a aposta da T-010
 - [x] `navigation-compose` fixado na **2.9.8**: a 2.10.0 é a terceira dependência
       a exigir `compileSdk 37`, junto com Compose BOM e sqlcipher
 

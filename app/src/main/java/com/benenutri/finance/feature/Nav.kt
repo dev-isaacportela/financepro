@@ -2,11 +2,14 @@ package com.benenutri.finance.feature
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -98,7 +101,14 @@ private fun BarraInferior(nav: NavHostController) {
     val atual by nav.currentBackStackEntryAsState()
 
     SlushSurface(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        // `windowInsetsPadding` antes do padding visual: com `enableEdgeToEdge` o
+        // Scaffold entrega o slot colado na borda física, e quem tem três botões
+        // de navegação em vez de gestos veria a barra atrás deles. No aparelho de
+        // gestos o erro quase não aparece — foi preciso rodar para enxergar.
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         shape = Pill,
     ) {
         Row(
