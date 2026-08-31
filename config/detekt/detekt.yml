@@ -34,7 +34,8 @@ naming:
   TopLevelPropertyNaming:
     constantPattern: '[A-Z][A-Za-z0-9]*'
 
-formatting:
-  Indentation:
-    active: true
-    indentSize: 4
+# Sem bloco `formatting`: aquele ruleset vem do plugin detekt-formatting
+# (wrapper do ktlint), que não está instalado — e configurá-lo sem o plugin
+# faz o detekt abortar com "Property 'formatting' does not exist".
+# Ele só definia indentSize 4, que já é o padrão. Se um dia quisermos as
+# regras de ktlint de verdade, é uma linha: detektPlugins(...detekt-formatting).
