@@ -8,6 +8,8 @@ Confere que:
   4. Todo @Req no codigo aponta para uma REQ que existe.
   5. Dependencias entre tasks existem e nao formam ciclo.
   6. Links e ancoras entre os documentos resolvem.
+  7. Guardas da constituicao: Art. 6 (dinheiro sem ponto flutuante)
+     e Art. 12 (sem migracao destrutiva).
 
 Uso:
     python tools/trace.py                # so o que ja foi implementado
@@ -38,6 +40,10 @@ RE_TID = re.compile(r"T-\d{3}")
 RE_ANNOT = re.compile(r'@Req\(\s*"(REQ-[A-Z0-9]+-\d{3})"')
 RE_MDLINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 RE_HEADING = re.compile(r"^#{1,6}\s+(.*?)\s*$")
+RE_FLOAT = re.compile(r"\b(?:Double|Float|BigDecimal)\b|\.to(?:Double|Float)\s*\(")
+
+# Caminhos por onde dinheiro trafega (Art. 6). Relativos ao pacote raiz.
+MONEY_PATHS = ("/core/money/", "/domain/", "/data/import/")
 
 PHASES = ["F0", "F1", "F2", "F3", "F4"]
 
@@ -168,6 +174,43 @@ def check_links(errors):
                     errors.append(f"{rel}: ancora inexistente -> {target}")
 
 
+def check_constitution(errors):
+    """Guardas dos Arts. 6 e 12, sobre o fonte sem comentarios.
+
+    Ficam aqui, e nao como grep no workflow, porque o KDoc de Money.kt explica
+    por que Double e proibido -- e um grep cru reprovava justamente o arquivo
+    que implementa a regra. Punir quem documenta a regra e uma guarda ruim.
+    """
+    if not SRC.exists():
+        return
+
+    for path in SRC.rglob("*.kt"):
+        rel = path.relative_to(ROOT).as_posix()
+        try:
+            code = strip_comments(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError):
+            continue
+
+        # Art. 12 — vale para todo o codigo, inclusive testes.
+        if "fallbackToDestructiveMigration" in code:
+            errors.append(
+                f"{rel}: fallbackToDestructiveMigration apaga dado financeiro "
+                f"do usuario (Art. 12, REQ-DATA-001)")
+
+        # Art. 6 — so em caminho de dinheiro, e so em src/main. Fora dai
+        # toFloat e legitimo (alpha, progresso de animacao), e os testes usam
+        # Double de proposito, para mostrar o erro que ele produz.
+        if "/src/main/" not in rel:
+            continue
+        if not any(seg in rel for seg in MONEY_PATHS):
+            continue
+        for m in RE_FLOAT.finditer(code):
+            line = code[:m.start()].count("\n") + 1
+            errors.append(
+                f"{rel}:{line}: '{m.group(0)}' em caminho de dinheiro "
+                f"(Art. 6, ADR-002)")
+
+
 def find_cycle(tasks):
     """Menor ciclo de dependencia, ou None."""
     WHITE, GRAY, BLACK = 0, 1, 2
@@ -251,6 +294,7 @@ def main():
             if dep not in tasks:
                 errors.append(f"{tid}: depende de {dep}, que nao existe")
     check_links(errors)
+    check_constitution(errors)
 
     cycle = find_cycle(tasks)
     if cycle:

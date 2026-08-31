@@ -57,10 +57,15 @@ função — escrever duas conversões texto→centavos seria criar duas fontes 
 verdade para a regra mais sensível do app.
 
 **Pronto quando**
-- [ ] `parseCents(String): Long?` cobre as 6 linhas da tabela de REQ-IMP-004
-- [ ] Nenhuma ocorrência de `toDouble`/`toFloat` no arquivo — verificado por detekt
-- [ ] `formatBRL(Long)` produz `R$ 1.234,56` e `−R$ 18,50`
-- [ ] `MoneyTest`, `MoneyFormatTest`, `MoneyParseTest` com `@Req`
+- [x] `parseCents(String): Long?` cobre as 6 linhas da tabela de REQ-IMP-004
+- [x] Nenhum ponto flutuante em caminho de dinheiro — verificado por
+      `tools/trace.py` (guarda do Art. 6), não por detekt: as regras equivalentes
+      no detekt exigem resolução de tipos, que é frágil em projeto Android
+- [x] `formatBRL(Long)` produz `R$ 1.234,56` e `−R$ 18,50`, com U+2212 e não hífen
+- [x] `MoneyTest`, `MoneyFormatTest`, `MoneyParseTest` com `@Req` — 21 testes
+- [x] `parseCents` aceita a saída de `formatBRL` (round-trip). O sinal U+2212 que
+      `formatBRL` emite não era reconhecido na volta — bug encontrado ao escrever
+      o teste, não depois
 
 ### T-003 — Núcleo de datas ⇉
 **Fase** F0 · **Depende de** T-001 · **REQ** REQ-CORE-003
@@ -68,8 +73,14 @@ verdade para a regra mais sensível do app.
 `core/time/MonthRange.kt`: período mensal a partir de `monthStartDay`, com clamp.
 
 **Pronto quando**
-- [ ] `MonthRangeTest` cobre as 3 linhas da tabela de REQ-CORE-003, incluindo `monthStartDay = 31`
-- [ ] Nenhum uso de `Calendar` ou `Date` — só `java.time`
+- [x] `MonthRangeTest` cobre as 3 linhas da tabela de REQ-CORE-003, incluindo `monthStartDay = 31`
+- [x] Nenhum uso de `Calendar` ou `Date` — só `java.time`
+- [x] Períodos consecutivos não deixam buraco nem se sobrepõem, verificado em 24
+      meses para 5 valores de `monthStartDay` — sem isso uma transação sumiria do
+      orçamento ou seria contada duas vezes
+
+`monthOf(date)` — descobrir a que mês uma data pertence — **não** entra aqui.
+É de quem precisar primeiro (T-017 ou T-028), com o teste junto.
 
 ### T-004 — Schema e DAOs
 **Fase** F0 · **Depende de** T-001 · **REQ** REQ-ACC-001, REQ-ACC-002, REQ-CAT-001, REQ-CAT-002, REQ-TXN-001, REQ-DATA-001, REQ-DATA-002, REQ-DATA-003
