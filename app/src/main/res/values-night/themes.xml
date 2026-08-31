@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  O mesmo tema com o papel invertido. Sem este arquivo, o fundo da janela fica
+  branco no tema escuro e qualquer tela que não pinte o próprio fundo vira
+  texto branco sobre branco — e o pior é que o layout continua correto, então
+  o `uiautomator dump` mostra tudo no lugar enquanto a tela parece vazia.
+-->
+<resources>
+    <style name="Theme.MobileFinance" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/paper_dark</item>
+        <item name="android:statusBarColor">@color/paper_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

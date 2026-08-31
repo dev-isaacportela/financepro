@@ -38,11 +38,11 @@ rm -rf "$OUT"; mkdir -p "$OUT"
 # Só o que é Kotlin puro. Nada que importe android.* compila aqui — e isso é
 # uma checagem de graça do Art. 8: se um arquivo de domain/ passar a importar
 # Android, este script quebra.
-mapfile -t FONTES < <(find app/src/main/java/com/benenutri/finance/core \
-                            app/src/main/java/com/benenutri/finance/domain \
+mapfile -t FONTES < <(find app/src/main/java/app/financepro/core \
+                            app/src/main/java/app/financepro/domain \
                             -name '*.kt' 2>/dev/null | sort)
-mapfile -t TESTES < <(find app/src/test/java/com/benenutri/finance/core \
-                            app/src/test/java/com/benenutri/finance/domain \
+mapfile -t TESTES < <(find app/src/test/java/app/financepro/core \
+                            app/src/test/java/app/financepro/domain \
                             -name '*.kt' 2>/dev/null | sort)
 
 [ "${#TESTES[@]}" -gt 0 ] || { echo "nenhum teste encontrado"; exit 1; }

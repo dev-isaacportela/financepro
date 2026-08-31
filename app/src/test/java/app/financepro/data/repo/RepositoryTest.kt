@@ -1,0 +1,63 @@
+package app.financepro.data.repo
+
+import app.financepro.data.db.CATEGORIA
+import app.financepro.data.db.CONTA
+import app.financepro.data.db.DbTest
+import app.financepro.data.db.LANCAMENTO
+import app.financepro.data.db.dia
+import app.financepro.domain.model.AccountType
+import app.financepro.domain.usecase.balanceOf
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Test
+import java.time.LocalDate
+
+/**
+ * A fronteira entidade ↔ domínio, que é onde os dois vocabulários podem
+ * divergir sem ninguém notar.
+ *
+ * O teste vai até `balanceOf` de propósito: prova que o que sai do repositório
+ * entra direto no caso de uso, sem adaptador no meio. Se o mapeamento perdesse
+ * `cleared` ou `counterAccountId`, o saldo daria outro número aqui.
+ */
+class RepositoryTest : DbTest() {
+
+    @Test
+    fun `intervalo de datas atravessa a fronteira LocalDate - epochDay`() = runBlocking {
+        val contas = AccountRepository(db.accountDao())
+        val txns = TxnRepository(db.txnDao())
+        val conta = db.accountDao().upsert(CONTA)
+        val naConta = LANCAMENTO.copy(accountId = conta)
+        db.txnDao().upsert(naConta.copy(date = dia(2026, 2, 28), description = "fora"))
+        db.txnDao().upsert(naConta.copy(date = dia(2026, 3, 1), description = "borda"))
+        db.txnDao().upsert(naConta.copy(date = dia(2026, 3, 31), description = "borda"))
+
+        val marco = txns.observeBetween(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)).first()
+
+        assertEquals(listOf("borda", "borda"), marco.map { it.description })
+        assertEquals(LocalDate.of(2026, 3, 31), marco.first().date)
+        assertEquals(conta, contas.byId(conta)?.id)
+    }
+
+    @Test
+    fun `saldo calculado sobre o que o repositorio devolve fecha com a formula`() = runBlocking {
+        val contas = AccountRepository(db.accountDao())
+        val txns = TxnRepository(db.txnDao())
+        val origem = db.accountDao().upsert(CONTA.copy(name = "Corrente", initialBalanceCents = 100_000))
+        val destino = db.accountDao().upsert(CONTA.copy(name = "Poupança", type = AccountType.SAVINGS))
+        val cat = db.categoryDao().upsert(CATEGORIA)
+        db.txnDao().upsert(LANCAMENTO.copy(accountId = origem, categoryId = cat, amountCents = -18_50))
+        db.txnDao().upsert(
+            LANCAMENTO.copy(accountId = origem, counterAccountId = destino, amountCents = -30_000),
+        )
+        db.txnDao().upsert(LANCAMENTO.copy(accountId = origem, amountCents = -7_00, cleared = false))
+
+        val todas = txns.observeBetween(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31)).first()
+
+        // 100.000 − 1.850 − 30.000; o previsto de 700 não entra (REQ-TXN-006).
+        assertEquals(68_150L, balanceOf(contas.byId(origem)!!, todas))
+        // A transferência chega no destino pelo segundo termo da fórmula.
+        assertEquals(30_000L, balanceOf(contas.byId(destino)!!, todas))
+    }
+}

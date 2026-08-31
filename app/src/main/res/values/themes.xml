@@ -3,11 +3,16 @@
   Tema mínimo de plataforma, só para o Android ter o que aplicar antes do
   Compose assumir. O sistema visual de verdade (Slush) é a T-010, em
   core/ui/theme, e não vive em XML.
+
+  O `windowBackground` **precisa** acompanhar o modo noturno: ele é o que
+  aparece atrás de qualquer tela que não pinte o próprio fundo, e um branco
+  fixo com o tema escuro ativo dá texto branco sobre papel branco. Foi
+  exatamente o que aconteceu no onboarding, na S26 (T-013).
 -->
 <resources>
     <style name="Theme.MobileFinance" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:statusBarColor">@android:color/white</item>
+        <item name="android:windowBackground">@color/paper</item>
+        <item name="android:statusBarColor">@color/paper</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>

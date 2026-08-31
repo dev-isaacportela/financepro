@@ -349,8 +349,17 @@ trocando uma linha do `NavHost`.
 **Fase** F0 · **Depende de** T-009, T-011 · **REQ** REQ-UI-005
 
 **Pronto quando**
-- [ ] Uma única tela; app utilizável em menos de 30 segundos após instalar
-- [ ] Cria `CASH` e `CHECKING` com o saldo informado em `initialBalanceCents`
+- [x] Uma única tela, uma pergunta: "Quanto você tem hoje?". Verificado no
+      aparelho — instalar, informar o saldo e tocar Começar, e o app já está
+      utilizável
+- [x] Cria `CASH` e `CHECKING` com o saldo informado em `initialBalanceCents`
+- [x] "Já passou pelo onboarding?" é **pergunta ao banco**, não flag em
+      DataStore: sem conta nenhuma, não há onde lançar, então "sem contas" já é
+      a definição de primeiro uso. Uma flag seria mais um estado para
+      dessincronizar — apagar os dados e não a flag prenderia o usuário numa
+      tela inicial que não funciona
+- [x] É o único pôster completo do app. Sem a fita (diferida), o pôster é
+      `DisplayXl` a 88sp, que em 360dp ocupa quase a largura toda
 
 ### T-013 — Lançamento rápido
 **Fase** F0 · **Depende de** T-009, T-011 · **REQ** REQ-UI-002, REQ-UI-003, REQ-CAT-006
@@ -358,10 +367,37 @@ trocando uma linha do `NavHost`.
 O fluxo mais importante do app (Art. 18).
 
 **Pronto quando**
-- [ ] Despesa registrada em 3 toques a partir do dashboard, cronometrada
-- [ ] Bottom sheet, nunca tela cheia; teclado numérico em foco na abertura
-- [ ] Campos condicionais de REQ-UI-003 aparecem e somem corretamente
-- [ ] Grid ordenado por `useCount`, incrementado ao salvar
+- [x] Despesa registrada em 3 toques a partir da tela inicial — FAB, valor,
+      categoria, salvar —, verificado na S26: saldo de R$ 500,00 vira R$ 490,00
+      depois de uma despesa de R$ 10,00, sem nenhuma navegação de tela cheia
+- [x] Bottom sheet, nunca tela cheia, com o teclado numérico já em foco. Digita-se
+      **centavos**, da direita para a esquerda, como numa maquininha: sem vírgula
+      para posicionar, e sem o erro clássico de digitar "18" e gravar 18 centavos
+- [x] Campos condicionais de REQ-UI-003 aparecem e somem corretamente. A regra
+      vive em `QuickEntryState` como propriedade derivada, não espalhada em `if`
+      pela folha — é o que a torna verificável em JVM por `QuickEntryStateTest`
+- [x] Grid ordenado por `useCount`, incrementado ao salvar, com teste próprio
+- [x] O sinal é aplicado na borda: quem digita 18,50 numa despesa grava −1850
+      (REQ-TXN-002). Pedir o sinal a quem está com o cartão na mão seria mudar a
+      convenção do banco de lugar
+- [x] Parcelamento usa `splitInstallments` da T-026, já testada em 792
+      combinações, e grava as N linhas numa escrita só — meia compra parcelada é
+      dinheiro inventado no extrato. A UI de editar/excluir por escopo é da T-027
+
+**Dois bugs que só o aparelho mostrou**
+
+- **A folha não abria uma segunda vez.** Ela vive fora do `NavHost` de propósito
+  (é sobreposição, não destino), então o `hiltViewModel()` dela é o da Activity e
+  sobrevive ao fechamento com `salvo = true` — e na reabertura o efeito que fecha
+  ao salvar disparava na primeira composição. O sintoma era o botão de lançar
+  simplesmente parar de responder. `concluido()` consome o sinal e devolve o
+  formulário limpo; `QuickEntryViewModelTest` guarda a regressão.
+- **Texto branco sobre papel branco no onboarding.** O `windowBackground` do tema
+  de plataforma estava fixo em branco enquanto o tema escuro estava ativo, e a
+  tela não pintava fundo próprio. O pior é que o layout estava correto: o
+  `uiautomator dump` mostrava tudo no lugar enquanto a tela parecia vazia.
+  Corrigido nos dois lados — `values-night/themes.xml` e a tela pintando
+  `Slush.paper`, porque nenhuma tela deve depender do fundo da janela.
 
 ### T-014 — Lista de transações
 **Fase** F0 · **Depende de** T-013 · **REQ** REQ-TXN-010, REQ-TXN-011, REQ-TXN-012
@@ -387,6 +423,11 @@ CRUD, lista com saldo, extrato com saldo corrente acumulado linha a linha.
 **Fase** F0 · **Depende de** T-014, T-015 · **REQ** REQ-UI-004, REQ-UI-006
 
 Blocos de cartão e orçamento entram vazios na F0 e são preenchidos na F1.
+
+Existe hoje um `HomeScreen` **mínimo**, criado pela T-013 só para o fluxo de três
+toques ter de onde partir: saldo total e o botão de lançar. Os seis blocos em
+ordem de REQ-UI-004 são desta task. O saldo já vem de `totalBalance`, o caso de
+uso puro da T-008 — não de um `SUM` em `@Query`.
 
 ### T-018 — Segurança do app ⇉
 **Fase** F0 · **Depende de** T-011 · **REQ** REQ-SEC-003, REQ-SEC-004, REQ-SEC-005, REQ-SEC-006

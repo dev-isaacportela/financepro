@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Os dois papéis de design.md §4, em XML, só para o tema de plataforma ter o que
+  pintar antes do Compose assumir. A fonte de verdade continua sendo
+  core/ui/theme/Color.kt; estes dois existem porque `windowBackground` não é
+  Compose e não enxerga os tokens.
+-->
+<resources>
+    <color name="paper">#FFFFFF</color>
+    <color name="paper_dark">#111111</color>
+</resources>

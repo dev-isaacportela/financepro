@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.benenutri.finance"
+    namespace = "app.financepro"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.benenutri.finance"
+        applicationId = "app.financepro"
         minSdk = 26          // java.time nativo, sem desugaring (arquitetura.md §1)
         targetSdk = 36
         versionCode = 1
@@ -83,6 +83,9 @@ dependencies {
     implementation(libs.sqlcipher.android)
 
     implementation(libs.hilt.android)
+    implementation(libs.hilt.navigation.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)

@@ -23,7 +23,7 @@ app não tem nenhum dos dois problemas. Quando o build incremental passar de ~1m
 o primeiro corte natural é `:core:database`.
 
 ```
-com.benenutri.finance/
+app.financepro/
   core/
     money/          Money.kt (formatação, parse), extensões de Long
     time/           MonthRange.kt, clamps de dia do mês
