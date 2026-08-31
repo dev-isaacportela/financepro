@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.financepro.core.ui.component.Chips
@@ -35,6 +36,7 @@ import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.StickerNames
 import app.financepro.core.ui.theme.Stickers
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
@@ -155,7 +157,15 @@ private fun Cores(selecionada: Int, onClick: (Int) -> Unit) {
                         shape = SlushShapes.extraSmall,
                     )
                     .clickable { onClick(argb) }
-                    .semantics { contentDescription = "Cor" },
+                    // Nome da cor, e não "Cor": seis quadrados com a mesma
+                    // descrição deixam quem usa leitor escolhendo às cegas
+                    // (REQ-A11Y-001). E `selected`, porque a seleção aqui é
+                    // espessura de contorno — que o leitor não enxerga
+                    // (REQ-A11Y-003).
+                    .semantics {
+                        contentDescription = StickerNames[cor] ?: "Cor"
+                        selected = argb == selecionada
+                    },
             )
         }
     }

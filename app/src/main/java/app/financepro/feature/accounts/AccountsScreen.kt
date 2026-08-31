@@ -1,6 +1,7 @@
 package app.financepro.feature.accounts
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,7 @@ import app.financepro.core.ui.component.MoneyText
 import app.financepro.core.ui.component.SlushCard
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.Caption
+import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
 import app.financepro.core.ui.theme.Subheading
@@ -124,13 +126,20 @@ private fun Linha(conta: Account, saldoCents: Long, onClick: () -> Unit, onArqui
     }
 }
 
-/** Ponto de cor, não bloco: a lista é densa e a cor aqui é identidade, não estado. */
+/**
+ * Ponto de cor, não bloco: a lista é densa e a cor aqui é identidade, não estado.
+ *
+ * O contorno não é decoração, é o mesmo motivo de design.md §6.3: um ponto
+ * Sunburst sobre papel branco dá 1.40:1 e desaparece — leria como falha de
+ * renderização, não como escolha.
+ */
 @Composable
 private fun PontoDeCor(colorArgb: Int) = Box(
     Modifier
         .size(16.dp)
         .clip(SlushShapes.extraSmall)
-        .background(Color(colorArgb)),
+        .background(Color(colorArgb))
+        .border(OutlineWidth, Slush.ink, SlushShapes.extraSmall),
 )
 
 private fun rotulo(conta: Account): String {

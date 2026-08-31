@@ -1176,7 +1176,7 @@ escuro.
 
 ### REQ-A11Y-006 — Leitura de valores
 
-`F0` · `MUST` · Teste: `manual`
+`F0` · `MUST` · Teste: `MoneySpokenTest`
 
 O SISTEMA DEVE expor valores monetários ao leitor de tela por extenso — "menos
 dezoito reais e cinquenta centavos" — e não como dígitos crus.

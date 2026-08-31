@@ -1,5 +1,6 @@
 package app.financepro.core.ui.theme
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import app.financepro.core.testing.Req
 import app.financepro.data.db.CATEGORIAS_PADRAO
@@ -20,7 +21,7 @@ import java.io.File
  * Comentários saem antes da varredura. Sem isso o próprio KDoc que explica a
  * regra reprovaria o build, que foi como o `Money.kt` derrubou o CI uma vez.
  */
-@Req("REQ-DS-001", "REQ-DS-004")
+@Req("REQ-DS-001", "REQ-DS-004", "REQ-A11Y-001")
 class TokenLintTest {
 
     private val fontes = srcMain().walkTopDown().filter { it.extension == "kt" }.toList()
@@ -73,6 +74,14 @@ class TokenLintTest {
         val doSeed = CATEGORIAS_PADRAO.map { it.corArgb }.toSet()
 
         assertEquals(emptySet<Int>(), doSeed - doTema)
+    }
+
+    @Test
+    fun `toda cor de sticker tem nome falado`() {
+        // O mapa e a lista são duas declarações, e a segunda cor nova entraria
+        // só numa delas. Sem esta linha, o seletor de cores volta a anunciar
+        // "Cor" para ela e ninguém percebe (REQ-A11Y-001).
+        assertEquals(emptyList<Color>(), Stickers.filterNot { it in StickerNames })
     }
 
     private fun semComentarios(arquivo: File): String = arquivo.readText()

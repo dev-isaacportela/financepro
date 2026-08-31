@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -308,7 +309,12 @@ private fun Aba(
 
     Surface(
         onClick = onClick,
-        modifier = modifier.semantics { selected = selecionada },
+        // 14dp de padding e um Label de 13sp dão ~46dp de alvo — dois a menos
+        // que REQ-A11Y-002 exige, e design.md §6.1 já mandava ampliar por aqui.
+        // A acessibilidade vence o token: o desenho não muda, o alvo cresce.
+        modifier = modifier
+            .minimumInteractiveComponentSize()
+            .semantics { selected = selecionada },
         shape = Pill,
         color = fundo,
         contentColor = tinta,

@@ -1,6 +1,7 @@
 package app.financepro.feature.categories
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.SlushCard
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.Caption
+import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
 import app.financepro.core.ui.theme.Subheading
@@ -89,11 +91,14 @@ private fun Linha(categoria: Category, onClick: () -> Unit, onExcluir: () -> Uni
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // Contorno pelo mesmo motivo de design.md §6.3: sem ele um ponto
+            // Sunburst sobre papel branco dá 1.40:1 e some.
             Box(
                 Modifier
                     .size(16.dp)
                     .clip(SlushShapes.extraSmall)
-                    .background(Color(categoria.colorArgb)),
+                    .background(Color(categoria.colorArgb))
+                    .border(OutlineWidth, Slush.ink, SlushShapes.extraSmall),
             )
             Column(Modifier.weight(1f)) {
                 Text(categoria.name, style = Body, color = Slush.ink, maxLines = 1)

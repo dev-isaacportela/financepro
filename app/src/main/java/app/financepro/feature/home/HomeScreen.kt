@@ -80,6 +80,7 @@ fun HomeScreen(
 
         SlushFab(
             onClick = onNovoLancamento,
+            rotulo = "Novo lançamento",
             modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp),
         ) {
             // Sem biblioteca de ícones: um "+" em Label diz a mesma coisa e não

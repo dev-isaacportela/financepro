@@ -46,3 +46,25 @@ val LavenderDark = Color(0xFF1E1729)
 
 /** As seis, para quem precisa percorrer o conjunto — `ContrastTest`, por exemplo. */
 val Stickers = listOf(ElectricBlue, MintPop, Lavender, Ember, Sunburst, VoltageViolet)
+
+/**
+ * Como cada cor se chama em voz alta. REQ-A11Y-001
+ *
+ * Um seletor de cores é o caso em que a cor **é** o conteúdo, e seis quadrados
+ * anunciados como "Cor" deixam quem usa leitor de tela escolhendo às cegas
+ * entre seis coisas idênticas.
+ *
+ * Nome de uso, não do token: "Azul", e não "Electric Blue". Quem ouve está
+ * escolhendo a cor da conta, não lendo o guia de marca.
+ *
+ * Mapa e não lista paralela — índices desalinhados renomeariam cores em
+ * silêncio. `TokenLintTest` prova que as seis estão aqui.
+ */
+val StickerNames = mapOf(
+    ElectricBlue to "Azul",
+    MintPop to "Verde",
+    Lavender to "Lilás",
+    Ember to "Laranja",
+    Sunburst to "Amarelo",
+    VoltageViolet to "Roxo",
+)

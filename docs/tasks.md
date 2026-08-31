@@ -641,10 +641,48 @@ transitiva, sem ninguém declarar.
 
 Passagem por todas as telas da F0 (Art. 17 — é auditoria da fase, não adiamento).
 
+Auditoria, mas não só: REQ-A11Y-006 é **código**, e a passada encontrou mais três
+defeitos reais no que já estava entregue.
+
 **Pronto quando**
-- [ ] TalkBack lê valores por extenso
-- [ ] Fonte a 200% sem truncar nem sobrepor
-- [ ] Nenhuma informação transmitida só por cor
+- [x] TalkBack lê valores por extenso — `spokenBRL` em `core/money`, ligado na
+      `contentDescription` do `MoneyText`. Uma correção, e todas as ~30 chamadas
+      de valor do app passam a falar: é para isso que o KDoc do componente cobra
+      que todo dinheiro passe por lá
+- [x] Soletração escrita à mão porque não há de onde tirá-la: o
+      `RuleBasedNumberFormat` do ICU faz exatamente isto e o Android **não o
+      expõe** — `android.icu.text` publica `NumberFormat` sem o estilo
+      `SPELLOUT`. A alternativa era arrastar o `com.ibm.icu:icu4j` inteiro por
+      sessenta linhas. Tentado e descartado com o compilador na mão, não por
+      suposição
+- [x] `MoneySpokenTest` em JVM pura, 9 casos, incluindo os dois que só
+      apareceram rodando: `R$ 0,01` dizia "zero reais e um centavo", e zero pede
+      singular ("zero real"). REQ-A11Y-006 deixou de ser `manual` na spec no
+      mesmo commit (Art. 3)
+- [x] **Alvo de toque das abas** — 14dp de padding com `Label` de 13sp dava
+      ~46dp, dois a menos que REQ-A11Y-002. O design.md §6.1 já mandava ampliar
+      por `minimumInteractiveComponentSize()`; o código nunca o aplicou. É a
+      classe de defeito que só uma passada dedicada encontra, porque a tela
+      parece certa
+- [x] **Seletor de cores** anunciava "Cor" seis vezes, e a seleção era só
+      espessura de contorno — invisível para o leitor. Agora cada cor diz o nome
+      (`StickerNames`) e expõe `selected` (REQ-A11Y-001, REQ-A11Y-003).
+      `TokenLintTest` prova que nenhuma cor do tema fica sem nome, senão a
+      próxima entraria só numa das duas declarações
+- [x] **Pontos de cor** em Contas e Categorias ganharam contorno: sem ele um
+      ponto Sunburst sobre papel branco dá 1.40:1 e some. A razão já estava
+      escrita em design.md §6.3 para a linha de transação e não tinha sido
+      aplicada nas outras duas telas
+- [x] FAB pede `rotulo` obrigatório. O conteúdo dele é um `+`, e "sinal de
+      adição" não diz o que o botão faz. Parâmetro e não `Modifier` opcional,
+      para o próximo chamador não conseguir esquecer
+- [ ] Conferido no aparelho com TalkBack ligado, e com a fonte a 200% em todas
+      as telas da F0 — é o que fecha as três caixas originais de verdade
+
+`maxLines = 1` fica onde está — descrição de transação, nome de conta e de
+categoria. É o desenho de design.md §6.3, e o que REQ-A11Y-004 proíbe truncar é
+**valor**, que não tem `maxLines` em lugar nenhum. O nome completo chega ao
+leitor pela `contentDescription` do sticker.
 
 ### T-021 — Rastreabilidade no CI ⇉
 **Fase** F0 · **Depende de** T-001 · **REQ** —

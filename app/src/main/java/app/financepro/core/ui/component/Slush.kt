@@ -18,9 +18,12 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import app.financepro.core.money.formatBRL
+import app.financepro.core.money.spokenBRL
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.MoneyBody
 import app.financepro.core.ui.theme.OutlineWidth
@@ -128,15 +131,24 @@ fun SlushSurface(
     }
 }
 
+/**
+ * [rotulo] é obrigatório de propósito. O conteúdo de um FAB é um glifo — o
+ * nosso é um `+` —, e "sinal de adição" não diz a ninguém o que o botão faz
+ * (REQ-A11Y-001). Sendo parâmetro e não `Modifier` opcional, não há como
+ * esquecê-lo no próximo chamador.
+ */
 @Composable
 fun SlushFab(
     onClick: () -> Unit,
+    rotulo: String,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     FloatingActionButton(
         onClick = onClick,
-        modifier = modifier.minimumInteractiveComponentSize(),
+        modifier = modifier
+            .minimumInteractiveComponentSize()
+            .semantics { contentDescription = rotulo },
         shape = Pill,
         containerColor = Slush.ink,
         contentColor = Slush.paper,
@@ -160,6 +172,14 @@ fun SlushFab(
  *
  * A cor é sempre `ink`. Receita e despesa se distinguem pelo **sinal** e pelo
  * rótulo da categoria, nunca por verde e vermelho (REQ-A11Y-003).
+ *
+ * E é aqui que REQ-A11Y-006 se resolve de uma vez: a `contentDescription` traz
+ * o valor por extenso, de [spokenBRL]. O texto na tela continua `−R$ 18,50`,
+ * que é o que o olho quer; o leitor de tela ouve "menos dezoito reais e
+ * cinquenta centavos" em vez de "traço erre cifrão dezoito vírgula cinquenta".
+ *
+ * Corrigir isto no componente e não em cada tela é a razão de o KDoc acima
+ * cobrar que todo valor passe por aqui — trinta chamadas, uma correção.
  */
 @Composable
 fun MoneyText(
@@ -167,9 +187,10 @@ fun MoneyText(
     modifier: Modifier = Modifier,
     style: TextStyle = MoneyBody,
 ) {
+    val falado = spokenBRL(cents)
     Text(
         text = formatBRL(cents),
-        modifier = modifier,
+        modifier = modifier.semantics { contentDescription = falado },
         color = Slush.ink,
         style = style,
     )
