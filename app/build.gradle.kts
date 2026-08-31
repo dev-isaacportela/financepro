@@ -40,6 +40,9 @@ android {
     testOptions {
         unitTests {
             isReturnDefaultValues = true
+            // Robolectric precisa do AndroidManifest mesclado e dos recursos
+            // empacotados para levantar a Application nos testes de DAO (T-004).
+            isIncludeAndroidResources = true
         }
     }
 }
@@ -70,10 +73,10 @@ dependencies {
     implementation(libs.compose.material3)
     debugImplementation(libs.compose.ui.tooling)
 
-    // Entidades e DAOs entram na T-004; a configuração acima já fica válida.
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
 }

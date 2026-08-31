@@ -97,10 +97,33 @@ tratar só do mapeamento para o banco. É o que permite validar saldo e validaç
 de transação sem emulador, que é justamente o objetivo do Art. 8.
 
 **Pronto quando**
-- [ ] `PRAGMA foreign_keys = ON` no `onOpen`, com teste que prova que `RESTRICT` dispara
-- [ ] Todos os índices da §4.1 criados
-- [ ] Schema v1 exportado e commitado em `app/schemas/`
-- [ ] `fallbackToDestructiveMigration` não existe no código — verificado por detekt
+- [x] `PRAGMA foreign_keys = ON` no `onOpen`, com teste que prova que `RESTRICT`
+      dispara. O callback é `AppDatabase.ForeignKeysOn`, e o teste abre o banco
+      pelo mesmo objeto que a produção usa — se ele morasse só no módulo Hilt, o
+      teste provaria `RESTRICT` num banco que ninguém abre desse jeito
+- [x] Todos os índices da §4.1 criados, mais os das colunas filhas de FK que o
+      Room exige. O único parcial de `dedupeKey` virou total: `@Index` não tem
+      `WHERE`, e no SQLite dois `NULL` não colidem em índice único — mesmo efeito
+- [x] Schema v1 exportado e commitado em `app/schemas/`
+- [x] `fallbackToDestructiveMigration` não existe no código — verificado por
+      `tools/trace.py`, não por detekt: a guarda do Art. 12 já mora lá junto com
+      a do Art. 6, e duplicá-la em duas ferramentas só cria uma para desatualizar
+- [x] `AccountDaoTest`, `CategoryDaoTest` e `TxnDaoTest` com `@Req` — 18 testes
+      em JVM via Robolectric, sem emulador. Cobrem CASCADE, RESTRICT, `SET NULL`
+      e o índice único de dedupe
+- [x] Hierarquia de um nível (REQ-CAT-002) não é expressável em DDL: a FK garante
+      que o pai existe, não que ele seja raiz. Fica em `upsertChecked`, dentro de
+      `@Transaction`, porque entre a checagem e o `INSERT` o pai pode virar filho
+
+**Gotchas de ambiente (Windows)** — nenhum deles é do projeto, e por isso a
+correção mora em `~/.gradle/init.gradle.kts`, não no repositório:
+
+- o worker de teste é forkado com args próprios e **não** herda
+  `org.gradle.jvmargs`, então o contorno de AF_UNIX da T-001 precisa ser
+  repassado a ele;
+- o Robolectric monta o caminho do `android-all-instrumented.jar` a partir de uma
+  URL sem decodificar, e um espaço no nome do usuário vira `%20` — a native
+  runtime falha com `NoSuchFileException`. `user.home` no nome 8.3 resolve.
 
 ### T-005 — Criptografia do banco
 **Fase** F0 · **Depende de** T-004 · **REQ** REQ-SEC-001, REQ-SEC-002

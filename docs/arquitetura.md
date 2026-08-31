@@ -173,11 +173,34 @@ CREATE INDEX idx_txn_category_date ON txn(categoryId, date);
 CREATE INDEX idx_txn_installment   ON txn(installmentGroupId);
 CREATE INDEX idx_txn_cleared_date  ON txn(cleared, date);
 CREATE UNIQUE INDEX idx_txn_dedupe ON txn(accountId, dedupeKey) WHERE dedupeKey IS NOT NULL;
+
+-- Colunas filhas de FK. Cobrem o DELETE do lado pai, que sem índice varre a
+-- tabela inteira, e calam o aviso do Room que apareceria em todo build.
+CREATE INDEX idx_account_payment      ON account(paymentAccountId);
+CREATE INDEX idx_category_parent      ON category(parentId);
+CREATE INDEX idx_txn_recurring        ON txn(recurringRuleId);
+CREATE INDEX idx_txn_batch            ON txn(importBatchId);
+CREATE INDEX idx_rule_account         ON recurring_rule(accountId);
+CREATE INDEX idx_rule_counter         ON recurring_rule(counterAccountId);
+CREATE INDEX idx_rule_category        ON recurring_rule(categoryId);
+CREATE INDEX idx_batch_account        ON import_batch(accountId);
+CREATE INDEX idx_payee_rule_category  ON payee_rule(categoryId);
 ```
 
 O índice único parcial em `dedupeKey` faz o banco recusar duplicata de importação
 por conta. É a rede de segurança embaixo da checagem em código — se o dedupe da
 aplicação falhar, o `INSERT` falha, em vez de sujar os dados silenciosamente.
+
+No código ele é **total**, sem o `WHERE`: o `@Index` do Room não expressa índice
+parcial, e no SQLite dois `NULL` nunca colidem dentro de um índice único — o
+efeito é o mesmo. A alternativa seria criar o índice por `execSQL` num callback,
+fora do schema exportado, e aí o Room reprovaria a validação de abertura por
+encontrar um índice que ele não declarou.
+
+`@Upsert` **não** é o caminho de escrita da importação. Em violação de índice
+único ele cai para um `UPDATE` pela chave primária, que numa linha nova (`id = 0`)
+não casa com nada e falha em silêncio — a duplicata sumiria sem erro. O import
+usa `@Insert`, que aborta.
 
 `ON DELETE RESTRICT` em `categoryId` é o que implementa a regra "não dá para
 excluir categoria com transações" no nível do banco, sem código de verificação.

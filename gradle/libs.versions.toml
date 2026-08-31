@@ -36,6 +36,9 @@ vico = "3.3.1"                 # T-033
 
 junit = "4.13.2"
 turbine = "1.2.0"
+# Room precisa de SQLite e de um Context. O Robolectric roda os dois na JVM,
+# em segundos; a alternativa e emulador no CI, minutos por rodada (T-004).
+robolectric = "4.16"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -69,6 +72,7 @@ vico-compose-m3 = { module = "com.patrykandpatrick.vico:compose-m3", version.ref
 
 junit = { module = "junit:junit", version.ref = "junit" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
