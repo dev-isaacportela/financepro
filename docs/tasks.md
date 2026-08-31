@@ -142,8 +142,20 @@ guardada no Android Keystore.
 Categorias padrão e ~40 regras de estabelecimento.
 
 **Pronto quando**
-- [ ] `SeedTest` verifica as 10 categorias e o volume mínimo de `payee_rule`
-- [ ] Seed roda uma única vez, na criação do banco
+- [x] `SeedTest` verifica as 10 categorias e o volume mínimo de `payee_rule` —
+      56 regras, todas apontando para categoria existente
+- [x] Seed roda uma única vez, na criação do banco. É `onCreate` do Room, não
+      flag em DataStore: o ciclo de vida do banco já é a garantia, e uma flag
+      separada é mais um estado para dessincronizar
+- [x] O teste abre banco em **arquivo**, não em memória — é a única forma de
+      provar que reabrir não semeia de novo
+- [x] Chaves de `payee_rule` já na forma que `normalize` (T-036) produz:
+      maiúsculas, sem acento, sem sequência de 4+ dígitos. Chave com acento
+      nunca casaria, e o erro só apareceria na primeira importação da F2
+
+O casamento dessas chaves fica na T-040, e precisa ancorar em limite de palavra:
+elas são **palavra-chave**, não descrição inteira — o extrato traz
+`UBER *TRIP HELP.UBER.COM`, e `TIM` dentro de `OTIMO` é o caso que prova.
 
 ### T-007 — Validação de transação
 **Fase** F0 · **Depende de** T-002 · **REQ** REQ-CORE-002, REQ-ACC-006, REQ-CAT-003, REQ-TXN-004, REQ-TXN-005, REQ-TXN-013

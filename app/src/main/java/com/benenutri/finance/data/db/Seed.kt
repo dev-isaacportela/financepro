@@ -1,0 +1,156 @@
+package com.benenutri.finance.data.db
+
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.benenutri.finance.domain.model.CategoryKind
+
+/**
+ * Semente do banco. REQ-CAT-004 · REQ-ACT-003
+ *
+ * Roda em `onCreate`, que o Room chama **uma vez**, na criação do arquivo. Não
+ * há flag de "já semeei" em DataStore para desincronizar, nem `INSERT OR
+ * IGNORE` a cada abertura: o próprio ciclo de vida do banco é a garantia.
+ *
+ * SQL cru porque em `onCreate` os DAOs ainda não existem — a instância do Room
+ * está sendo construída. Os valores vão como parâmetros ligados, nunca
+ * concatenados: nome de categoria com apóstrofo quebraria a query montada à mão.
+ */
+val SeedCallback = object : RoomDatabase.Callback() {
+    override fun onCreate(db: SupportSQLiteDatabase) {
+        CATEGORIAS_PADRAO.forEach { c ->
+            db.execSQL(
+                "INSERT INTO category (id, name, kind, parentId, iconKey, colorArgb, archived, useCount) " +
+                    "VALUES (?, ?, ?, NULL, ?, ?, 0, 0)",
+                arrayOf(c.id, c.nome, c.kind.name, c.iconKey, c.corArgb),
+            )
+        }
+        REGRAS_PADRAO.forEach { (chave, categoriaId) ->
+            db.execSQL(
+                "INSERT INTO payee_rule (normalizedKey, categoryId, hitCount) VALUES (?, ?, 1)",
+                arrayOf(chave, categoriaId),
+            )
+        }
+    }
+}
+
+/**
+ * As cores são os stickers de [design.md](../../../../../../../../docs/design.md)
+ * §1, como Int ARGB com sinal. Ficam aqui, e não em `core/ui/theme/`, porque
+ * `data/` não importa nada de Compose — o tema declara os mesmos hex do lado
+ * dele (T-010). São seis stickers para dez categorias; a repetição é do design.
+ */
+private const val ELECTRIC_BLUE = 0xFF4DA2FF.toInt()
+private const val MINT_POP = 0xFF55DB9C.toInt()
+private const val LAVENDER = 0xFFE9CCFF.toInt()
+private const val EMBER = 0xFFFB4903.toInt()
+private const val SUNBURST = 0xFFFFD731.toInt()
+private const val VOLTAGE_VIOLET = 0xFF5C4ADE.toInt()
+
+internal data class CategoriaPadrao(
+    val id: Long,
+    val nome: String,
+    val kind: CategoryKind,
+    val iconKey: String,
+    val corArgb: Int,
+)
+
+/**
+ * REQ-CAT-004 — as dez da spec, nesta ordem.
+ *
+ * O `id` é explícito porque [REGRAS_PADRAO] aponta para ele. Deixar o
+ * AUTOINCREMENT decidir daria os mesmos números hoje e um bug silencioso no dia
+ * em que alguém inserisse uma categoria antes destas.
+ */
+internal val CATEGORIAS_PADRAO = listOf(
+    CategoriaPadrao(1, "Alimentação", CategoryKind.EXPENSE, "utensils", EMBER),
+    CategoriaPadrao(2, "Transporte", CategoryKind.EXPENSE, "car", ELECTRIC_BLUE),
+    CategoriaPadrao(3, "Moradia", CategoryKind.EXPENSE, "home", SUNBURST),
+    CategoriaPadrao(4, "Saúde", CategoryKind.EXPENSE, "cross", MINT_POP),
+    CategoriaPadrao(5, "Lazer", CategoryKind.EXPENSE, "confetti", LAVENDER),
+    CategoriaPadrao(6, "Educação", CategoryKind.EXPENSE, "book", VOLTAGE_VIOLET),
+    CategoriaPadrao(7, "Compras", CategoryKind.EXPENSE, "bag", EMBER),
+    CategoriaPadrao(8, "Assinaturas", CategoryKind.EXPENSE, "repeat", ELECTRIC_BLUE),
+    CategoriaPadrao(9, "Salário", CategoryKind.INCOME, "cash", MINT_POP),
+    CategoriaPadrao(10, "Outros", CategoryKind.EXPENSE, "dots", LAVENDER),
+)
+
+/**
+ * REQ-ACT-003 — para a primeira importação não chegar vazia.
+ *
+ * As chaves já estão na forma que `normalize` (T-036) produz: maiúsculas, sem
+ * acento, sem sequência de 4+ dígitos, espaço simples. Uma chave com acento
+ * nunca casaria com nada, e o erro só apareceria na F2.
+ *
+ * `Salário` e `Outros` não aparecem: receita não vem de estabelecimento, e
+ * "Outros" é o destino de quem não casou com regra nenhuma.
+ *
+ * Estas chaves são **palavra-chave**, não descrição inteira: um extrato traz
+ * `UBER *TRIP HELP.UBER.COM`, nunca `UBER`. Quem casa é a T-040, e ela precisa
+ * ancorar em limite de palavra — `TIM` dentro de `OTIMO` é o caso que prova.
+ */
+internal val REGRAS_PADRAO: List<Pair<String, Long>> = listOf(
+    // Alimentação
+    "IFOOD" to 1L,
+    "RAPPI" to 1L,
+    "ZE DELIVERY" to 1L,
+    "MCDONALDS" to 1L,
+    "BURGER KING" to 1L,
+    "SUBWAY" to 1L,
+    "STARBUCKS" to 1L,
+    "PADARIA" to 1L,
+    "SUPERMERCADO" to 1L,
+    "CARREFOUR" to 1L,
+    "PAO DE ACUCAR" to 1L,
+    "ASSAI" to 1L,
+    "ATACADAO" to 1L,
+    // Transporte
+    "UBER" to 2L,
+    "99APP" to 2L,
+    "CABIFY" to 2L,
+    "IPIRANGA" to 2L,
+    "SHELL" to 2L,
+    "PETROBRAS" to 2L,
+    "ESTACIONAMENTO" to 2L,
+    "SEM PARAR" to 2L,
+    "CONECTCAR" to 2L,
+    // Moradia
+    "ENEL" to 3L,
+    "LIGHT SERVICOS" to 3L,
+    "CEMIG" to 3L,
+    "SABESP" to 3L,
+    "COMGAS" to 3L,
+    "VIVO" to 3L,
+    "CLARO" to 3L,
+    "TIM" to 3L,
+    // Saúde
+    "DROGASIL" to 4L,
+    "DROGARIA" to 4L,
+    "RAIA" to 4L,
+    "PACHECO" to 4L,
+    "UNIMED" to 4L,
+    "HAPVIDA" to 4L,
+    // Lazer
+    "CINEMARK" to 5L,
+    "INGRESSO COM" to 5L,
+    "STEAMGAMES" to 5L,
+    // Educação
+    "UDEMY" to 6L,
+    "ALURA" to 6L,
+    "COURSERA" to 6L,
+    // Compras
+    "AMAZON" to 7L,
+    "MERCADOLIVRE" to 7L,
+    "MAGAZINE LUIZA" to 7L,
+    "AMERICANAS" to 7L,
+    "SHOPEE" to 7L,
+    "ALIEXPRESS" to 7L,
+    // Assinaturas
+    "NETFLIX" to 8L,
+    "SPOTIFY" to 8L,
+    "DISNEY PLUS" to 8L,
+    "HBO MAX" to 8L,
+    "PRIME VIDEO" to 8L,
+    "YOUTUBEPREMIUM" to 8L,
+    "APPLE COM" to 8L,
+    "GOOGLE" to 8L,
+)
