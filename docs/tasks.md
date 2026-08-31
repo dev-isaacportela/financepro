@@ -465,11 +465,11 @@ captura. Título em linha própria, que é também o que sobrevive à fonte a 20
 
 **Fora de escopo, e por quê**
 
-**Editar transação não entra, e não tem dono.** A DoD desta task não pede, mas
-REQ-TXN-001 exige "criar, editar, excluir e listar" — e nenhuma task da F0 cobre
-a edição. A T-027 é dona do escopo de parcela, não da edição simples. Inventar
-uma folha de edição aqui seria trabalho não pedido (Art. 1); o buraco fica
-registrado para virar task antes de a F0 fechar.
+**Editar transação não entra aqui.** A DoD desta task não pede, mas REQ-TXN-001
+exige "criar, editar, excluir e listar" — e nenhuma task da F0 cobria a edição.
+A T-027 é dona do escopo de parcela, não da edição simples. Inventar uma folha
+de edição aqui seria trabalho não pedido (Art. 1); o buraco virou a **T-050**,
+onde tem dono e DoD.
 
 **Dívida deixada**
 
@@ -706,6 +706,39 @@ leitor pela `contentDescription` do sticker.
       espera um `MigrationTest` que só faz sentido quando existir um schema v2.
       O segundo erro era `REQ-CAT-005`, e a T-016 o fechou — esta linha ficou
       desatualizada entre os dois commits, que é o que o Art. 3 não quer
+
+### T-050 — Editar transação
+**Fase** F0 · **Depende de** T-013, T-014 · **REQ** REQ-TXN-001, REQ-TXN-003, REQ-TXN-005
+
+REQ-TXN-001 exige "criar, editar, excluir e listar". A F0 entregou três: a T-013
+cria, a T-014 lista e exclui. **Editar não tinha dono** — a T-014 registrou o
+buraco em vez de tapá-lo por conta própria (Art. 1), e esta task é o dono que
+faltava. A F0 não fecha sem ela: é um `MUST` pela metade.
+
+Número alto para uma task de F0 de propósito. Os IDs são identificadores, não
+ordem, e renumerar a F0 inteira quebraria a referência de todo commit já feito.
+
+Reabre a `QuickEntrySheet` com a transação carregada, em vez de uma segunda
+folha: os campos são os mesmos, e duas folhas divergiriam no primeiro campo
+novo. `validateTxn` e `sanitize` da T-007 já valem para os dois caminhos.
+
+Fora do escopo: escolher entre "esta parcela" e "todas as parcelas" é da T-027,
+que é dona do escopo de parcela. Aqui, transação parcelada abre para leitura com
+o aviso de que a edição de parcela chega na F1 — melhor que editar uma parcela e
+deixar as outras onze inconsistentes.
+
+**Pronto quando**
+- [ ] Toque na linha da lista abre a folha preenchida, e salvar **atualiza** a
+      transação em vez de criar outra — com teste, porque um `insert` no lugar
+      de um `update` duplica dinheiro na tela e é invisível na revisão
+- [ ] Editar não perde o que o domínio não carrega: `notes`, `dedupeKey`,
+      `importBatchId`, `recurringRuleId` e `createdAt` sobrevivem ao ciclo. É o
+      mesmo cuidado que o desfazer da T-014 já tomou guardando a entidade, e
+      pela mesma razão — uma `dedupeKey` perdida faz a importação da F2 recriar
+      a transação como nova
+- [ ] `updatedAt` muda, `createdAt` não
+- [ ] Transação com `installmentGroupId` abre somente leitura, com o motivo na
+      tela (T-027 destrava)
 
 ---
 
