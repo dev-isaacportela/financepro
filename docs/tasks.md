@@ -33,11 +33,19 @@ Projeto Gradle, `libs.versions.toml`, `minSdk 26`, JVM 17, Compose, Hilt, Room,
 DataStore, detekt.
 
 **Pronto quando**
-- [ ] Repositório git inicializado, com `.gitignore` de Android — sem ele o Art. 2
-      (commit cita `REQ-*`) não tem onde ser aplicado, e nada acima está versionado
-- [ ] `./gradlew assembleDebug` e `./gradlew test` passam num app vazio
-- [ ] Version catalog é a única fonte de versões — nenhuma versão literal em `build.gradle.kts`
-- [ ] `room.schemaLocation` aponta para `app/schemas/`
+- [x] Repositório git inicializado, com `.gitignore` e `.gitattributes` — sem ele o
+      Art. 2 (commit cita `REQ-*`) não tem onde ser aplicado
+- [ ] `./gradlew assembleDebug` e `./gradlew test` passam num app vazio —
+      **bloqueado no ambiente, não no projeto:** `Selector.open()` do JDK falha
+      nesta máquina (`Unable to establish loopback connection`), no JBR 21 e no
+      JDK 24, enquanto `Pipe` e `SocketChannel` funcionam. É o Winsock do Windows
+      com um LSP interferindo — típico de Docker Desktop, VPN ou antivírus.
+      Correção do lado do usuário: `netsh winsock reset` como administrador e
+      reiniciar. Até lá, quem valida é o job `build` do CI.
+- [x] Version catalog é a única fonte de versões — nenhuma versão literal em `build.gradle.kts`
+- [x] `room.schemaLocation` aponta para `app/schemas/`
+- [x] `.gitattributes` força LF em `gradlew` — sem isso o CI Linux falha com
+      "bad interpreter", erro que não parece ter relação com fim de linha
 
 ### T-002 — Núcleo de dinheiro ⇉
 **Fase** F0 · **Depende de** T-001 · **REQ** REQ-CORE-001, REQ-CORE-004, REQ-CORE-005, REQ-IMP-004
@@ -221,8 +229,13 @@ Passagem por todas as telas da F0 (Art. 17 — é auditoria da fase, não adiame
 `tools/trace.py` no pipeline, e anotação `@Req` disponível para os testes.
 
 **Pronto quando**
-- [ ] CI falha se um `MUST` da fase entregue estiver sem task ou sem teste
-- [ ] Roda em segundos, sem dependência externa (Art. 4)
+- [x] Anotação `@Req` escrita em `core/testing/Req.kt`, `@Retention(SOURCE)`
+- [x] Workflow em `.github/workflows/ci.yml`: rastreabilidade roda **antes** do
+      build e sem Gradle — se a spec quebrou, não vale compilar
+- [x] Roda em segundos, sem dependência externa (Art. 4)
+- [ ] Workflow exercido de verdade — só na primeira execução em um remoto
+- [ ] Ao fechar a F0, trocar `trace.py` por `trace.py --phase F0` no workflow.
+      Hoje `--phase F0` falha com 35 erros, que é o resultado correto
 
 ---
 

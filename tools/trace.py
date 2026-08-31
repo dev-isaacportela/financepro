@@ -104,14 +104,24 @@ def parse_tasks():
     return tasks
 
 
+def strip_comments(text):
+    """Remove comentarios de bloco e de linha do fonte Kotlin.
+
+    Sem isto, o exemplo de uso dentro do KDoc de Req.kt e contado como
+    anotacao real -- o que fez a ferramenta relatar cobertura que nao existia.
+    """
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    return re.sub(r"//[^\n]*", "", text)
+
+
 def scan_annotations():
-    """-> {req_id: [arquivos]}. Vazio enquanto nao houver codigo."""
+    """-> {req_id: [arquivos]}. Vazio enquanto nao houver testes anotados."""
     found = {}
     if not SRC.exists():
         return found
     for path in SRC.rglob("*.kt"):
         try:
-            text = path.read_text(encoding="utf-8")
+            text = strip_comments(path.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError):
             continue
         for req in RE_ANNOT.findall(text):
@@ -217,13 +227,15 @@ def main():
                 errors.append(f"{tid}: cita {rid}, que nao existe em spec.md")
 
     # 3. Teste nomeado sem @Req no codigo.
-    #    So cobra ate a fase pedida; sem --phase, cobra so o que ja tem codigo.
+    #    So e cobrado com --phase, explicitamente. A versao anterior inferia
+    #    "ja tem codigo?" pela presenca de qualquer anotacao, e passava a cobrar
+    #    o projeto inteiro assim que a primeira aparecia -- quebrando o gate por
+    #    conta propria. Qual fase esta pronta e decisao humana, nao heuristica.
     limit = PHASES.index(args.phase) if args.phase else -1
     for rid, r in sorted(reqs.items()):
         if r["priority"] != "MUST" or r["test"] in (None, "manual"):
             continue
-        enforce = (PHASES.index(r["phase"]) <= limit) if limit >= 0 else bool(annots)
-        if enforce and rid not in annots:
+        if limit >= 0 and PHASES.index(r["phase"]) <= limit and rid not in annots:
             errors.append(
                 f"{rid} ({r['phase']} MUST): sem @Req no codigo "
                 f"(esperado em {r['test']})")
