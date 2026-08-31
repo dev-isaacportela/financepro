@@ -12,10 +12,16 @@ ksp = "2.3.2"                # KSP2: versionamento independente do Kotlin,
 detekt = "1.23.8"
 
 # --- em uso a partir da T-001 ---
-composeBom = "2026.08.00"
-coreKtx = "1.19.0"
+#
+# ATENÇÃO ao atualizar: as três versões abaixo estão DELIBERADAMENTE uma
+# linha atrás da última. Compose BOM 2026.08.00, core-ktx 1.19.0 e
+# lifecycle 2.11.0 exigem `compileSdk 37` e AGP 9.1+, e o build quebra com
+# 28 erros de metadados de AAR. Subir só estas versões não funciona: exige
+# também compileSdk 37, AGP >= 9.1 e a plataforma android-37 instalada.
+composeBom = "2026.06.01"
+coreKtx = "1.18.0"
 activityCompose = "1.13.0"
-lifecycle = "2.11.0"
+lifecycle = "2.10.0"
 
 # --- declarados aqui, aplicados nas suas próprias tasks ---
 navigationCompose = "2.10.0"   # T-011
