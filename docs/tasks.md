@@ -265,8 +265,11 @@ Passagem por todas as telas da F0 (Art. 17 — é auditoria da fase, não adiame
 `invoiceMonthFor` e `dueDateFor`, Kotlin puro.
 
 **Pronto quando**
-- [ ] `InvoiceMonthTest` cobre as 6 linhas de REQ-CARD-003 e as 4 de REQ-CARD-004
-- [ ] Virada de ano testada explicitamente (dez → jan)
+- [x] `InvoiceMonthTest` cobre as 6 linhas de REQ-CARD-003 e as 4 de REQ-CARD-004
+- [x] Virada de ano testada explicitamente (dez → jan)
+- [x] Invariante extra: **vencimento nunca vem antes do fechamento**, verificado
+      nas 784 combinações de `closingDay` × `dueDay`
+- [x] A fatura nunca retrocede nem pula um mês ao percorrer 2 anos de calendário
 
 ### T-024 — Fatura
 **Fase** F1 · **Depende de** T-022, T-023 · **REQ** REQ-CARD-005, REQ-CARD-007, REQ-CARD-008
@@ -292,9 +295,14 @@ Seletor de mês, itens por categoria, botão pagar fatura.
 **Fase** F1 · **Depende de** T-002 · **REQ** REQ-TXN-007, REQ-TXN-008
 
 **Pronto quando**
-- [ ] `SplitInstallmentsTest` verifica `soma == total` para **todo** `n` de 1 a 72, sobre um conjunto de totais que inclui 1, 10, 7, 100000
-- [ ] Sobra alocada na última parcela, nunca na primeira
-- [ ] Cobre as 4 linhas da tabela de REQ-TXN-008
+- [x] `SplitInstallmentsTest` verifica `soma == total` para **todo** `n` de 1 a 72,
+      sobre 11 totais — 792 combinações
+- [x] Sobra alocada na última parcela, nunca na primeira: quem confere o extrato
+      compara a **primeira** parcela com o valor anunciado na compra
+- [x] Cobre as 4 linhas da tabela de REQ-TXN-008
+- [x] Funciona igual para valor negativo, que é como despesa é gravada
+- [x] Datas ajustam fim de mês: compra em 31/01 gera parcela em 28/02 e **volta**
+      para 31/03, em vez de ficar presa no dia 28
 
 ### T-027 — UI de parcelamento
 **Fase** F1 · **Depende de** T-026, T-013 · **REQ** REQ-TXN-009
