@@ -93,7 +93,8 @@ private fun Formulario(state: QuickEntryState, vm: QuickEntryViewModel) {
             .padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        MoneyField(cents = state.cents, onCentsChange = vm::valor)
+        // O único lugar com foco automático: Art. 18 protege este caminho.
+        MoneyField(cents = state.cents, onCentsChange = vm::valor, autoFocus = true)
         Erro(state.erroDe(ValidationError.Campo.VALOR))
 
         Chips(

@@ -5,6 +5,7 @@ import app.financepro.data.db.ACCOUNT_CHECKING_COLOR
 import app.financepro.data.db.AccountDao
 import app.financepro.data.db.AccountEntity
 import app.financepro.data.db.CategoryDao
+import app.financepro.data.db.CategoryEntity
 import app.financepro.data.db.TxnDao
 import app.financepro.data.db.TxnEntity
 import app.financepro.data.db.toDomain
@@ -54,6 +55,39 @@ class AccountRepository @Inject constructor(private val dao: AccountDao) {
      * ser utilizável em menos de 30 segundos: quem instala tem dinheiro na
      * carteira e dinheiro no banco, e não precisa cadastrar nada antes de gastar.
      */
+    /**
+     * Cria ou atualiza. REQ-ACC-001
+     *
+     * Recebe o modelo de domínio inteiro porque a tela de contas edita todos os
+     * campos que ele tem — não sobra nada de apresentação para o repositório
+     * adivinhar, que era o motivo de não existir escrita genérica antes.
+     */
+    suspend fun salvar(conta: Account): Long = dao.upsert(
+        AccountEntity(
+            id = conta.id,
+            name = conta.name,
+            type = conta.type,
+            initialBalanceCents = conta.initialBalanceCents,
+            colorArgb = conta.colorArgb,
+            iconKey = conta.iconKey,
+            archived = conta.archived,
+            sortOrder = conta.sortOrder,
+            creditLimitCents = conta.creditLimitCents,
+            closingDay = conta.closingDay,
+            dueDay = conta.dueDay,
+            paymentAccountId = conta.paymentAccountId,
+        ),
+    )
+
+    /**
+     * REQ-ACC-005 — arquivar tira das listas e do saldo, e **preserva** o
+     * histórico. É por isso que arquivar existe em vez de excluir: apagar a
+     * conta levaria as transações junto por `CASCADE`, e o relatório do ano
+     * passado mudaria sozinho.
+     */
+    suspend fun arquivar(conta: Account, arquivada: Boolean = true) =
+        salvar(conta.copy(archived = arquivada))
+
     suspend fun criarIniciais(saldoCents: Long) {
         dao.upsert(
             AccountEntity(
@@ -78,7 +112,10 @@ class AccountRepository @Inject constructor(private val dao: AccountDao) {
 }
 
 @Singleton
-class CategoryRepository @Inject constructor(private val dao: CategoryDao) {
+class CategoryRepository @Inject constructor(
+    private val dao: CategoryDao,
+    private val txns: TxnDao,
+) {
 
     fun observeActive(): Flow<List<Category>> = dao.observeActive().map { l -> l.map { it.toDomain() } }
 
@@ -90,6 +127,38 @@ class CategoryRepository @Inject constructor(private val dao: CategoryDao) {
 
     /** REQ-CAT-006 — cada salvamento empurra a categoria para cima no grid. */
     suspend fun registrarUso(id: Long) = dao.bumpUse(id)
+
+    /** REQ-CAT-001 · REQ-CAT-002 — a checagem de um nível vem junto. */
+    suspend fun salvar(categoria: Category): Long = dao.upsertChecked(
+        CategoryEntity(
+            id = categoria.id,
+            name = categoria.name,
+            kind = categoria.kind,
+            parentId = categoria.parentId,
+            iconKey = categoria.iconKey,
+            colorArgb = categoria.colorArgb,
+            archived = categoria.archived,
+        ),
+    )
+
+    /** Quantas transações impedem a exclusão (REQ-CAT-005). */
+    suspend fun transacoesEm(id: Long): Int = dao.contarTransacoes(id)
+
+    /**
+     * Exclui, movendo o que segurava a categoria. REQ-CAT-005
+     *
+     * `destino` nulo só é aceito quando não há nada a mover: sem isso, "excluir
+     * sem escolher para onde" viraria transação sem categoria, que é
+     * exatamente o que REQ-TXN-005 proíbe.
+     */
+    suspend fun excluir(categoria: Category, destino: Long?) {
+        val presas = transacoesEm(categoria.id)
+        require(presas == 0 || destino != null) {
+            "Mova as $presas transações antes"
+        }
+        if (destino != null && presas > 0) txns.recategorizar(categoria.id, destino)
+        dao.byId(categoria.id)?.let { dao.delete(it) }
+    }
 }
 
 @Singleton

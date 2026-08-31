@@ -1,9 +1,9 @@
 package app.financepro.feature.txn
 
 import app.financepro.core.testing.Req
-import app.financepro.domain.model.Account
+import app.financepro.domain.UMA_CATEGORIA
+import app.financepro.domain.UMA_CONTA
 import app.financepro.domain.model.AccountType
-import app.financepro.domain.model.Category
 import app.financepro.domain.model.CategoryKind
 import app.financepro.domain.model.TxnType
 import org.junit.Assert.assertEquals
@@ -22,8 +22,9 @@ import org.junit.Test
 @Req("REQ-UI-003")
 class QuickEntryStateTest {
 
-    private val corrente = Account(1, "Corrente", AccountType.CHECKING)
-    private val cartao = Account(2, "Cartão", AccountType.CREDIT_CARD, closingDay = 10, dueDay = 17)
+    private val corrente = UMA_CONTA.copy(id = 1, name = "Corrente")
+    private val cartao =
+        UMA_CONTA.copy(id = 2, name = "Cartão", type = AccountType.CREDIT_CARD, closingDay = 10, dueDay = 17)
     private val base = QuickEntryState(contas = listOf(corrente, cartao), contaId = corrente.id)
 
     @Test
@@ -70,19 +71,7 @@ class QuickEntryStateTest {
     }
 
     private companion object {
-        val gasto = Category(
-            id = 1,
-            name = "Mercado",
-            kind = CategoryKind.EXPENSE,
-            colorArgb = 0,
-            iconKey = "utensils",
-        )
-        val receita = Category(
-            id = 2,
-            name = "Salário",
-            kind = CategoryKind.INCOME,
-            colorArgb = 0,
-            iconKey = "cash",
-        )
+        val gasto = UMA_CATEGORIA.copy(id = 1, name = "Mercado")
+        val receita = UMA_CATEGORIA.copy(id = 2, name = "Salário", kind = CategoryKind.INCOME)
     }
 }

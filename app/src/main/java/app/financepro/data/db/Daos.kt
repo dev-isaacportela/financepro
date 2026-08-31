@@ -73,6 +73,16 @@ abstract class CategoryDao {
     @Query("SELECT * FROM category WHERE parentId = :parentId")
     abstract suspend fun childrenOf(parentId: Long): List<CategoryEntity>
 
+    /**
+     * Quantas transações seguram esta categoria. REQ-CAT-005
+     *
+     * A exclusão é recusada pelo banco de qualquer forma; isto existe para a
+     * mensagem dizer **quantas** — "Mova as 37 transações antes" é acionável,
+     * "não é possível excluir" não é.
+     */
+    @Query("SELECT COUNT(*) FROM txn WHERE categoryId = :id")
+    abstract suspend fun contarTransacoes(id: Long): Int
+
     @Query("UPDATE category SET useCount = useCount + 1 WHERE id = :id")
     abstract suspend fun bumpUse(id: Long)
 
@@ -153,4 +163,14 @@ interface TxnDao {
 
     @Delete
     suspend fun delete(txn: TxnEntity)
+
+    /**
+     * Recategorização em lote. REQ-CAT-005
+     *
+     * É o que a UI oferece quando a exclusão é recusada. Uma escrita só: mover
+     * transação por transação deixaria metade num limbo se o app morresse no
+     * meio, e a categoria antiga continuaria inexcluível por um resto.
+     */
+    @Query("UPDATE txn SET categoryId = :destino WHERE categoryId = :origem")
+    suspend fun recategorizar(origem: Long, destino: Long): Int
 }

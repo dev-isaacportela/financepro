@@ -1,6 +1,8 @@
 package app.financepro.domain.usecase
 
 import app.financepro.core.testing.Req
+import app.financepro.domain.UMA_CATEGORIA
+import app.financepro.domain.UMA_CONTA
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.model.Category
@@ -22,16 +24,16 @@ class ValidateTxnTest {
     private val hoje = LocalDate.of(2026, 8, 31)
 
     private val contas = listOf(
-        Account(1, "Corrente", AccountType.CHECKING),
-        Account(2, "Carteira", AccountType.CASH),
-        Account(3, "Antiga", AccountType.SAVINGS, archived = true),
+        UMA_CONTA.copy(id = 1, name = "Corrente"),
+        UMA_CONTA.copy(id = 2, name = "Carteira", type = AccountType.CASH),
+        UMA_CONTA.copy(id = 3, name = "Antiga", type = AccountType.SAVINGS, archived = true),
     ).associateBy { it.id }
 
     // Cor e ícone são obrigatórios de propósito: sem valor padrão, ninguém cria
     // categoria sem sticker por esquecimento. Aqui eles são só ruído.
     private val categorias = listOf(
-        Category(10, "Alimentação", CategoryKind.EXPENSE, colorArgb = 0, iconKey = "utensils"),
-        Category(20, "Salário", CategoryKind.INCOME, colorArgb = 0, iconKey = "cash"),
+        UMA_CATEGORIA.copy(id = 10, name = "Alimentação"),
+        UMA_CATEGORIA.copy(id = 20, name = "Salário", kind = CategoryKind.INCOME),
     ).associateBy { it.id }
 
     private fun validar(t: Txn) = validateTxn(t, contas, categorias, hoje)

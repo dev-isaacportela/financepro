@@ -59,7 +59,7 @@ fun OnboardingScreen(vm: OnboardingViewModel = hiltViewModel()) {
             style = BodyLg,
             color = Slush.ink,
         )
-        MoneyField(cents = saldo, onCentsChange = { saldo = it })
+        MoneyField(cents = saldo, onCentsChange = { saldo = it }, autoFocus = true)
         FilledCta(
             text = "Começar",
             onClick = { vm.concluir(saldo) },

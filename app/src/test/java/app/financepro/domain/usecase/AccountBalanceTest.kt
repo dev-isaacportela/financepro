@@ -1,6 +1,7 @@
 package app.financepro.domain.usecase
 
 import app.financepro.core.testing.Req
+import app.financepro.domain.UMA_CONTA
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.model.Txn
@@ -15,13 +16,24 @@ class AccountBalanceTest {
 
     private val hoje = LocalDate.of(2026, 8, 31)
 
-    private val corrente = Account(1, "Corrente", AccountType.CHECKING, initialBalanceCents = 10000)
-    private val carteira = Account(2, "Carteira", AccountType.CASH)
-    private val cartao = Account(
-        3, "Nubank", AccountType.CREDIT_CARD,
-        creditLimitCents = 500000, closingDay = 10, dueDay = 20, paymentAccountId = 1,
+    private val corrente = UMA_CONTA.copy(id = 1, name = "Corrente", initialBalanceCents = 10000)
+    private val carteira = UMA_CONTA.copy(id = 2, name = "Carteira", type = AccountType.CASH)
+    private val cartao = UMA_CONTA.copy(
+        id = 3,
+        name = "Nubank",
+        type = AccountType.CREDIT_CARD,
+        creditLimitCents = 500000,
+        closingDay = 10,
+        dueDay = 20,
+        paymentAccountId = 1,
     )
-    private val arquivada = Account(4, "Antiga", AccountType.SAVINGS, 90000, archived = true)
+    private val arquivada = UMA_CONTA.copy(
+        id = 4,
+        name = "Antiga",
+        type = AccountType.SAVINGS,
+        initialBalanceCents = 90000,
+        archived = true,
+    )
 
     private fun despesa(conta: Long, cents: Long, cleared: Boolean = true) =
         Txn(accountId = conta, type = TxnType.EXPENSE, amountCents = -cents, date = hoje, cleared = cleared)

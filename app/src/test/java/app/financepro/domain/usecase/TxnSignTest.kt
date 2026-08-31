@@ -1,6 +1,7 @@
 package app.financepro.domain.usecase
 
 import app.financepro.core.testing.Req
+import app.financepro.domain.UMA_CONTA
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.model.Txn
@@ -19,7 +20,7 @@ import java.time.LocalDate
 class TxnSignTest {
 
     private val hoje = LocalDate.of(2026, 8, 31)
-    private val conta = Account(1, "Corrente", AccountType.CHECKING)
+    private val conta = UMA_CONTA.copy(id = 1, name = "Corrente")
 
     private fun txn(tipo: TxnType, cents: Long) =
         Txn(accountId = 1, type = tipo, amountCents = cents, date = hoje, categoryId = 1)

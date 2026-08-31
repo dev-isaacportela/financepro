@@ -34,17 +34,21 @@ import app.financepro.core.ui.theme.Slush
  * O que a tela mostra é [formatBRL] do acumulado, via `visualTransformation`: a
  * formatação pt-BR continua com uma fonte só, a mesma de [MoneyText].
  *
- * O foco é pedido na composição. REQ-UI-002 exige o teclado já aberto, e um
- * toque a mais para focar o campo seria um quarto toque num fluxo de três.
+ * [autoFocus] existe porque o foco automático é certo num lugar só: a folha de
+ * lançamento, onde REQ-UI-002 exige o teclado já aberto e um toque a mais seria
+ * o quarto num fluxo de três. Num formulário com dois campos de dinheiro —
+ * saldo de abertura e limite do cartão — todos pedindo foco, o último composto
+ * rouba o cursor e o usuário digita no campo errado. Padrão desligado.
  */
 @Composable
 fun MoneyField(
     cents: Long,
     onCentsChange: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    autoFocus: Boolean = false,
 ) {
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focus.requestFocus() }
+    LaunchedEffect(autoFocus) { if (autoFocus) focus.requestFocus() }
 
     // Zero vira campo vazio, e o cursor fica sempre no fim: com dígitos entrando
     // pela direita, um cursor no meio faria a próxima tecla cair no lugar errado.

@@ -1,0 +1,187 @@
+package app.financepro.feature.accounts
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import app.financepro.core.ui.component.FilledCta
+import app.financepro.core.ui.component.GhostButton
+import app.financepro.core.ui.component.MoneyField
+import app.financepro.core.ui.theme.Caption
+import app.financepro.core.ui.theme.OutlineWidth
+import app.financepro.core.ui.theme.Slush
+import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Stickers
+import app.financepro.domain.model.Account
+import app.financepro.domain.model.AccountType
+import androidx.compose.ui.graphics.toArgb
+
+/**
+ * Formulário de conta. REQ-ACC-001 · REQ-ACC-002 · REQ-UI-003
+ *
+ * Os três campos de cartão aparecem **só** para `CREDIT_CARD` — mesma regra que
+ * a folha de lançamento aplica aos seus campos condicionais, e pelo mesmo
+ * motivo: campo que não se aplica ao que está sendo criado é ruído que compete
+ * com o que importa.
+ *
+ * Dia de fechamento e vencimento saem de uma lista de 1 a 28, não de um campo
+ * livre: 29, 30 e 31 não existem em fevereiro, e a spec limita a faixa na
+ * coluna. Recusar depois o que a interface ofereceu é pior que não oferecer.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AccountFormSheet(
+    conta: Account,
+    erro: String?,
+    onChange: (Account) -> Unit,
+    onSalvar: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        shape = SlushShapes.extraLarge,
+        containerColor = Slush.paper,
+        contentColor = Slush.ink,
+        tonalElevation = 0.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .imePadding()
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            OutlinedTextField(
+                value = conta.name,
+                onValueChange = { onChange(conta.copy(name = it)) },
+                label = { Text("Nome") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Rotulo("Tipo")
+            Chips(
+                itens = AccountType.entries.map { it to tipoCurto(it) },
+                selecionado = conta.type,
+                onClick = { onChange(conta.copy(type = it)) },
+            )
+
+            Rotulo("Cor")
+            Cores(selecionada = conta.colorArgb, onClick = { onChange(conta.copy(colorArgb = it)) })
+
+            Rotulo("Saldo de abertura")
+            MoneyField(
+                cents = conta.initialBalanceCents,
+                onCentsChange = { onChange(conta.copy(initialBalanceCents = it)) },
+            )
+
+            if (conta.isCard) CamposDeCartao(conta, onChange)
+
+            if (erro != null) {
+                Text("⚠ $erro", style = Caption, color = Slush.ink)
+            }
+
+            FilledCta(text = "Salvar", onClick = onSalvar, modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+/** REQ-ACC-002 — os três só existem para `CREDIT_CARD`. */
+@Composable
+private fun CamposDeCartao(conta: Account, onChange: (Account) -> Unit) {
+    Rotulo("Limite do cartão")
+    MoneyField(
+        cents = conta.creditLimitCents ?: 0,
+        onCentsChange = { onChange(conta.copy(creditLimitCents = it)) },
+    )
+
+    Rotulo("Fecha no dia")
+    Chips(
+        itens = DIAS.map { it to it.toString() },
+        selecionado = conta.closingDay,
+        onClick = { onChange(conta.copy(closingDay = it)) },
+    )
+
+    Rotulo("Vence no dia")
+    Chips(
+        itens = DIAS.map { it to it.toString() },
+        selecionado = conta.dueDay,
+        onClick = { onChange(conta.copy(dueDay = it)) },
+    )
+}
+
+@Composable
+private fun Cores(selecionada: Int, onClick: (Int) -> Unit) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(Stickers) { cor ->
+            val argb = cor.toArgb()
+            Box(
+                Modifier
+                    .size(48.dp)
+                    .clip(SlushShapes.extraSmall)
+                    .background(cor)
+                    // Seleção pela espessura do contorno, não por outra cor:
+                    // a cor aqui já é o conteúdo (REQ-A11Y-003).
+                    .border(
+                        width = if (argb == selecionada) 3.dp else OutlineWidth,
+                        color = Slush.ink,
+                        shape = SlushShapes.extraSmall,
+                    )
+                    .clickable { onClick(argb) }
+                    .semantics { contentDescription = "Cor" },
+            )
+        }
+    }
+}
+
+@Composable
+private fun <T> Chips(itens: List<Pair<T, String>>, selecionado: T?, onClick: (T) -> Unit) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(itens, key = { it.first.toString() }) { (valor, texto) ->
+            if (valor == selecionado) {
+                FilledCta(text = texto, onClick = { onClick(valor) })
+            } else {
+                GhostButton(text = texto, onClick = { onClick(valor) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun Rotulo(texto: String) = Text(texto, style = Caption, color = Slush.ink)
+
+private fun tipoCurto(tipo: AccountType) = when (tipo) {
+    AccountType.CHECKING -> "Corrente"
+    AccountType.SAVINGS -> "Poupança"
+    AccountType.CASH -> "Dinheiro"
+    AccountType.CREDIT_CARD -> "Cartão"
+    AccountType.INVESTMENT -> "Investimento"
+}
+
+/** 1 a 28: 29, 30 e 31 não existem em todo mês, e a coluna limita a faixa. */
+private val DIAS = (1..28).toList()

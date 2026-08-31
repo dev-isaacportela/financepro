@@ -13,17 +13,20 @@ import java.time.LocalDate
  * função de data do SQLite. Um converter esconderia isso e faria toda `@Query`
  * de intervalo parecer mágica.
  *
- * Só o sentido entidade → domínio existe. A volta é do repositório (T-009), que
- * é quem tem `colorArgb`, `iconKey` e `sortOrder` vindos da tela — campos de
- * apresentação que o domínio não precisa conhecer para calcular saldo.
+ * Só o sentido entidade → domínio existe. A volta é do repositório, na tela que
+ * escreve: é ela que sabe se está criando uma conta, editando uma categoria ou
+ * gravando uma transação, e cada uma preenche colunas diferentes.
  */
 
 fun AccountEntity.toDomain() = Account(
     id = id,
     name = name,
     type = type,
+    colorArgb = colorArgb,
+    iconKey = iconKey,
     initialBalanceCents = initialBalanceCents,
     archived = archived,
+    sortOrder = sortOrder,
     creditLimitCents = creditLimitCents,
     closingDay = closingDay,
     dueDay = dueDay,

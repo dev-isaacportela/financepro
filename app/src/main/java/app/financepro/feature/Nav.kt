@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,13 +36,17 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.SlushSurface
 import app.financepro.core.ui.theme.Display
 import app.financepro.core.ui.theme.Label
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
 import app.financepro.core.ui.theme.Slush
+import app.financepro.core.ui.theme.Subheading
 import app.financepro.data.repo.AccountRepository
+import app.financepro.feature.accounts.AccountsScreen
+import app.financepro.feature.categories.CategoriesScreen
 import app.financepro.feature.home.HomeScreen
 import app.financepro.feature.onboarding.OnboardingScreen
 import app.financepro.feature.txn.QuickEntrySheet
@@ -76,6 +81,14 @@ data object Orcamento
 
 @Serializable
 data object Mais
+
+// Destinos de dentro do "Mais". Não são abas: não cabem numa barra de quatro, e
+// promovê-los tiraria espaço do que se usa todo dia.
+@Serializable
+data object Contas
+
+@Serializable
+data object Categorias
 
 private val ABAS = listOf(
     Inicio to "Início",
@@ -131,11 +144,12 @@ private fun Abas(nav: NavHostController) {
             modifier = Modifier.fillMaxSize().padding(insets),
         ) {
             composable<Inicio> { HomeScreen(onNovoLancamento = { lancando = true }) }
-            // As três restantes entram nas suas tasks: T-014, T-029 e
-            // T-015/T-016/T-018.
+            composable<Mais> { MaisScreen(onIr = { nav.navigate(it) }) }
+            composable<Contas> { AccountsScreen() }
+            composable<Categorias> { CategoriesScreen() }
+            // As duas restantes entram nas suas tasks: T-014 e T-029.
             emDesenvolvimento<Transacoes>("Transações")
             emDesenvolvimento<Orcamento>("Orçamento")
-            emDesenvolvimento<Mais>("Mais")
         }
     }
 
@@ -153,6 +167,29 @@ private inline fun <reified T : Any> NavGraphBuilder.emDesenvolvimento(titulo: S
             Text(titulo, style = Display, color = Slush.ink, textAlign = TextAlign.Center)
         }
     }
+
+/**
+ * O "Mais" da barra: um índice, não uma tela.
+ *
+ * Contas e Categorias são destinos próprios em vez de abas porque a barra tem
+ * quatro lugares (REQ-UI-001) e nenhum deles deve ser gasto com algo que se
+ * mexe uma vez por mês.
+ */
+@Composable
+private fun MaisScreen(onIr: (Any) -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text("Mais", style = Subheading, color = Slush.ink)
+        GhostButton(text = "Contas", onClick = { onIr(Contas) }, modifier = Modifier.fillMaxWidth())
+        GhostButton(
+            text = "Categorias",
+            onClick = { onIr(Categorias) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
 
 @Composable
 private fun BarraInferior(nav: NavHostController) {

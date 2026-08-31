@@ -1,6 +1,7 @@
 package app.financepro.domain.usecase
 
 import app.financepro.core.testing.Req
+import app.financepro.domain.UMA_CONTA
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.model.Txn
@@ -21,8 +22,8 @@ import java.time.LocalDate
 class TransferTest {
 
     private val hoje = LocalDate.of(2026, 8, 31)
-    private val a = Account(1, "A", AccountType.CHECKING, initialBalanceCents = 20000)
-    private val b = Account(2, "B", AccountType.CASH)
+    private val a = UMA_CONTA.copy(id = 1, name = "A", initialBalanceCents = 20000)
+    private val b = UMA_CONTA.copy(id = 2, name = "B", type = AccountType.CASH)
 
     private val transferencia = Txn(
         accountId = 1, counterAccountId = 2, type = TxnType.TRANSFER,

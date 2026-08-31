@@ -15,13 +15,23 @@ import java.time.LocalDate
 
 enum class AccountType { CHECKING, SAVINGS, CASH, CREDIT_CARD, INVESTMENT }
 
-/** REQ-ACC-001 · REQ-ACC-002 · REQ-CARD-001 */
+/**
+ * REQ-ACC-001 · REQ-ACC-002 · REQ-CARD-001
+ *
+ * [colorArgb] e [iconKey] são obrigatórios porque REQ-ACC-001 diz que toda conta
+ * tem cor e ícone. Sem valor padrão, ninguém cria conta sem eles por descuido —
+ * e o preço é que o teste de saldo precisa dizer uma cor que não lhe interessa,
+ * o que é barato perto de uma conta invisível na lista.
+ */
 data class Account(
     val id: Long,
     val name: String,
     val type: AccountType,
+    val colorArgb: Int,
+    val iconKey: String,
     val initialBalanceCents: Long = 0,
     val archived: Boolean = false,
+    val sortOrder: Int = 0,
     // Só CREDIT_CARD:
     val creditLimitCents: Long? = null,
     val closingDay: Int? = null,

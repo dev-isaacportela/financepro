@@ -419,11 +419,47 @@ O fluxo mais importante do app (Art. 18).
 
 CRUD, lista com saldo, extrato com saldo corrente acumulado linha a linha.
 
+**Pronto quando**
+- [x] Lista com o saldo de cada conta, vindo de `balanceOf` — o caso de uso puro
+      da T-008 — e não de um `SUM` por conta em `@Query`. Verificado no aparelho
+- [x] Criar e editar: nome, tipo, cor e saldo de abertura (REQ-ACC-001)
+- [x] Campos de cartão só aparecem para `CREDIT_CARD` (REQ-ACC-002), conferido
+      na S26: escolher "Cartão" faz surgirem limite, fechamento e vencimento
+- [x] Dia de fechamento e vencimento saem de uma lista de 1 a 28, não de campo
+      livre. Recusar depois o que a interface ofereceu é pior que não oferecer
+- [x] **Arquivar, nunca excluir** (REQ-ACC-005): excluir levaria as transações
+      junto por `CASCADE`, e o relatório do ano passado mudaria sozinho
+- [x] Criar um cartão aqui faz o campo de parcelas aparecer na folha de
+      lançamento — a ponta que a T-013 não tinha como exercitar
+- [ ] Extrato por conta com saldo corrente acumulado linha a linha — fica para a
+      T-014, que é quem define a linha de transação e seus filtros. Duplicar a
+      lista aqui agora daria duas para reconciliar depois
+
+**Um achado de uso**
+
+`MoneyField` pedia foco sempre. Correto na folha de lançamento, onde ele é o
+único e o Art. 18 exige o teclado aberto; errado neste formulário, que tem
+**dois** — saldo de abertura e limite do cartão — e o último composto roubava o
+cursor. Virou `autoFocus`, desligado por padrão.
+
 ### T-016 — Categorias ⇉
 **Fase** F0 · **Depende de** T-009, T-011 · **REQ** REQ-CAT-005
 
 **Pronto quando**
-- [ ] Exclusão de categoria com transações é bloqueada pelo banco, e a UI oferece recategorização em lote
+- [x] Exclusão de categoria com transações é bloqueada pelo banco, e a UI oferece
+      recategorização em lote
+- [x] A tela **pergunta antes de tentar**: conta as transações presas e já mostra
+      para onde movê-las. Deixar o `RESTRICT` estourar e só então perguntar faria
+      o usuário passar por um erro para chegar à opção que resolve
+- [x] A mensagem é a da spec, com o número: "Mova as N transações antes". Um
+      "não foi possível excluir" não diz o que fazer
+- [x] O destino oferecido nunca mistura receita com despesa (REQ-CAT-003):
+      mover despesa para categoria de receita produziria transação inválida
+      assim que alguém a editasse
+- [x] A movimentação é **uma** escrita, não N: mover uma a uma deixaria metade
+      num limbo se o app morresse no meio, e a categoria antiga continuaria
+      inexcluível por um resto
+- [x] `CategoriesViewModelTest` cobre os quatro casos
 
 ### T-017 — Dashboard
 **Fase** F0 · **Depende de** T-014, T-015 · **REQ** REQ-UI-004, REQ-UI-006

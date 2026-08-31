@@ -61,7 +61,7 @@ class QuickEntryViewModelTest : DbTest() {
         }
         vm = QuickEntryViewModel(
             AccountRepository(db.accountDao()),
-            CategoryRepository(db.categoryDao()),
+            CategoryRepository(db.categoryDao(), db.txnDao()),
             TxnRepository(db.txnDao()),
         )
         esperar("contas e categorias chegarem ao estado") {
