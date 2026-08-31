@@ -41,10 +41,18 @@ DataStore, detekt.
       interno de `Selector.open()` é um socket **AF_UNIX**, cujo arquivo nasce
       em `java.io.tmpdir` — e `connect()` devolve `EINVAL` para qualquer socket
       criado dentro de `%LOCALAPPDATA%\Temp` nesta máquina. Fora do `Temp`
-      funciona. Correção é de máquina, não do repositório:
-      `-Djdk.net.unixdomain.tmpdir=<pasta fora do Temp>` em `GRADLE_OPTS` e no
-      `org.gradle.jvmargs` do `~/.gradle/gradle.properties` — caminho absoluto
-      do Windows não pode entrar em arquivo versionado
+      funciona. Correção é de máquina, não do repositório — caminho absoluto do
+      Windows não pode entrar em arquivo versionado:
+
+      ```
+      JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:/Users/<curto>/.gradle/afunix-tmp
+      ```
+
+      Tem de ser variável de ambiente. `org.gradle.jvmargs` no
+      `~/.gradle/gradle.properties` **não** serve: o `gradle.properties` do
+      projeto sobrescreve o do home, e a propriedade some do daemon no primeiro
+      reinício. `GRADLE_OPTS` também não basta, porque não alcança o worker de
+      teste, que é forkado com args próprios
 - [x] Version catalog é a única fonte de versões — nenhuma versão literal em `build.gradle.kts`
 - [x] `room.schemaLocation` aponta para `app/schemas/`
 - [x] `.gitattributes` força LF em `gradlew` — sem isso o CI Linux falha com
@@ -295,6 +303,26 @@ Tokens, tipografia, formas e componentes base conforme [design.md](design.md).
 **Fase** F0 · **Depende de** T-010 · **REQ** REQ-UI-001
 
 Bottom bar de 4 destinos, rotas type-safe.
+
+**Pronto quando**
+- [x] Quatro destinos — Início, Transações, Orçamento, Mais — como `@Serializable
+      data object`. Rota como texto só quebra em tempo de execução, e num app de
+      quatro abas o custo de descobrir isso já é maior que o de anotá-las
+- [x] Barra é pílula flutuante contornada, não a `NavigationBar` do Material:
+      aquela traz superfície tonal e nenhum contorno, o oposto da gramática de
+      Slush (design.md §6.1)
+- [x] Seleção sinalizada por **preenchimento**, não só por cor (REQ-A11Y-003), e
+      exposta ao leitor de tela por `semantics { selected = ... }`
+- [x] `popUpTo(Inicio) { saveState }` + `launchSingleTop` + `restoreState`: sem
+      eles, ir e voltar entre abas empilha destinos e o botão voltar vira labirinto
+- [x] `MainActivity` fica só com tema e grafo — tela dentro da `Activity` é tela
+      que nenhuma rota alcança
+- [x] `navigation-compose` fixado na **2.9.8**: a 2.10.0 é a terceira dependência
+      a exigir `compileSdk 37`, junto com Compose BOM e sqlcipher
+
+As quatro telas são um único placeholder compartilhado, não quatro arquivos de
+stub. Cada uma vira tela de verdade na sua task (T-017, T-014, T-029, T-015)
+trocando uma linha do `NavHost`.
 
 ### T-012 — Onboarding
 **Fase** F0 · **Depende de** T-009, T-011 · **REQ** REQ-UI-005
