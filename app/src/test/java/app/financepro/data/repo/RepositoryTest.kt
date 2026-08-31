@@ -1,5 +1,6 @@
 package app.financepro.data.repo
 
+import app.financepro.core.testing.Req
 import app.financepro.data.db.CATEGORIA
 import app.financepro.data.db.CONTA
 import app.financepro.data.db.DbTest
@@ -10,6 +11,9 @@ import app.financepro.domain.usecase.balanceOf
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
@@ -59,5 +63,60 @@ class RepositoryTest : DbTest() {
         assertEquals(68_150L, balanceOf(contas.byId(origem)!!, todas))
         // A transferência chega no destino pelo segundo termo da fórmula.
         assertEquals(30_000L, balanceOf(contas.byId(destino)!!, todas))
+    }
+
+    /**
+     * REQ-TXN-010 — o desfazer devolve a linha **inteira**.
+     *
+     * É o teste que justifica o repositório guardar a `TxnEntity` em vez de o
+     * ViewModel guardar o `Txn`: `notes`, `dedupeKey`, `importBatchId` e
+     * `createdAt` não existem no modelo de domínio, e um desfazer que os apaga
+     * é pior que não ter desfazer — a `dedupeKey` perdida faria a próxima
+     * importação recriar a transação como se fosse nova.
+     *
+     * Um `assertEquals` do objeto inteiro, e não campo a campo: assim ele
+     * continua pegando o erro quando alguém acrescentar a décima segunda coluna.
+     */
+    @Req("REQ-TXN-010")
+    @Test
+    fun `desfazer repoe a linha inteira, com id e colunas que o dominio nao carrega`() = runBlocking {
+        val txns = TxnRepository(db.txnDao())
+        val conta = db.accountDao().upsert(CONTA)
+        val id = db.txnDao().insert(
+            LANCAMENTO.copy(
+                accountId = conta,
+                description = "Padaria",
+                notes = "com o troco",
+                dedupeKey = "OFX-42",
+                createdAt = 1_700_000_000_000,
+                updatedAt = 1_700_000_000_000,
+            ),
+        )
+        val original = db.txnDao().byId(id)
+
+        txns.excluir(id)
+        assertNull(db.txnDao().byId(id))
+
+        assertTrue(txns.desfazerExclusao())
+
+        assertEquals(original, db.txnDao().byId(id))
+    }
+
+    @Test
+    fun `desfazer duas vezes repoe uma vez, e sem exclusao pendente nao faz nada`() = runBlocking {
+        val txns = TxnRepository(db.txnDao())
+        val conta = db.accountDao().upsert(CONTA)
+        val id = db.txnDao().insert(LANCAMENTO.copy(accountId = conta))
+
+        // Sem nada pendente: no-op, e não um `insert` de lixo.
+        assertFalse(txns.desfazerExclusao())
+
+        txns.excluir(id)
+        assertTrue(txns.desfazerExclusao())
+        // O segundo desfazer não pode duplicar a linha — "desfazer" repõe uma vez.
+        assertFalse(txns.desfazerExclusao())
+
+        val todas = txns.observeBetween(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31)).first()
+        assertEquals(1, todas.size)
     }
 }

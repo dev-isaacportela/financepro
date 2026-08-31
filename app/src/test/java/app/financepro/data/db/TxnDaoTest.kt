@@ -11,7 +11,11 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Req("REQ-TXN-001", "REQ-DATA-002")
+// A metade de REQ-TXN-012 que é do banco: a janela de datas e o filtro de
+// conta. A combinação com categoria, tipo e busca é regra, e mora em
+// `TxnListTest` — o `LIKE` do SQLite não dobra acento, e a conversão de
+// texto para centavos não pode ter uma segunda implementação (Art. 6).
+@Req("REQ-TXN-001", "REQ-DATA-002", "REQ-TXN-012")
 class TxnDaoTest : DbTest() {
 
     private val dao get() = db.txnDao()
@@ -74,6 +78,22 @@ class TxnDaoTest : DbTest() {
 
         assertEquals(1, dao.observeByAccount(destino, dia(2026, 1, 1), dia(2026, 12, 31)).first().size)
         assertEquals(1, dao.observeByAccount(origem, dia(2026, 1, 1), dia(2026, 12, 31)).first().size)
+    }
+
+    @Test
+    fun `conta e periodo se combinam com E`() = runBlocking {
+        // Nada provava o `AND` de `observeByAccount`: uma linha na conta certa
+        // mas fora da janela precisa ficar de fora, senão o extrato de março
+        // traria fevereiro junto.
+        val alvo = accounts.upsert(CONTA.copy(name = "Alvo"))
+        val outra = accounts.upsert(CONTA.copy(name = "Outra"))
+        dao.upsert(LANCAMENTO.copy(accountId = alvo, date = dia(2026, 3, 10), description = "dentro"))
+        dao.upsert(LANCAMENTO.copy(accountId = alvo, date = dia(2026, 2, 10), description = "fora da janela"))
+        dao.upsert(LANCAMENTO.copy(accountId = outra, date = dia(2026, 3, 10), description = "outra conta"))
+
+        val marco = dao.observeByAccount(alvo, dia(2026, 3, 1), dia(2026, 3, 31)).first()
+
+        assertEquals(listOf("dentro"), marco.map { it.description })
     }
 
     @Test

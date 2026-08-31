@@ -347,9 +347,10 @@ Bottom bar de 4 destinos, rotas type-safe.
 - [x] `navigation-compose` fixado na **2.9.8**: a 2.10.0 é a terceira dependência
       a exigir `compileSdk 37`, junto com Compose BOM e sqlcipher
 
-As quatro telas são um único placeholder compartilhado, não quatro arquivos de
+As quatro telas eram um único placeholder compartilhado, não quatro arquivos de
 stub. Cada uma vira tela de verdade na sua task (T-017, T-014, T-029, T-015)
-trocando uma linha do `NavHost`.
+trocando uma linha do `NavHost` — e foi exatamente uma linha nas quatro vezes.
+Só o Orçamento (T-029) ainda usa o placeholder.
 
 ### T-012 — Onboarding
 **Fase** F0 · **Depende de** T-009, T-011 · **REQ** REQ-UI-005
@@ -409,10 +410,75 @@ O fluxo mais importante do app (Art. 18).
 **Fase** F0 · **Depende de** T-013 · **REQ** REQ-TXN-010, REQ-TXN-011, REQ-TXN-012
 
 **Pronto quando**
-- [ ] Agrupada por dia com total do dia no cabeçalho
-- [ ] Swipe-excluir com desfazer de 5s, sem diálogo
-- [ ] Filtros de mês, conta, categoria e tipo, e busca por texto ou valor
-- [ ] Comentário `ponytail:` documentando a ausência de Paging ([ADR-009](decisoes.md#adr-009--sem-paging-3-no-mvp))
+- [x] Agrupada por dia, decrescente, com o líquido do dia no cabeçalho. O
+      cabeçalho soma **as linhas visíveis**, e não só as `cleared` como
+      `balanceOf` — um total que não bate com o que está logo abaixo lê como
+      bug. Em F0 a diferença é teórica: nada cria transação prevista antes da
+      T-031, e o `ponytail:` diz onde separar as duas quando ela deixar de ser
+- [x] Swipe-excluir com desfazer de 5s, sem diálogo. Cinco segundos **exatos**
+      exigem `Indefinite` dentro de `withTimeoutOrNull`: `SnackbarDuration.Short`
+      são ~4s e `Long` ~10s, e nenhum dos dois é o que a spec pede
+- [x] Filtros de mês, conta, categoria e tipo, e busca por texto ou valor
+- [x] Deslizar não é o único caminho: a linha tem `CustomAccessibilityAction`
+      de excluir. Com o TalkBack ligado o gesto de arrastar não chega ao
+      componente, então sem ela **excluir seria inalcançável** por leitor de
+      tela (Art. 17). São quatro linhas
+- [x] Comentário `ponytail:` documentando a ausência de Paging ([ADR-009](decisoes.md#adr-009--sem-paging-3-no-mvp)),
+      com o teto de ~5k linhas nomeado onde ele de fato é atingido: o filtro
+      "Tudo" e o extrato de conta, que carregam o histórico inteiro
+- [x] Extrato por conta com saldo corrente linha a linha — o item que a T-015
+      empurrou para cá. É a **mesma** lista com a conta filtrada, não uma
+      segunda tela: duplicá-la daria duas para reconciliar depois, que era
+      exatamente o motivo do adiamento. Verificado na S26 — a primeira linha do
+      extrato da Carteira traz −R$ 18,50, o mesmo número que a tela de Contas
+      mostra para ela
+
+**Três decisões que carregam o resto**
+
+- **O desfazer guarda a entidade, não o modelo de domínio.** `TxnEntity` tem
+  `notes`, `recurringRuleId`, `importBatchId`, `dedupeKey` e `createdAt`, que
+  `Txn` não carrega. Repor a linha a partir do domínio apagaria as cinco em
+  silêncio — e uma `dedupeKey` perdida faria a importação da F2 recriar a
+  transação como se fosse nova. A entidade fica no repositório: subi-la para o
+  domínio quebraria o Art. 8, devolvê-la ao ViewModel quebraria a §3 da
+  arquitetura. O teste compara o **objeto inteiro**, e não campo a campo, para
+  continuar pegando o erro quando alguém acrescentar a décima segunda coluna.
+- **`efeitoEm` saiu de dentro de `balanceOf`.** O total do dia e o saldo
+  corrente precisavam da mesma fórmula de dois termos do ADR-003; reescrevê-la
+  nos dois daria três fontes de verdade para a conta mais sensível do app.
+  `balanceOf` passou a somá-la, e os testes que já existiam guardaram a
+  refatoração. O caso que justifica o par: na lista geral, R$ 1.000 mudando de
+  bolso não pode aparecer como prejuízo de R$ 1.000 no cabeçalho do dia.
+- **Filtro e busca são regra, não `@Query`.** Em SQL ficam só o mês e a conta,
+  que já estavam lá e já tinham teste. O que decide não é gosto: o `LIKE` do
+  SQLite só ignora caixa em ASCII, e a busca por valor exigiria uma segunda
+  conversão texto → centavos. REQ-TXN-012 teve o `Teste:` corrigido na spec no
+  mesmo commit (Art. 3).
+
+**Um bug que só o aparelho mostrou**
+
+"Agosto de 2026" saía cortado em **"Agosto de"**: o título dividia a linha com
+três pílulas e não cabe em 360dp. O `uiautomator dump` não denuncia — ele traz o
+texto inteiro, porque o corte é de desenho, não de conteúdo. Foi preciso olhar a
+captura. Título em linha própria, que é também o que sobrevive à fonte a 200%
+(REQ-A11Y-004), onde a versão de uma linha só ficaria pior.
+
+**Fora de escopo, e por quê**
+
+**Editar transação não entra, e não tem dono.** A DoD desta task não pede, mas
+REQ-TXN-001 exige "criar, editar, excluir e listar" — e nenhuma task da F0 cobre
+a edição. A T-027 é dona do escopo de parcela, não da edição simples. Inventar
+uma folha de edição aqui seria trabalho não pedido (Art. 1); o buraco fica
+registrado para virar task antes de a F0 fechar.
+
+**Dívida deixada**
+
+- `ponytail:` em `TxnList.kt` — a busca não dobra acento, então "alimentacao"
+  não acha "Alimentação". A dobra é da `normalize` da T-036, e escrever uma
+  segunda aqui criaria as duas implementações que aquela task existe para
+  impedir.
+- `ponytail:` em `TransactionsState` — `monthStartDay` fixo em 1. `monthRange`
+  já aceita o parâmetro (REQ-CORE-003); falta a tela de ajustes de onde lê-lo.
 
 ### T-015 — Contas ⇉
 **Fase** F0 · **Depende de** T-009, T-011 · **REQ** REQ-ACC-005
@@ -431,9 +497,11 @@ CRUD, lista com saldo, extrato com saldo corrente acumulado linha a linha.
       junto por `CASCADE`, e o relatório do ano passado mudaria sozinho
 - [x] Criar um cartão aqui faz o campo de parcelas aparecer na folha de
       lançamento — a ponta que a T-013 não tinha como exercitar
-- [ ] Extrato por conta com saldo corrente acumulado linha a linha — fica para a
-      T-014, que é quem define a linha de transação e seus filtros. Duplicar a
-      lista aqui agora daria duas para reconciliar depois
+- [x] Extrato por conta com saldo corrente acumulado linha a linha — entregue
+      pela T-014, que é quem define a linha de transação e seus filtros.
+      Duplicar a lista aqui daria duas para reconciliar depois, então ele é a
+      **mesma** lista com a conta filtrada: a coluna de saldo aparece quando há
+      exatamente uma conta escolhida
 
 **Um achado de uso**
 
@@ -527,10 +595,10 @@ Passagem por todas as telas da F0 (Art. 17 — é auditoria da fase, não adiame
 - [x] Workflow exercido de verdade — verde na primeira execução, em
       `dev-isaacportela/mobile-finance` (privado)
 - [ ] Ao fechar a F0, trocar `trace.py` por `trace.py --phase F0` no workflow.
-      Hoje `--phase F0` falha com **2** erros, e os dois são legítimos:
-      `REQ-CAT-005` só tem a metade de banco pronta (falta a recategorização em
-      lote da T-016) e `REQ-DATA-001` espera um `MigrationTest` que só faz
-      sentido quando existir um schema v2
+      Hoje `--phase F0` falha com **1** erro, e ele é legítimo: `REQ-DATA-001`
+      espera um `MigrationTest` que só faz sentido quando existir um schema v2.
+      O segundo erro era `REQ-CAT-005`, e a T-016 o fechou — esta linha ficou
+      desatualizada entre os dois commits, que é o que o Art. 3 não quer
 
 ---
 

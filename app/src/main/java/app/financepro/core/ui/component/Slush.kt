@@ -1,7 +1,10 @@
 package app.financepro.core.ui.component
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -18,6 +21,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import app.financepro.core.money.formatBRL
+import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.MoneyBody
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
@@ -170,3 +174,32 @@ fun MoneyText(
         style = style,
     )
 }
+
+/**
+ * Fileira de escolha única. REQ-A11Y-003
+ *
+ * A seleção é sinalizada por **preenchimento** (`FilledCta` no lugar de
+ * `GhostButton`), não por cor — a mesma gramática da barra de navegação, e o
+ * que faz a escolha sobreviver a daltonismo e a tema escuro sem condicional.
+ *
+ * Nasceu privada no formulário de conta (T-015). Subiu quando os filtros de
+ * transação (T-014) viraram o **segundo chamador real** — que é o que o Art. 10
+ * exige antes de promover qualquer coisa. Reescrevê-la lá criaria dois chips
+ * para divergirem no primeiro ajuste de espaçamento.
+ */
+@Composable
+fun <T> Chips(itens: List<Pair<T, String>>, selecionado: T?, onClick: (T) -> Unit) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(itens, key = { it.first.toString() }) { (valor, texto) ->
+            if (valor == selecionado) {
+                FilledCta(text = texto, onClick = { onClick(valor) })
+            } else {
+                GhostButton(text = texto, onClick = { onClick(valor) })
+            }
+        }
+    }
+}
+
+/** Rótulo de campo. Existe para nenhuma tela escolher o estilo por conta própria. */
+@Composable
+fun Rotulo(texto: String) = Text(texto, style = Caption, color = Slush.ink)

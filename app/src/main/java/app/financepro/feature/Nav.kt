@@ -50,6 +50,7 @@ import app.financepro.feature.categories.CategoriesScreen
 import app.financepro.feature.home.HomeScreen
 import app.financepro.feature.onboarding.OnboardingScreen
 import app.financepro.feature.txn.QuickEntrySheet
+import app.financepro.feature.txn.TransactionsScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -147,8 +148,8 @@ private fun Abas(nav: NavHostController) {
             composable<Mais> { MaisScreen(onIr = { nav.navigate(it) }) }
             composable<Contas> { AccountsScreen() }
             composable<Categorias> { CategoriesScreen() }
-            // As duas restantes entram nas suas tasks: T-014 e T-029.
-            emDesenvolvimento<Transacoes>("Transações")
+            composable<Transacoes> { TransactionsScreen(onNovoLancamento = { lancando = true }) }
+            // A restante entra na sua task: T-029.
             emDesenvolvimento<Orcamento>("Orçamento")
         }
     }

@@ -351,10 +351,17 @@ cabeçalho exibindo a data e o saldo líquido do dia.
 
 ### REQ-TXN-012 — Filtros e busca
 
-`F0` · `SHOULD` · Teste: `TxnDaoTest`
+`F0` · `SHOULD` · Teste: `TxnListTest`
 
 O SISTEMA DEVE permitir filtrar transações por mês, conta, categoria e tipo, e
 buscar por trecho da descrição ou por valor exato.
+
+O teste era `TxnDaoTest` e mudou na T-014 (Art. 3). A janela de mês e o filtro
+de conta continuam sendo do banco, e `TxnDaoTest` os cobre; a combinação dos
+quatro filtros com a busca é regra, e mora em `domain/usecase` (Art. 9). O que
+decide não é gosto: o `LIKE` do SQLite só ignora caixa em ASCII, e a busca por
+valor exigiria uma **segunda** conversão de texto para centavos — que é o que o
+Art. 6 proíbe e o que a T-036 existe para impedir.
 
 ### REQ-TXN-013 — Limite de data
 

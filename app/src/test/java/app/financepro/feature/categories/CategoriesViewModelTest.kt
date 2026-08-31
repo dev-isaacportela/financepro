@@ -1,6 +1,5 @@
 package app.financepro.feature.categories
 
-import android.os.Looper
 import app.financepro.core.testing.Req
 import app.financepro.data.db.CATEGORIA
 import app.financepro.data.db.CONTA
@@ -16,7 +15,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.robolectric.Shadows.shadowOf
 
 /**
  * REQ-CAT-005 — exclusão protegida, com recategorização em lote.
@@ -106,20 +104,5 @@ class CategoriesViewModelTest : DbTest() {
         // REQ-CAT-003: mover despesa para uma categoria de receita produziria
         // transação inválida assim que alguém a editasse.
         assertEquals(listOf("Lazer"), vm.state.value.destinosPara(alvo).map { it.name })
-    }
-
-    private fun esperar(descricao: String, condicao: () -> Boolean) {
-        val limite = System.nanoTime() + LIMITE_NANOS
-        while (System.nanoTime() < limite) {
-            shadowOf(Looper.getMainLooper()).idle()
-            if (condicao()) return
-            Thread.sleep(PASSO_MS)
-        }
-        error("tempo esgotado esperando: $descricao")
-    }
-
-    private companion object {
-        const val LIMITE_NANOS = 5_000_000_000L
-        const val PASSO_MS = 5L
     }
 }

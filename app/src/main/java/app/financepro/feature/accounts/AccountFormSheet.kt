@@ -26,9 +26,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import app.financepro.core.ui.component.Chips
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyField
+import app.financepro.core.ui.component.Rotulo
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Slush
@@ -158,22 +160,6 @@ private fun Cores(selecionada: Int, onClick: (Int) -> Unit) {
         }
     }
 }
-
-@Composable
-private fun <T> Chips(itens: List<Pair<T, String>>, selecionado: T?, onClick: (T) -> Unit) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(itens, key = { it.first.toString() }) { (valor, texto) ->
-            if (valor == selecionado) {
-                FilledCta(text = texto, onClick = { onClick(valor) })
-            } else {
-                GhostButton(text = texto, onClick = { onClick(valor) })
-            }
-        }
-    }
-}
-
-@Composable
-private fun Rotulo(texto: String) = Text(texto, style = Caption, color = Slush.ink)
 
 private fun tipoCurto(tipo: AccountType) = when (tipo) {
     AccountType.CHECKING -> "Corrente"

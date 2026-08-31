@@ -1,6 +1,5 @@
 package app.financepro.feature.txn
 
-import android.os.Looper
 import app.financepro.core.testing.Req
 import app.financepro.data.db.CATEGORIAS_PADRAO
 import app.financepro.data.db.CONTA
@@ -23,7 +22,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.robolectric.Shadows.shadowOf
 import java.time.LocalDate
 
 /**
@@ -151,25 +149,4 @@ class QuickEntryViewModelTest : DbTest() {
     private fun gravadas() =
         runBlocking { db.txnDao().observeBetween(dia(2026, 1, 1), dia(2026, 12, 31)).first() }
 
-    /**
-     * Roda o looper principal até [condicao] valer, sem bloquear nele.
-     *
-     * O limite existe para o teste falhar dizendo o que faltou, em vez de
-     * pendurar a suíte inteira — que foi como esta classe se comportou na
-     * primeira versão.
-     */
-    private fun esperar(descricao: String, condicao: () -> Boolean) {
-        val limite = System.nanoTime() + LIMITE_NANOS
-        while (System.nanoTime() < limite) {
-            shadowOf(Looper.getMainLooper()).idle()
-            if (condicao()) return
-            Thread.sleep(PASSO_MS)
-        }
-        error("tempo esgotado esperando: $descricao")
-    }
-
-    private companion object {
-        const val LIMITE_NANOS = 5_000_000_000L
-        const val PASSO_MS = 5L
-    }
 }

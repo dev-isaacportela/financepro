@@ -119,6 +119,9 @@ val Caption = TextStyle(
     letterSpacing = (-0.01).em,
 )
 
+/** A descrição da linha de transação, que design.md §6.3 pede em peso 700. */
+val BodyStrong = Body.copy(fontWeight = FontWeight.W700)
+
 /** Nav, botões e rótulos: a abertura é o que dá ar aos controles pill. */
 val Label = TextStyle(
     fontFamily = Inter,
@@ -130,6 +133,9 @@ val Label = TextStyle(
 // Todo valor monetário passa por um destes dois, via `MoneyText` (REQ-DS-007).
 val MoneyLg = DisplaySm.copy(fontFeatureSettings = TNUM)
 val MoneyBody = Body.copy(fontWeight = FontWeight.W700, fontSize = 15.sp, fontFeatureSettings = TNUM)
+
+/** Saldo corrente do extrato: `tnum` também aqui, senão a coluna não alinha. */
+val MoneyCaption = Caption.copy(fontFeatureSettings = TNUM)
 
 /**
  * O mapa para o Material 3, para que um `Text` sem `style` explícito já caia num

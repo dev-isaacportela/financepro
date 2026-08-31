@@ -1,5 +1,6 @@
 package app.financepro.data.repo
 
+import app.financepro.core.time.PERIODO_TODO
 import app.financepro.data.db.ACCOUNT_CASH_COLOR
 import app.financepro.data.db.ACCOUNT_CHECKING_COLOR
 import app.financepro.data.db.AccountDao
@@ -164,12 +165,25 @@ class CategoryRepository @Inject constructor(
 @Singleton
 class TxnRepository @Inject constructor(private val dao: TxnDao) {
 
+    /** A linha da última exclusão, à espera do desfazer. Ver [excluir]. */
+    @Volatile
+    private var ultimaExcluida: TxnEntity? = null
+
     /**
      * O intervalo chega como `LocalDate` e vira `epochDay` aqui: a conversão é
      * de borda, e nenhuma tela precisa saber que a coluna é inteiro.
      */
     fun observeBetween(de: LocalDate, ate: LocalDate): Flow<List<Txn>> =
         dao.observeBetween(de.toEpochDay(), ate.toEpochDay()).map { l -> l.map { it.toDomain() } }
+
+    /**
+     * O histórico inteiro, para quem calcula saldo.
+     *
+     * Saldo é de todos os tempos por definição (REQ-ACC-003), e três telas
+     * pediam isso soletrando a mesma janela larga cada uma à sua maneira. A
+     * janela em si está em [PERIODO_TODO], com o `ponytail:` que a explica.
+     */
+    fun observeTudo(): Flow<List<Txn>> = observeBetween(PERIODO_TODO.start, PERIODO_TODO.endInclusive)
 
     fun observeByAccount(accountId: Long, de: LocalDate, ate: LocalDate): Flow<List<Txn>> =
         dao.observeByAccount(accountId, de.toEpochDay(), ate.toEpochDay())
@@ -198,6 +212,44 @@ class TxnRepository @Inject constructor(private val dao: TxnDao) {
         val grupo = UUID.randomUUID().toString()
         val agora = System.currentTimeMillis()
         dao.upsertAll(parcelas.map { it.toEntity(agora).copy(installmentGroupId = grupo) })
+    }
+
+    /**
+     * Exclui, guardando a linha para o desfazer de 5s. REQ-TXN-010
+     *
+     * A entidade fica **aqui**, e não no ViewModel, por uma razão concreta:
+     * `TxnEntity` tem `notes`, `recurringRuleId`, `importBatchId`, `dedupeKey` e
+     * `createdAt`, que o modelo de domínio não carrega. Desfazer a partir de um
+     * `Txn` apagaria as cinco em silêncio — e uma `dedupeKey` perdida faria a
+     * próxima importação (F2) recriar a transação como se fosse nova.
+     *
+     * Subir as colunas para o domínio quebraria o Art. 8; devolver a entidade
+     * para o ViewModel quebraria a §3 da arquitetura. Guardá-la no repositório
+     * não quebra nenhum dos dois.
+     *
+     * ponytail: guarda **uma** exclusão; a segunda descarta a primeira. É o que
+     * o snackbar comporta, que mostra uma de cada vez. Vira pilha se a T-042
+     * (desfazer de lote de importação) precisar.
+     */
+    suspend fun excluir(id: Long) {
+        val alvo = dao.byId(id) ?: return
+        ultimaExcluida = alvo
+        dao.delete(alvo)
+    }
+
+    /**
+     * Repõe a última exclusão. Devolve `false` se não havia o que desfazer.
+     *
+     * `insert`, não `upsert`: o id volta idêntico, e as parcelas irmãs do mesmo
+     * `installmentGroupId` continuam apontando para o conjunto certo. O sinal é
+     * consumido na entrada — desfazer duas vezes repõe uma vez, que é o que a
+     * palavra significa.
+     */
+    suspend fun desfazerExclusao(): Boolean {
+        val alvo = ultimaExcluida ?: return false
+        ultimaExcluida = null
+        dao.insert(alvo)
+        return true
     }
 }
 

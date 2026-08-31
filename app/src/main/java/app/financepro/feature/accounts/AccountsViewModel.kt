@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import javax.inject.Inject
 
 /**
@@ -53,7 +52,7 @@ class AccountsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            combine(contas.observeAll(), txns.observeBetween(INICIO, FIM)) { cs, ts -> cs to ts }
+            combine(contas.observeAll(), txns.observeTudo()) { cs, ts -> cs to ts }
                 .collect { (cs, ts) ->
                     _state.update { it.copy(contas = cs, saldos = saldos(cs, ts)) }
                 }
@@ -121,11 +120,4 @@ class AccountsViewModel @Inject constructor(
     }
 
     private fun saldos(cs: List<Account>, ts: List<Txn>) = cs.associate { it.id to balanceOf(it, ts) }
-
-    private companion object {
-        // ponytail: mesma janela larga da HomeViewModel. Some quando a T-014
-        // definir o filtro de período de verdade.
-        val INICIO: LocalDate = LocalDate.of(2000, 1, 1)
-        val FIM: LocalDate = LocalDate.of(2100, 1, 1)
-    }
 }

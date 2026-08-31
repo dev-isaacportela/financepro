@@ -53,3 +53,17 @@ fun monthRange(month: YearMonth, monthStartDay: Int = 1): MonthRange {
 
 private fun periodStart(month: YearMonth, monthStartDay: Int): LocalDate =
     month.atDay(minOf(monthStartDay, month.lengthOfMonth()))
+
+/**
+ * "Todo o histórico", para quem precisa de saldo sem recorte de período.
+ *
+ * Nasceu triplicada — `HomeViewModel`, `AccountsViewModel` e
+ * `TransactionsViewModel` tinham cada um o seu par de constantes, e os dois
+ * primeiros já carregavam um `ponytail:` prometendo que a T-014 resolveria. A
+ * quarta cópia é que seria o erro: saldo é de todos os tempos por definição
+ * (REQ-ACC-003), e três definições do que "todos os tempos" significa divergem.
+ *
+ * ponytail: janela literal em vez de query sem `BETWEEN`. Trocar quando o
+ * `observeBetween` sem intervalo existir — o gatilho é o da ADR-009, ~5k linhas.
+ */
+val PERIODO_TODO = MonthRange(LocalDate.of(2000, 1, 1), LocalDate.of(2100, 1, 1))
