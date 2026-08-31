@@ -273,6 +273,17 @@ Biometria opcional, `allowBackup="false"`, `FLAG_SECURE`, expurgo de logs.
 Manifesto mesclado, não o do módulo: a permissão costuma entrar por dependência
 transitiva, sem ninguém declarar.
 
+**Pronto quando**
+- [x] `ManifestTest` com `@Req`, lendo o mesclado pelo `PackageManager`
+- [x] Guarda exercida de verdade: declarar `INTERNET` no manifesto faz o teste
+      falhar. Sem esse ensaio, um teste verde não prova nada
+- [x] Segundo caso ancora o primeiro — um manifesto que não chegou ao teste
+      também "não declara INTERNET", e passaria por vacuidade. O teste exige ver
+      a `MainActivity` na lista
+- [x] Proíbe `INTERNET` nominalmente, não "nenhuma permissão": a T-018 traz
+      `USE_BIOMETRIC` legitimamente, e um teste que reprova toda permissão vira
+      obstáculo em vez de guarda
+
 ### T-020 — Acessibilidade das telas F0
 **Fase** F0 · **Depende de** T-017 · **REQ** REQ-A11Y-001, REQ-A11Y-003, REQ-A11Y-004, REQ-A11Y-006
 

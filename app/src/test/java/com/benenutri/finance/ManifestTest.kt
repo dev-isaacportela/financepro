@@ -1,0 +1,63 @@
+package com.benenutri.finance
+
+import android.Manifest
+import android.content.pm.PackageManager
+import com.benenutri.finance.core.testing.Req
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+
+/**
+ * REQ-SEC-007 — o app não pede rede nas fases F0 a F3.
+ *
+ * Um app financeiro sem permissão de `INTERNET` é uma garantia que o usuário
+ * confere sozinho nas informações do app, e não uma promessa na política de
+ * privacidade. Este teste é o que impede a garantia de morrer sem ninguém
+ * perceber.
+ *
+ * Lê o manifesto **mesclado**, via `PackageManager`, e não o do módulo: a
+ * permissão quase nunca entra por alguém digitando `<uses-permission>` — entra
+ * por dependência transitiva, no manifesto de um AAR que ninguém abriu.
+ *
+ * A partir da F4 a T-049 adiciona `INTERNET` de propósito, e é **aqui** que a
+ * regra muda junto, de preferência no mesmo commit.
+ */
+@Req("REQ-SEC-007")
+@RunWith(RobolectricTestRunner::class)
+class ManifestTest {
+
+    private val app = RuntimeEnvironment.getApplication()
+
+    @Test
+    fun `manifesto mesclado nao declara INTERNET`() {
+        val permissoes = app.packageManager
+            .getPackageInfo(app.packageName, PackageManager.GET_PERMISSIONS)
+            .requestedPermissions
+            ?.toList()
+            .orEmpty()
+
+        assertFalse(
+            "alguém — ou alguma dependência — trouxe INTERNET de volta: $permissoes",
+            Manifest.permission.INTERNET in permissoes,
+        )
+    }
+
+    @Test
+    fun `o manifesto que o teste le e mesmo o mesclado`() {
+        // Sem esta âncora o teste acima passaria por vacuidade: um manifesto
+        // que não chegou ao teste também não declara INTERNET.
+        val atividades = app.packageManager
+            .getPackageInfo(app.packageName, PackageManager.GET_ACTIVITIES)
+            .activities
+            ?.map { it.name }
+            .orEmpty()
+
+        assertTrue(
+            "manifesto mesclado não chegou ao teste: $atividades",
+            MainActivity::class.qualifiedName in atividades,
+        )
+    }
+}
