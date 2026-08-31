@@ -35,13 +35,16 @@ DataStore, detekt.
 **Pronto quando**
 - [x] Repositório git inicializado, com `.gitignore` e `.gitattributes` — sem ele o
       Art. 2 (commit cita `REQ-*`) não tem onde ser aplicado
-- [ ] `./gradlew assembleDebug` e `./gradlew test` passam num app vazio —
-      **bloqueado no ambiente, não no projeto:** `Selector.open()` do JDK falha
-      nesta máquina (`Unable to establish loopback connection`), no JBR 21 e no
-      JDK 24, enquanto `Pipe` e `SocketChannel` funcionam. É o Winsock do Windows
-      com um LSP interferindo — típico de Docker Desktop, VPN ou antivírus.
-      Correção do lado do usuário: `netsh winsock reset` como administrador e
-      reiniciar. Até lá, quem valida é o job `build` do CI.
+- [x] `./gradlew assembleDebug` e `./gradlew test` passam num app vazio.
+      Esteve bloqueado por `Unable to establish loopback connection` em toda
+      invocação do Gradle. **Não era o Winsock:** a partir do JDK 16 o par
+      interno de `Selector.open()` é um socket **AF_UNIX**, cujo arquivo nasce
+      em `java.io.tmpdir` — e `connect()` devolve `EINVAL` para qualquer socket
+      criado dentro de `%LOCALAPPDATA%\Temp` nesta máquina. Fora do `Temp`
+      funciona. Correção é de máquina, não do repositório:
+      `-Djdk.net.unixdomain.tmpdir=<pasta fora do Temp>` em `GRADLE_OPTS` e no
+      `org.gradle.jvmargs` do `~/.gradle/gradle.properties` — caminho absoluto
+      do Windows não pode entrar em arquivo versionado
 - [x] Version catalog é a única fonte de versões — nenhuma versão literal em `build.gradle.kts`
 - [x] `room.schemaLocation` aponta para `app/schemas/`
 - [x] `.gitattributes` força LF em `gradlew` — sem isso o CI Linux falha com
