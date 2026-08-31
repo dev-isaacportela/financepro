@@ -37,7 +37,11 @@ RE_TASK_DEPS = re.compile(r"\*\*Depende de\*\*\s*(.+?)\s*·")
 RE_TASK_REQS = re.compile(r"\*\*REQ\*\*\s*(.*)$")
 RE_ID = re.compile(r"REQ-[A-Z0-9]+-\d{3}")
 RE_TID = re.compile(r"T-\d{3}")
-RE_ANNOT = re.compile(r'@Req\(\s*"(REQ-[A-Z0-9]+-\d{3})"')
+# A anotacao e `@Req(vararg ids)`. Capturar so o primeiro id, que era o que
+# esta regex fazia, faz a rastreabilidade MENTIR na direcao perigosa: ela
+# reprovava requisitos que estavam cobertos, e o gate --phase parecia mais
+# longe do que estava. Aqui pega a lista inteira; os ids saem com RE_ID.
+RE_ANNOT = re.compile(r"@Req\(([^)]*)\)", re.S)
 RE_MDLINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 RE_HEADING = re.compile(r"^#{1,6}\s+(.*?)\s*$")
 RE_FLOAT = re.compile(r"\b(?:Double|Float|BigDecimal)\b|\.to(?:Double|Float)\s*\(")
@@ -130,8 +134,9 @@ def scan_annotations():
             text = strip_comments(path.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError):
             continue
-        for req in RE_ANNOT.findall(text):
-            found.setdefault(req, []).append(str(path.relative_to(ROOT)))
+        for args in RE_ANNOT.findall(text):
+            for req in RE_ID.findall(args):
+                found.setdefault(req, []).append(str(path.relative_to(ROOT)))
     return found
 
 

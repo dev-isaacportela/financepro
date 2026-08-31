@@ -415,9 +415,17 @@ Passagem por todas as telas da F0 (Art. 17 — é auditoria da fase, não adiame
 - [x] Workflow em `.github/workflows/ci.yml`: rastreabilidade roda **antes** do
       build e sem Gradle — se a spec quebrou, não vale compilar
 - [x] Roda em segundos, sem dependência externa (Art. 4)
+- [x] `@Req` é `vararg`, e a varredura lia **só o primeiro id** de cada
+      anotação. A rastreabilidade mentia na direção perigosa: reprovava
+      requisito que estava coberto, e fazia o gate parecer mais longe do que
+      estava. Corrigido — 19 requisitos rastreados viraram 40, sem uma linha de
+      teste nova
 - [ ] Workflow exercido de verdade — só na primeira execução em um remoto
 - [ ] Ao fechar a F0, trocar `trace.py` por `trace.py --phase F0` no workflow.
-      Hoje `--phase F0` falha com 35 erros, que é o resultado correto
+      Hoje `--phase F0` falha com **2** erros, e os dois são legítimos:
+      `REQ-CAT-005` só tem a metade de banco pronta (falta a recategorização em
+      lote da T-016) e `REQ-DATA-001` espera um `MigrationTest` que só faz
+      sentido quando existir um schema v2
 
 ---
 
