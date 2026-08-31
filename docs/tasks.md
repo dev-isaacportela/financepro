@@ -131,10 +131,42 @@ correção mora em `~/.gradle/init.gradle.kts`, não no repositório:
 SQLCipher com chave de 32 bytes gerada por `SecureRandom` no primeiro boot,
 guardada no Android Keystore.
 
+**Guardada como, exatamente.** O provider `AndroidKeyStore` não devolve material
+de chave — `SecretKey.getEncoded()` retorna `null` de propósito. Uma senha que
+precisa ser lida de volta para abrir o banco, portanto, não pode morar *dentro*
+do Keystore: ela é **embrulhada** por uma chave AES-GCM que mora lá e nunca sai.
+O envelope (IV + texto cifrado) fica em `filesDir/db.key`. O efeito é o que o
+[ADR-010](decisoes.md#adr-010--sqlcipher-e-sem-permissão-de-rede-até-a-f4) quer:
+o arquivo copiado do aparelho não abre em outro lugar, porque a chave que o
+decifra é inextraível e presa àquele hardware.
+
+Sem `setUserAuthenticationRequired`: o worker de recorrência (T-031) abre o banco
+com a tela bloqueada. O bloqueio biométrico é da tela (REQ-SEC-003), não do
+arquivo.
+
 **Pronto quando**
+- [x] `sqlcipher-android` no APK, com `libsqlcipher.so` nas quatro ABIs —
+      fixado na **4.17.0**: a 4.18.0 declara `minCompileSdk=37` e reprova o
+      `checkAarMetadata`, mesmo motivo do bloco de Compose no version catalog
+- [x] Falha em vez de gerar senha nova quando o envelope existe mas não decifra.
+      Regenerar em silêncio transformaria um problema de chave na perda calada de
+      todo o histórico financeiro
+- [x] Escrita do envelope é `write` em `.tmp` + `rename`, que é atômico no mesmo
+      volume: sem isso um desligamento no meio da gravação deixaria arquivo
+      truncado, indistinguível de corrupção
 - [ ] Arquivo `.db` extraído do aparelho não é legível por `sqlite3`
 - [ ] Chave não aparece em `SharedPreferences`, DataStore, código ou log
 - [ ] Reinstalação com dados preservados ainda abre o banco
+
+Os três últimos são `Teste: manual` na spec e **só fecham no aparelho** — a
+biblioteca nativa do SQLCipher não existe na JVM, e os testes de DAO montam o
+banco em memória sem passar por `buildDatabase`. Roteiro:
+
+```
+adb shell run-as com.benenutri.finance cat files/../databases/finance.db > /tmp/f.db
+sqlite3 /tmp/f.db .tables      # precisa falhar com "file is not a database"
+adb shell run-as com.benenutri.finance ls -R shared_prefs files
+```
 
 ### T-006 — Sementes ⇉
 **Fase** F0 · **Depende de** T-004 · **REQ** REQ-CAT-004, REQ-ACT-003

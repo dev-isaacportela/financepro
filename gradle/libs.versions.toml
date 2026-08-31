@@ -26,7 +26,10 @@ lifecycle = "2.10.0"
 # --- declarados aqui, aplicados nas suas próprias tasks ---
 navigationCompose = "2.10.0"   # T-011
 room = "2.8.4"                 # T-004
-sqlcipher = "4.18.0"           # T-005
+sqlcipher = "4.17.0"           # T-005 — uma linha atrás da última de
+                             # propósito: a 4.18.0 declara minCompileSdk=37
+                             # e reprova o build no checkAarMetadata, pelo
+                             # mesmo motivo do bloco de Compose acima
 hilt = "2.60.1"                # T-009
 hiltNavigationCompose = "1.4.0"
 datastore = "1.2.1"            # T-009

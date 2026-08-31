@@ -1,8 +1,11 @@
 package com.benenutri.finance.data.db
 
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 /**
  * Banco do app. REQ-DATA-001 · REQ-DATA-002 · REQ-DATA-003
@@ -12,9 +15,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * `fallbackToDestructiveMigration()` — proibido pelo Art. 12 — viraria a saída
  * fácil no primeiro schema quebrado.
  *
- * Quem monta o `RoomDatabase.Builder` é o módulo Hilt (T-009), com o
- * `openHelperFactory` do SQLCipher (T-005). O que mora aqui é só o que não pode
- * ficar a critério de quem constrói: [ForeignKeysOn].
+ * Quem chama [buildDatabase] é o módulo Hilt (T-009), mas a construção mora
+ * aqui: FK ligadas, semente e cifragem não podem ficar a critério de quem monta
+ * o grafo de dependências.
  */
 @Database(
     entities = [
@@ -53,4 +56,26 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
     }
+}
+
+/**
+ * O banco de verdade, cifrado. REQ-SEC-001 · [ADR-010](../../../../../../../../docs/decisoes.md)
+ *
+ * `fallbackToDestructiveMigration` não aparece aqui e não vai aparecer (Art. 12,
+ * REQ-DATA-001): apagar o histórico financeiro do usuário para vencer um erro de
+ * migração não é uma opção, e `tools/trace.py` reprova o build se alguém tentar.
+ *
+ * Os testes de DAO **não** passam por esta função — eles montam o banco em
+ * memória direto pelo Room. A biblioteca nativa do SQLCipher não existe na JVM,
+ * e o que ela troca é o `openHelperFactory`, não uma linha de SQL. O preço é que
+ * REQ-SEC-001 e REQ-SEC-002 só se verificam no aparelho, e a spec já os marca
+ * como `Teste: manual`.
+ */
+fun buildDatabase(context: Context): AppDatabase {
+    System.loadLibrary("sqlcipher")
+    return Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.NAME)
+        .openHelperFactory(SupportOpenHelperFactory(DatabaseKey(context).getOrCreate()))
+        .addCallback(AppDatabase.ForeignKeysOn)
+        .addCallback(SeedCallback)
+        .build()
 }
