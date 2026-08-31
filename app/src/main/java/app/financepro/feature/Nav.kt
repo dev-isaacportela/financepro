@@ -44,17 +44,23 @@ import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.Subheading
+import app.financepro.data.prefs.SecurityPrefs
 import app.financepro.data.repo.AccountRepository
 import app.financepro.feature.accounts.AccountsScreen
 import app.financepro.feature.categories.CategoriesScreen
 import app.financepro.feature.home.HomeScreen
+import app.financepro.feature.lock.LockScreen
 import app.financepro.feature.onboarding.OnboardingScreen
 import app.financepro.feature.txn.QuickEntrySheet
 import app.financepro.feature.txn.TransactionsScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import javax.inject.Inject
 
@@ -110,29 +116,62 @@ private val ABAS = listOf(
  * cara de quem já usa o app.
  */
 @HiltViewModel
-class RaizViewModel @Inject constructor(contas: AccountRepository) : ViewModel() {
+class RaizViewModel @Inject constructor(
+    contas: AccountRepository,
+    private val seguranca: SecurityPrefs,
+) : ViewModel() {
     val precisaOnboarding = contas.observeAll()
         .map { it.isEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(PARADA_MS), null)
+
+    /** `null` até a primeira leitura, pelo mesmo motivo de [precisaOnboarding]. */
+    val bloqueio = seguranca.bloqueio
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(PARADA_MS), null)
+
+    private val _destrancado = MutableStateFlow(false)
+    val destrancado = _destrancado.asStateFlow()
+
+    fun destrancar() {
+        _destrancado.value = true
+    }
+
+    fun alternarBloqueio() = viewModelScope.launch {
+        seguranca.definirBloqueio(!seguranca.bloqueio.first())
+    }
 
     private companion object {
         const val PARADA_MS = 5_000L
     }
 }
 
+/**
+ * O bloqueio vem **antes** do onboarding no `when`, e não como sobreposição: o
+ * requisito é "antes de exibir qualquer dado financeiro" (REQ-SEC-003), e uma
+ * camada por cima do dashboard teria o dashboard montado atrás dela.
+ *
+ * ponytail: tranca uma vez por processo, não a cada volta do segundo plano. O
+ * relock em `onStop` precisa distinguir "usuário saiu" de "a tela de credencial
+ * do sistema subiu" — que é outra Activity, e sem essa distinção o app entra em
+ * laço pedindo senha. Fechar isso quando houver aparelho para exercer os dois
+ * caminhos.
+ */
 @Composable
 fun FinanceNav(nav: NavHostController = rememberNavController(), vm: RaizViewModel = hiltViewModel()) {
     val precisaOnboarding by vm.precisaOnboarding.collectAsStateWithLifecycle()
+    val bloqueio by vm.bloqueio.collectAsStateWithLifecycle()
+    val destrancado by vm.destrancado.collectAsStateWithLifecycle()
 
-    when (precisaOnboarding) {
-        null -> Unit // primeira leitura do banco; nada a mostrar ainda
-        true -> OnboardingScreen()
-        false -> Abas(nav)
+    when {
+        // Primeira leitura do banco e da preferência; nada a mostrar ainda.
+        precisaOnboarding == null || bloqueio == null -> Unit
+        bloqueio == true && !destrancado -> LockScreen(onDesbloqueado = vm::destrancar)
+        precisaOnboarding == true -> OnboardingScreen()
+        else -> Abas(nav, bloqueio == true, vm::alternarBloqueio)
     }
 }
 
 @Composable
-private fun Abas(nav: NavHostController) {
+private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: () -> Unit) {
     var lancando by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -154,7 +193,13 @@ private fun Abas(nav: NavHostController) {
                     onVerTransacoes = { nav.navigate(Transacoes) { launchSingleTop = true } },
                 )
             }
-            composable<Mais> { MaisScreen(onIr = { nav.navigate(it) }) }
+            composable<Mais> {
+                MaisScreen(
+                    onIr = { nav.navigate(it) },
+                    bloqueio = bloqueio,
+                    onAlternarBloqueio = onAlternarBloqueio,
+                )
+            }
             composable<Contas> { AccountsScreen() }
             composable<Categorias> { CategoriesScreen() }
             composable<Transacoes> { TransactionsScreen(onNovoLancamento = { lancando = true }) }
@@ -186,7 +231,7 @@ private inline fun <reified T : Any> NavGraphBuilder.emDesenvolvimento(titulo: S
  * mexe uma vez por mês.
  */
 @Composable
-private fun MaisScreen(onIr: (Any) -> Unit) {
+private fun MaisScreen(onIr: (Any) -> Unit, bloqueio: Boolean, onAlternarBloqueio: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -196,6 +241,14 @@ private fun MaisScreen(onIr: (Any) -> Unit) {
         GhostButton(
             text = "Categorias",
             onClick = { onIr(Categorias) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        // Uma preferência não é uma tela de ajustes. O estado vai **escrito** no
+        // rótulo, não sinalizado por cor (REQ-A11Y-003) — e é o mesmo botão,
+        // que também é o que o leitor de tela anuncia por inteiro.
+        GhostButton(
+            text = if (bloqueio) "Bloqueio do app: ligado" else "Bloqueio do app: desligado",
+            onClick = onAlternarBloqueio,
             modifier = Modifier.fillMaxWidth(),
         )
     }

@@ -41,7 +41,7 @@ app.financepro/
   data/
     db/             AppDatabase, entities, DAOs, migrations, converters
     repo/           AccountRepository, TxnRepository, BudgetRepository, ...
-    prefs/          SettingsDataStore
+    prefs/          SecurityPrefs (T-018), SettingsDataStore
     import/         parsers OFX/CSV, dedupe, ImportBatch  -> ver ingestao.md
     notif/          NotificationListenerService + parsers por banco
   domain/
@@ -50,7 +50,7 @@ app.financepro/
                     GenerateRecurring, SplitInstallments, ValidateTxn
   feature/
     home/  txn/  accounts/  card/  budget/  recurring/
-    reports/  importer/  settings/  onboarding/
+    reports/  importer/  settings/  onboarding/  lock/
   MainActivity.kt
   FinanceApp.kt
 ```

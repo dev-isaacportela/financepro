@@ -9,6 +9,14 @@
       transitiva, porque o teste lê o manifesto MESCLADO.
     -->
 
+    <!--
+      REQ-SEC-003 — bloqueio biométrico opcional, com fallback para a credencial
+      do aparelho. Declarada nominalmente aqui e não herdada em silêncio da
+      androidx.biometric: o ManifestTest da T-019 proíbe INTERNET pelo nome, não
+      "toda permissão", justamente para esta caber sem afrouxar aquela guarda.
+    -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
     <application
         android:name=".FinanceApp"
         android:allowBackup="false"

@@ -47,6 +47,12 @@ RE_HEADING = re.compile(r"^#{1,6}\s+(.*?)\s*$")
 RE_FLOAT = re.compile(r"\b(?:Double|Float|BigDecimal)\b|\.to(?:Double|Float)\s*\(")
 
 # Caminhos por onde dinheiro trafega (Art. 6). Relativos ao pacote raiz.
+# Art. 15 / REQ-SEC-006 — nada de log em src/main. Banir a classe inteira, e
+# nao "Log com valor monetario": detectar interpolacao monetaria exigiria
+# semantica que uma varredura nao tem, e um saldo entra tanto por
+# Log.d("saldo=$s") quanto por uma variavel inocente tres linhas acima.
+RE_LOG = re.compile(r"\bandroid\.util\.Log\b|\bLog\.(?:v|d|i|w|e|wtf|println)\s*\(")
+
 MONEY_PATHS = ("/core/money/", "/domain/", "/data/import/")
 
 PHASES = ["F0", "F1", "F2", "F3", "F4"]
@@ -180,7 +186,7 @@ def check_links(errors):
 
 
 def check_constitution(errors):
-    """Guardas dos Arts. 6 e 12, sobre o fonte sem comentarios.
+    """Guardas dos Arts. 6, 12 e 15, sobre o fonte sem comentarios.
 
     Ficam aqui, e nao como grep no workflow, porque o KDoc de Money.kt explica
     por que Double e proibido -- e um grep cru reprovava justamente o arquivo
@@ -201,6 +207,18 @@ def check_constitution(errors):
             errors.append(
                 f"{rel}: fallbackToDestructiveMigration apaga dado financeiro "
                 f"do usuario (Art. 12, REQ-DATA-001)")
+
+        # Art. 15 — so em src/main: teste que loga nao vaza dado de usuario,
+        # e um Log no fonte do app vaza em qualquer build, debug inclusive.
+        # A DoD da T-018 pedia regra de detekt; nao da: o ForbiddenImport ja
+        # esta escopado em '**/domain/**' para a pureza do Art. 8, e o detekt
+        # nao aceita duas instancias da mesma regra com escopos diferentes.
+        if "/src/main/" in rel:
+            for m in RE_LOG.finditer(code):
+                line = code[:m.start()].count(chr(10)) + 1
+                errors.append(
+                    f"{rel}:{line}: '{m.group(0)}' — nenhum log no app "
+                    f"(Art. 15, REQ-SEC-006)")
 
         # Art. 6 — so em caminho de dinheiro, e so em src/main. Fora dai
         # toFloat e legitimo (alpha, progresso de animacao), e os testes usam

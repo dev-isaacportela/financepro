@@ -577,9 +577,45 @@ Resolvido com o dono do produto em 2026-08-31: receitas × despesas do período
 
 Biometria opcional, `allowBackup="false"`, `FLAG_SECURE`, expurgo de logs.
 
+REQ-SEC-004 já estava fechado desde a T-001: `allowBackup="false"` e
+`data_extraction_rules.xml` com `<cloud-backup />` e `<device-transfer />`
+vazios já estavam no manifesto.
+
 **Pronto quando**
-- [ ] Regra de detekt proíbe `Log.*` com interpolação de valor monetário
-- [ ] App aparece em branco na lista de recentes com bloqueio ativo
+- [x] ~~Regra de detekt~~ **guarda no `trace.py`** proíbe `Log` em `src/main`.
+      Detekt não dá: o `ForbiddenImport` já está escopado em `'**/domain/**'`
+      para a pureza do Art. 8, e detekt não aceita duas instâncias da mesma
+      regra com escopos diferentes; `ForbiddenMethodCall` exigiria resolução de
+      tipos, que `detekt.yml` já documenta como frágil aqui. A guarda foi para
+      onde moram as dos Arts. 6 e 12, pelo mesmo motivo delas
+- [x] Bane `Log` inteiro, e não "Log com valor monetário": detectar
+      interpolação monetária exige semântica que uma varredura não tem, e um
+      saldo entra tanto por `Log.d("saldo=$s")` quanto por uma variável de nome
+      inocente três linhas acima. Nenhum arquivo de `main` usava `Log` — a
+      guarda nasceu de graça
+- [x] Guarda exercida de verdade: um `android.util.Log.d` temporário em
+      `HomeScreen` faz o `trace.py` reprovar com 1 erro, e removê-lo devolve o
+      verde. Sem esse ensaio, um gate verde não prova nada (mesma régua da
+      T-019)
+- [x] `FLAG_SECURE` **coletado**, não lido uma vez: quem liga o bloqueio espera
+      que valha agora, e ler só no `onCreate` deixaria a miniatura dos recentes
+      exibindo o saldo até o próximo start do processo
+- [x] O bloqueio é um ramo do `when` de `FinanceNav`, antes do onboarding — não
+      uma sobreposição. Como sobreposição, o dashboard estaria montado atrás e
+      um instante de transição já o mostraria (REQ-SEC-003 diz "antes de exibir")
+- [x] `MainActivity` virou `FragmentActivity`: o `BiometricPrompt` monta um
+      fragmento para sobreviver a mudança de configuração no meio da autenticação
+- [x] `USE_BIOMETRIC` declarada nominalmente, e o `ManifestTest` da T-019
+      continua verde — ele proíbe `INTERNET` pelo nome justamente para esta caber
+- [ ] Conferido no aparelho: prompt antes de qualquer valor, recentes em branco,
+      e o **fallback de credencial** nas duas pontas do `minSdk` — API 26–29 usa
+      `setDeviceCredentialAllowed`, API 30+ usa `setAllowedAuthenticators`
+
+**Aberto de propósito.** O app tranca uma vez por processo, não a cada volta do
+segundo plano. O relock em `onStop` precisa distinguir "o usuário saiu" de "a
+tela de credencial do sistema subiu" — que é outra Activity, e sem essa
+distinção o app entra em laço pedindo senha. Registrado como `ponytail:` em
+`FinanceNav`, e fechável quando houver aparelho para exercer os dois caminhos.
 
 ### T-019 — Guarda de manifesto ⇉
 **Fase** F0 · **Depende de** T-001 · **REQ** REQ-SEC-007

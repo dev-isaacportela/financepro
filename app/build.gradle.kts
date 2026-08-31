@@ -84,6 +84,10 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.sqlcipher.android)
 
+    // T-018 — bloqueio biométrico (REQ-SEC-003) e a preferência que o liga.
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.datastore.preferences)
+
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
