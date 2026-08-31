@@ -421,8 +421,15 @@ inline, e os dois colaram na mesma linha.
 A fita azul é descrita como a assinatura da marca, presente em toda seção. Num
 app isso é peso de APK: renders 3D full-bleed, por densidade.
 
-**O que entra:** duas renderizações WebP com perda, ~80–120KB cada, em `nodpi`,
-escaladas pelo Compose. Uma para o onboarding, uma para estados vazios.
+**O que entra, quando existir:** duas renderizações WebP com perda, ~80–120KB
+cada, em `nodpi`, escaladas pelo Compose. Uma para o onboarding, uma para estados
+vazios.
+
+**Diferida (2026-08-31).** Os renders não existem, e é arte, não código — inventar
+outra coisa no lugar seria trocar a assinatura da marca por um desenho qualquer.
+Até lá o onboarding carrega o pôster com tipografia, stickers e banda de cor, que
+é o que já entrega o efeito em 360dp. Quando os arquivos chegarem, entram em
+`res/drawable-nodpi/` e o único código que muda é o do onboarding.
 
 **O que não entra:** fita em toda tela. Numa lista rolável ela seria redesenhada a
 cada frame por trás de conteúdo em movimento, custando banda de memória por nada

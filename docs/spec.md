@@ -1087,10 +1087,15 @@ O SISTEMA DEVE reduzir a expressão visual conforme a densidade de dados da tela
 
 | Tela | Display type | Fita 3D |
 |---|---|---|
-| Onboarding | `DisplayXl` | sim |
+| Onboarding | `DisplayXl` | diferida |
 | Estados vazios | `Display` | não |
 | Dashboard, cartão, orçamento | `DisplaySm` | não |
 | Lista de transações, importação, ajustes | **nenhum** | não |
+
+**A fita 3D está diferida por decisão do dono do produto (2026-08-31).** Ela é
+arte — renders 3D — e não existe. Até existir, o onboarding é pôster de tipografia
+pura: `DisplayXl`, stickers e banda de cor, sem a fita. O requisito não some, fica
+`diferida`, para que a ausência seja uma escolha registrada e não um esquecimento.
 
 O SISTEMA NÃO DEVE usar display type em listas roláveis de dados. Uma lista de 100
 transações em 88sp violaria o caminho de 5 segundos do Art. 18.

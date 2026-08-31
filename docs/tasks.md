@@ -284,10 +284,11 @@ Tokens, tipografia, formas e componentes base conforme [design.md](design.md).
 - [x] Componentes base nascem com alvo ≥ 48dp via `minimumInteractiveComponentSize()`
 - [x] `MoneyText` centraliza formatação, sinal e `tnum` — nenhuma tela formata
       dinheiro à mão
-- [ ] Duas renderizações WebP da fita 3D, ≤ 120KB cada, em `nodpi` — **não
-      feito.** É arte, não código: são renders 3D da fita, e não há como
-      produzi-los aqui sem inventar outra coisa no lugar. Bloqueia a T-012
-      (onboarding é o único pôster completo) e o estado vazio da T-014
+- [~] Duas renderizações WebP da fita 3D, ≤ 120KB cada, em `nodpi` —
+      **diferida por decisão do dono do produto (2026-08-31)**, e registrada
+      como tal em spec.md (REQ-DS-009) e design.md §7. É arte, não código.
+      A T-012 segue sem ela: o pôster de onboarding fica com tipografia,
+      stickers e banda de cor, que é o que já entrega o efeito em 360dp
 
 **Dívida deixada**
 
