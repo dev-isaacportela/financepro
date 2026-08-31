@@ -1,0 +1,25 @@
+# LF em tudo que é texto. Sem isto, o Git no Windows commita `gradlew` com
+# CRLF e o CI Linux falha com "bad interpreter: No such file or directory" —
+# erro que não parece ter nada a ver com fim de linha.
+* text=auto eol=lf
+
+# Scripts de Windows precisam de CRLF de verdade.
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+# O wrapper é executado por /bin/sh no CI. Nunca CRLF.
+gradlew text eol=lf
+
+# Binários: o Git não deve tocar.
+*.jar   binary
+*.keystore binary
+*.jks   binary
+*.png   binary
+*.webp  binary
+*.ttf   binary
+*.otf   binary
+
+# Diffs mais legíveis em revisão.
+*.kt   diff=java
+*.kts  diff=java
+*.md   diff=markdown

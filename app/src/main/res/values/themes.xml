@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Tema mínimo de plataforma, só para o Android ter o que aplicar antes do
+  Compose assumir. O sistema visual de verdade (Slush) é a T-010, em
+  core/ui/theme, e não vive em XML.
+-->
+<resources>
+    <style name="Theme.MobileFinance" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">@android:color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

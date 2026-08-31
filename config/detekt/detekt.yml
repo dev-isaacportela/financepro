@@ -1,0 +1,40 @@
+# Sobreposições ao config padrão (buildUponDefaultConfig = true no root build).
+# Só o que difere do padrão fica aqui.
+#
+# Nota sobre o que NÃO está aqui: as regras que dependem de resolução de tipos
+# (ForbiddenMethodCall para banir toDouble/toFloat, por exemplo) exigem a task
+# `detektMain` com classpath, que é frágil de configurar em projeto Android.
+# A guarda do Art. 6 é feita no CI por varredura de caminho, que é exata e não
+# tem falso positivo — ver .github/workflows/ci.yml.
+
+build:
+  maxIssues: 0
+
+complexity:
+  LongParameterList:
+    # Composables tomam muitos parâmetros por natureza; é o idioma, não um cheiro.
+    ignoreAnnotated: ['Composable']
+  TooManyFunctions:
+    ignoreAnnotatedFunctions: ['Composable']
+
+style:
+  MagicNumber:
+    # Valores de layout e de token visual são literais por definição.
+    ignoreAnnotated: ['Composable', 'Preview']
+    ignoreNumbers: ['-1', '0', '1', '2', '100']
+  MaxLineLength:
+    maxLineLength: 120
+  UnusedPrivateMember:
+    ignoreAnnotated: ['Preview']
+
+naming:
+  FunctionNaming:
+    # Composable é PascalCase por convenção oficial.
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9]*'
+
+formatting:
+  Indentation:
+    active: true
+    indentSize: 4

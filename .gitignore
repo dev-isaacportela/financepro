@@ -1,0 +1,33 @@
+*.iml
+.gradle/
+build/
+local.properties
+.cxx/
+captures/
+.externalNativeBuild/
+
+# Android Studio / IntelliJ — só o que é pessoal da máquina
+.idea/*
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+
+# Chaves de assinatura. Nunca versionar.
+*.jks
+*.keystore
+keystore.properties
+
+# Saídas
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+output.json
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Ferramentas baixadas para bootstrap (ver tools/README)
+tools/gradle-*/
+tools/gradle-*.zip

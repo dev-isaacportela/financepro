@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  REQ-SEC-004 — nenhum dado sai do aparelho por backup do sistema.
+
+  Regras vazias, de propósito: `<cloud-backup>` e `<device-transfer>` sem
+  nenhum `<include>` significam que nada é elegível. Combinado com
+  android:allowBackup="false", o banco não é copiado para o backup em nuvem
+  do Android nem para transferência entre aparelhos.
+
+  A cópia de segurança do usuário é a da T-035: arquivo único, AES-256, com
+  senha dele, para destino escolhido por ele.
+-->
+<data-extraction-rules>
+    <cloud-backup />
+    <device-transfer />
+</data-extraction-rules>

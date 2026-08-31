@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      REQ-SEC-007 — a permissão INTERNET NÃO é declarada nas fases F0 a F3.
+      É a garantia que o usuário confere sozinho nas informações do app.
+      Só a T-049 (Open Finance, F4) pode adicioná-la, e o ManifestTest da
+      T-019 falha se ela aparecer antes disso — inclusive por dependência
+      transitiva, porque o teste lê o manifesto MESCLADO.
+    -->
+
+    <application
+        android:name=".FinanceApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MobileFinance">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.MobileFinance">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

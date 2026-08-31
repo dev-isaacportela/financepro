@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Gate de especificação. Roda primeiro e sem Gradle: se a rastreabilidade
+  # quebrou, não vale gastar 5 minutos compilando (constitution.md Art. 4).
+  spec:
+    name: Rastreabilidade
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: trace.py
+        # Modo padrão: cobra task para todo MUST, requisito existente para toda
+        # citação, e links/âncoras entre os documentos.
+        #
+        # Ao fechar a F0, trocar por `--phase F0` — aí passa a cobrar também
+        # @Req no código para todo MUST daquela fase. Cada fase concluída
+        # avança este argumento. Hoje `--phase F0` falha com 35 erros, o que é
+        # o resultado correto: a F0 não começou.
+        run: python tools/trace.py
+
+      - name: Art. 6 — dinheiro não toca ponto flutuante
+        # Regra de caminho, não de projeto inteiro: `toFloat` é legítimo em
+        # Compose (alpha, progresso de animação). O que não pode é ponto
+        # flutuante nos caminhos onde dinheiro trafega.
+        run: |
+          PATHS="app/src/main/java/com/benenutri/finance/core/money
+                 app/src/main/java/com/benenutri/finance/domain
+                 app/src/main/java/com/benenutri/finance/data/import"
+          FOUND=0
+          for p in $PATHS; do
+            [ -d "$p" ] || continue
+            if grep -rnE '\.(toDouble|toFloat)\(\)|\bDouble\b|\bFloat\b' "$p"; then
+              FOUND=1
+            fi
+          done
+          if [ "$FOUND" = "1" ]; then
+            echo "::error::Ponto flutuante em caminho de dinheiro. Ver constitution.md Art. 6 e ADR-002."
+            exit 1
+          fi
+          echo "OK — nenhum ponto flutuante nos caminhos de dinheiro."
+
+      - name: Art. 12 — migração destrutiva é proibida
+        run: |
+          if grep -rn "fallbackToDestructiveMigration" app/src 2>/dev/null; then
+            echo "::error::fallbackToDestructiveMigration apaga dado financeiro do usuário. Ver Art. 12 e REQ-DATA-001."
+            exit 1
+          fi
+          echo "OK."
+
+  build:
+    name: Build e testes
+    runs-on: ubuntu-latest
+    needs: spec
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          # AGP 8.13 não roda sobre JDK 24. Fixado em 21, que é o JBR que o
+          # Android Studio também usa.
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: detekt
+        run: ./gradlew detekt --no-configuration-cache
+
+      - name: Testes de unidade
+        run: ./gradlew test
+
+      - name: assembleDebug
+        run: ./gradlew assembleDebug
+
+      - name: Relatórios
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorios
+          path: |
+            app/build/reports/
+            build/reports/detekt/
+          retention-days: 7
