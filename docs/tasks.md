@@ -87,6 +87,12 @@ verdade para a regra mais sensível do app.
 
 Entidades, DAOs, índices e converters conforme [arquitetura.md](arquitetura.md) §4.
 
+**Os modelos de domínio não entram aqui.** A §3 da arquitetura já exige que
+`domain/model/` seja Kotlin puro, sem anotação de Room — então eles são
+entregues junto das regras que os usam (T-007 e T-008), e esta task passa a
+tratar só do mapeamento para o banco. É o que permite validar saldo e validação
+de transação sem emulador, que é justamente o objetivo do Art. 8.
+
 **Pronto quando**
 - [ ] `PRAGMA foreign_keys = ON` no `onOpen`, com teste que prova que `RESTRICT` dispara
 - [ ] Todos os índices da §4.1 criados
@@ -114,25 +120,30 @@ Categorias padrão e ~40 regras de estabelecimento.
 - [ ] Seed roda uma única vez, na criação do banco
 
 ### T-007 — Validação de transação
-**Fase** F0 · **Depende de** T-002, T-004 · **REQ** REQ-CORE-002, REQ-ACC-006, REQ-CAT-003, REQ-TXN-004, REQ-TXN-005, REQ-TXN-013
+**Fase** F0 · **Depende de** T-002 · **REQ** REQ-CORE-002, REQ-ACC-006, REQ-CAT-003, REQ-TXN-004, REQ-TXN-005, REQ-TXN-013
 
 `domain/usecase/ValidateTxn.kt`. Kotlin puro, sem Android.
 
 **Pronto quando**
-- [ ] Cada regra da §5 da spec tem um caso de teste com a mensagem exata
-- [ ] Retorna lista de erros, não lança exceção — a UI mostra todos de uma vez
-- [ ] `ValidateTxnTest` com `@Req` para os 6 requisitos
+- [x] Cada regra da §5 da spec tem um caso de teste com a mensagem exata
+- [x] Retorna lista de erros, não lança exceção — a UI mostra todos de uma vez,
+      e há teste que prova os 4 erros saindo juntos
+- [x] `ValidateTxnTest` com `@Req` para os 6 requisitos
+- [x] `hoje` é injetado, não lido de `LocalDate.now()`: data do sistema dentro de
+      função pura tornaria o teste dependente do dia em que roda
 
 ### T-008 — Cálculo de saldo
-**Fase** F0 · **Depende de** T-004 · **REQ** REQ-ACC-003, REQ-ACC-004, REQ-ACC-007, REQ-TXN-002, REQ-TXN-003, REQ-TXN-006, REQ-CARD-009
+**Fase** F0 · **Depende de** T-002, T-003 · **REQ** REQ-ACC-003, REQ-ACC-004, REQ-ACC-007, REQ-TXN-002, REQ-TXN-003, REQ-TXN-006, REQ-CARD-009
 
 `AccountBalance`, com a fórmula de dois termos de [ADR-003](decisoes.md#adr-003--transferência-é-uma-linha-não-duas).
 
 **Pronto quando**
-- [ ] `AccountBalanceTest` cobre as 4 linhas da tabela de REQ-ACC-004
-- [ ] Teste explícito do invariante: transferência não altera a soma dos saldos (Art. 7)
-- [ ] Saldo total do dashboard exclui `CREDIT_CARD`
-- [ ] `TransferTest` e `TxnSignTest` com `@Req`
+- [x] `AccountBalanceTest` cobre as 4 linhas da tabela de REQ-ACC-004
+- [x] Teste explícito do invariante: transferência não altera a soma dos saldos (Art. 7)
+- [x] Saldo total do dashboard exclui `CREDIT_CARD`; dívida sai por `cardDebt`
+- [x] `TransferTest` e `TxnSignTest` com `@Req`
+- [x] **Pagar fatura zera a dívida do cartão sem nenhum ramo condicional** — é o
+      retorno prático do ADR-003, e tem teste próprio
 
 ### T-009 — Repositórios e DI
 **Fase** F0 · **Depende de** T-005, T-007, T-008 · **REQ** —
