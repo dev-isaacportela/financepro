@@ -35,3 +35,7 @@ gradle/gradle-daemon-jvm.properties
 # Ferramentas baixadas para bootstrap (ver tools/README)
 tools/gradle-*/
 tools/gradle-*.zip
+
+# Cache do Python do tools/trace.py
+__pycache__/
+*.pyc
