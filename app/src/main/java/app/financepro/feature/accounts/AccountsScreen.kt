@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -103,10 +104,15 @@ fun AccountsScreen(vm: AccountsViewModel = hiltViewModel()) {
 @Composable
 private fun Linha(conta: Account, saldoCents: Long, onClick: () -> Unit, onArquivar: () -> Unit) {
     SlushCard(Modifier.fillMaxWidth().clickable(onClick = onClick)) {
-        Row(
+        // `FlowRow` e não `Row`: com a fonte a 200% o valor e o botão não cabem
+        // ao lado do nome, e num Row eles são medidos primeiro — a coluna do
+        // nome sobrava com um caractere de largura e o nome descia letra por
+        // letra ("( D i n h e i r o"). Aqui o que não couber cai para a linha
+        // de baixo, e na escala normal nada muda (REQ-A11Y-004).
+        FlowRow(
             Modifier.padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            itemVerticalAlignment = Alignment.CenterVertically,
         ) {
             PontoDeCor(conta.colorArgb)
             Column(Modifier.weight(1f)) {

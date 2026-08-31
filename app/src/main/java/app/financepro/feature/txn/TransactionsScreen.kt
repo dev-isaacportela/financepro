@@ -215,7 +215,11 @@ private fun CabecalhoDoDia(dia: DiaDeTransacoes) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(DIA.format(dia.data), style = Caption, color = Slush.ink)
+        // `weight` na data, não no valor: num Row os filhos SEM peso são
+        // medidos primeiro e ficam com a largura que quiserem. Com a fonte a
+        // 200% a data engolia a linha e o total sobrava com uma coluna de um
+        // caractere — "−R / $ / 18, / 50", quatro linhas (REQ-A11Y-004).
+        Text(DIA.format(dia.data), style = Caption, color = Slush.ink, modifier = Modifier.weight(1f))
         MoneyText(cents = dia.totalCents, style = MoneyCaption)
     }
 }

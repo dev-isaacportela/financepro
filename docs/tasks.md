@@ -676,8 +676,48 @@ defeitos reais no que já estava entregue.
 - [x] FAB pede `rotulo` obrigatório. O conteúdo dele é um `+`, e "sinal de
       adição" não diz o que o botão faz. Parâmetro e não `Modifier` opcional,
       para o próximo chamador não conseguir esquecer
-- [ ] Conferido no aparelho com TalkBack ligado, e com a fonte a 200% em todas
-      as telas da F0 — é o que fecha as três caixas originais de verdade
+- [x] Conferido no aparelho (Galaxy S25, Android 16, 450dpi). A leitura por
+      extenso saiu da árvore de acessibilidade real, não de suposição:
+      `R$ 481,50` → "quatrocentos e oitenta e um reais e cinquenta centavos",
+      `−R$ 30,00` → "menos trinta reais", `R$ 0,00` → "zero real", `−R$ 18,50` →
+      "menos dezoito reais e cinquenta centavos", FAB → "Novo lançamento"
+- [x] Alvos de toque medidos em dp a partir das `bounds` do `uiautomator`, não
+      lidos do código: abas 82×48, FAB 56×56, `◀`/`▶` 58×48, "Filtros" 62×48,
+      linhas do Mais 352×48, stickers 64×83. Nenhum abaixo de 48
+- [x] Três toques do Art. 18 exercidos: o FAB abre a folha com o campo de valor
+      **já em foco**, e categorias e "Salvar" ficam visíveis sem rolar
+- [x] **A fonte a 200% derrubou três telas**, e nenhuma tinha aparecido em
+      revisão de código:
+
+      1. **Cabeçalho do dia** em Transações — o total do dia quebrava em quatro
+         linhas: `−R` / `$` / `18,` / `50`. É REQ-A11Y-004 literal, "sem truncar
+         valores". Num `Row`, os filhos **sem** `weight` são medidos primeiro e
+         ficam com a largura que quiserem; a data engolia a linha inteira e
+         sobrava uma coluna de um caractere para o dinheiro. `weight` foi para a
+         data, que é quem pode ceder
+      2. **Lista de contas e de categorias** — o nome descia letra por letra
+         ("( D i n h e i r o"), pela mesma razão elevada ao cubo: valor e botão,
+         os dois sem peso, não cabiam ao lado do nome. Viraram `FlowRow`, e o
+         que não couber cai para a linha de baixo. Na escala normal o desenho é
+         idêntico ao de antes — conferido nas duas escalas
+      3. **Abas** saíam como "Trans" e "Orça", cortadas sem reticência, o que lê
+         como outra palavra em vez de texto truncado. Agora duas linhas com
+         reticência: "Transações" cabe inteira, "Orçamento" fica visivelmente
+         cortado. Quatro abas em 360dp com a fonte dobrada não cabem por
+         extenso, e é o que a própria `NavigationBar` do Material faz — o leitor
+         de tela continua recebendo o rótulo inteiro
+- [x] Nenhum **valor** truncado em nenhuma tela, nas duas escalas. O que trunca
+      é descrição, nome de conta e de categoria, que é o desenho de design.md
+      §6.3 — e o nome completo chega ao leitor pela `contentDescription`
+- [ ] TalkBack ligado de verdade, ouvindo a navegação. A árvore de
+      acessibilidade prova o que o leitor **recebe**; falta ouvir a ordem em que
+      ele percorre a tela, que é a parte que nenhum dump mostra
+
+**O que a passada no aparelho ensinou.** As três quebras de 200% estavam em
+código já entregue e revisado, e nenhuma delas é visível lendo o arquivo: é
+preciso medir. A regra que sai daqui, e que vale para toda tela nova: num `Row`
+com valor monetário, o **rótulo** leva o `weight`, nunca o valor. Se houver um
+terceiro filho — botão, ícone, o que for —, o `Row` não serve, é `FlowRow`.
 
 `maxLines = 1` fica onde está — descrição de transação, nome de conta e de
 categoria. É o desenho de design.md §6.3, e o que REQ-A11Y-004 proíbe truncar é

@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
@@ -326,7 +327,18 @@ private fun Aba(
             text = rotulo,
             style = Label,
             textAlign = TextAlign.Center,
-            maxLines = 1,
+            // Duas linhas, não uma: a 200% "Transações" e "Orçamento" saíam
+            // cortados como "Trans" e "Orça" — sem reticências, o que lê como
+            // outra palavra em vez de texto truncado.
+            //
+            // Em duas linhas "Transações" cabe inteira; "Orçamento" ainda não,
+            // e aí a reticência é o que importa: a palavra fica visivelmente
+            // cortada em vez de virar "Orçament". Quatro abas em 360dp com a
+            // fonte dobrada não cabem por extenso, e é o que a própria
+            // NavigationBar do Material faz. O leitor de tela continua
+            // recebendo o rótulo inteiro, que é o que REQ-A11Y-001 pede.
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 14.dp),
         )
     }
