@@ -1,12 +1,14 @@
 # Fonte única de versões (T-001).
 # Nenhuma versão literal em build.gradle.kts — se aparecer, a revisão rejeita.
-# Todas as versões abaixo foram resolvidas contra Google Maven / Maven Central,
-# não estimadas.
+# Versões elevadas pelo Android Studio no primeiro sync (AGP 8.13 -> 9.0), e
+# validadas por ele. Minha pesquisa original filtrou a linha 9.x por engano e
+# fixou uma major atrasada.
 
 [versions]
-agp = "8.13.2"
-kotlin = "2.2.0"
-ksp = "2.2.0-2.0.2"          # o sufixo tem de casar com `kotlin` acima
+agp = "9.0.1"
+kotlin = "2.2.10"
+ksp = "2.3.2"                # KSP2: versionamento independente do Kotlin,
+                             # diferente do KSP1, que usava <kotlin>-<ksp>
 detekt = "1.23.8"
 
 # --- em uso a partir da T-001 ---

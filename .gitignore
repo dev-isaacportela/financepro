@@ -28,6 +28,10 @@ output.json
 .DS_Store
 Thumbs.db
 
+# Gerado pela IDE. Fixa toolchainVendor=JETBRAINS, o que faria o CI baixar
+# um JDK JetBrains a cada execucao em vez de usar o Temurin do setup-java.
+gradle/gradle-daemon-jvm.properties
+
 # Ferramentas baixadas para bootstrap (ver tools/README)
 tools/gradle-*/
 tools/gradle-*.zip
