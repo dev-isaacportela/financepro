@@ -332,8 +332,19 @@ Seletor de mês, itens por categoria, botão pagar fatura.
 Cálculo puro das datas de ocorrência.
 
 **Pronto quando**
-- [ ] `RecurrenceExpansionTest` cobre as 4 linhas de clamp de REQ-REC-006, incluindo ano bissexto
-- [ ] `interval` testado para as 4 frequências
+- [x] `RecurrenceExpansionTest` cobre as 4 linhas de clamp de REQ-REC-006, incluindo ano bissexto
+- [x] `interval` testado para as 4 frequências
+- [x] **O clamp não gruda**: regra do dia 31 gera 28/02 e volta para 31/03. Cada
+      ocorrência sai da âncora original, nunca da ocorrência anterior — calcular
+      a partir da anterior prenderia a regra no dia 28 para sempre
+- [x] Sequência estritamente crescente nas 4 frequências × 3 intervalos: data
+      repetida duplicaria lançamento, e data que retrocede quebraria a
+      idempotência da T-031, que avança `lastGeneratedDate`
+
+Campos de âncora (`dayOfMonth`, `weekday`, `monthOfYear`) são **opcionais** e,
+quando nulos, saem de `startDate` — mesma convenção do iCalendar (`BYMONTHDAY`
+derivando de `DTSTART`). Evita o estado inconsistente de `dayOfMonth = 10` com
+`startDate` no dia 3, sem mudar o schema: as colunas já são nuláveis.
 
 ### T-031 — Geração de ocorrências
 **Fase** F1 · **Depende de** T-030 · **REQ** REQ-REC-003, REQ-REC-004, REQ-REC-005, REQ-REC-007
