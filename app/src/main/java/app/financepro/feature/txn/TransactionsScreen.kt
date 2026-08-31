@@ -1,7 +1,6 @@
 package app.financepro.feature.txn
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,45 +32,38 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
+import app.financepro.core.ui.component.LinhaDeTransacao
 import app.financepro.core.ui.component.MoneyText
-import app.financepro.core.ui.component.SlushCard
 import app.financepro.core.ui.component.SlushSurface
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.MoneyCaption
-import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
 import app.financepro.core.ui.theme.Subheading
-import app.financepro.domain.model.Account
-import app.financepro.domain.model.Category
 import app.financepro.domain.model.Txn
-import app.financepro.domain.model.TxnType
 import app.financepro.domain.usecase.DiaDeTransacoes
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * Lista de transações. REQ-TXN-010 · REQ-TXN-011 · REQ-TXN-012 · REQ-UI-006 ·
- * [design.md](../../../../../../../../docs/design.md) §6.3
+ * Lista de transações. REQ-TXN-010 · REQ-TXN-011 · REQ-TXN-012 · REQ-UI-006
  *
  * A tela mais densa do app, e por isso a que menos tolera vocabulário de
- * pôster: o indicador de categoria é um ponto de 10dp, não o sticker de 34dp do
- * grid de lançamento — uma coluna de dez blocos coloridos torna a lista
- * ilegível, e a categoria já aparece por extenso na linha de baixo.
+ * pôster. A linha em si mora em `core/ui/component/TxnRow.kt` desde que o
+ * dashboard (T-017) virou o segundo chamador; o que sobrou aqui é o que é da
+ * tela — período, filtro, agrupamento por dia e o desfazer de 5s.
  *
  * ponytail: sem Paging 3 (ADR-009). A visão padrão é um mês, ~100 linhas, e
  * carregá-las em memória custa menos que `PagingSource`, estados de load e os
@@ -203,7 +194,7 @@ private fun Lista(state: TransactionsState, dias: List<DiaDeTransacoes>, onExclu
             item(key = "dia-" + dia.data) { CabecalhoDoDia(dia) }
             items(dia.itens, key = { it.id }) { txn ->
                 Deslizavel(onExcluir = { onExcluir(txn) }) {
-                    Linha(
+                    LinhaDeTransacao(
                         txn = txn,
                         categoria = state.categoriaDe(txn.categoryId),
                         conta = state.contaDe(txn.accountId),
@@ -268,63 +259,6 @@ private fun FundoExcluir() = Box(
     Text("Excluir", style = BodyStrong, color = Slush.paper)
 }
 
-/**
- * A linha de [design.md](../../../../../../../../docs/design.md) §6.3.
- *
- * Descrição e subtítulo são blocos **empilhados**, nunca lado a lado — é o erro
- * que o protótipo em HTML cometeu deixando-os como `span` inline. Sem altura
- * fixa: com fonte a 200% (REQ-A11Y-004) a linha precisa poder crescer.
- */
-@Composable
-private fun Linha(txn: Txn, categoria: Category?, conta: Account?, destino: Account?, saldoCents: Long?) {
-    SlushCard(Modifier.fillMaxWidth()) {
-        Row(
-            Modifier.padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.Top,
-        ) {
-            PontoDeCategoria(categoria?.colorArgb)
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = descricaoDe(txn, categoria),
-                    style = BodyStrong,
-                    color = Slush.ink,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = subtituloDe(txn, categoria, conta, destino),
-                    style = Caption,
-                    color = Slush.ink.copy(alpha = SUBTITULO_ALPHA),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                MoneyText(cents = txn.amountCents)
-                // Só no extrato de uma conta: sem conta escolhida, "saldo
-                // corrente" não teria de qual conta ser.
-                if (saldoCents != null) MoneyText(cents = saldoCents, style = MoneyCaption)
-            }
-        }
-    }
-}
-
-/**
- * Ponto de 10dp, não sticker. O contorno não é decoração: sem ele um ponto
- * Sunburst sobre papel branco dá 1.40:1 e some — leria como falha de
- * renderização, não como escolha (design.md §6.3).
- */
-@Composable
-private fun PontoDeCategoria(colorArgb: Int?) = Box(
-    Modifier
-        .padding(top = 5.dp)
-        .size(10.dp)
-        .clip(Pill)
-        .background(colorArgb?.let { Color(it) } ?: Slush.paper)
-        .border(OutlineWidth, Slush.ink, Pill),
-)
-
 @Composable
 private fun BarraDesfazer(dados: SnackbarData) {
     // `SlushSurface` e não o `Snackbar` do Material: aquele traz sombra por
@@ -347,29 +281,7 @@ private fun BarraDesfazer(dados: SnackbarData) {
 private fun tituloDoPeriodo(state: TransactionsState): String =
     if (state.periodoTodo) "Tudo" else MES.format(state.mes).replaceFirstChar { it.uppercase() }
 
-/** Descrição vazia é comum no lançamento de 3 toques: a categoria dá o nome. */
-private fun descricaoDe(txn: Txn, categoria: Category?): String =
-    txn.description.ifBlank { categoria?.name ?: tipoLegivel(txn.type) }
-
-private fun subtituloDe(txn: Txn, categoria: Category?, conta: Account?, destino: Account?): String {
-    val origem = conta?.name.orEmpty()
-    return if (txn.type == TxnType.TRANSFER) {
-        "Transferência · " + origem + " → " + destino?.name.orEmpty()
-    } else {
-        listOf(categoria?.name ?: "Sem categoria", origem).filter { it.isNotBlank() }.joinToString(" · ")
-    }
-}
-
-private fun tipoLegivel(tipo: TxnType) = when (tipo) {
-    TxnType.INCOME -> "Receita"
-    TxnType.EXPENSE -> "Despesa"
-    TxnType.TRANSFER -> "Transferência"
-}
-
 private const val DESFAZER_MS = 5_000L
-
-/** Os 62% de design.md §6.3 — o subtítulo recua sem sumir. */
-private const val SUBTITULO_ALPHA = 0.62f
 
 private val PT_BR: Locale = Locale.forLanguageTag("pt-BR")
 private val MES: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM 'de' yyyy", PT_BR)

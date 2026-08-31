@@ -144,7 +144,16 @@ private fun Abas(nav: NavHostController) {
             startDestination = Inicio,
             modifier = Modifier.fillMaxSize().padding(insets),
         ) {
-            composable<Inicio> { HomeScreen(onNovoLancamento = { lancando = true }) }
+            composable<Inicio> {
+                HomeScreen(
+                    onNovoLancamento = { lancando = true },
+                    onVerContas = { nav.navigate(Contas) },
+                    // `launchSingleTop`: "Ver todas" empilha a aba de propósito,
+                    // para o voltar devolver o dashboard — mas dois toques
+                    // seguidos não podem empilhar duas cópias dela.
+                    onVerTransacoes = { nav.navigate(Transacoes) { launchSingleTop = true } },
+                )
+            }
             composable<Mais> { MaisScreen(onIr = { nav.navigate(it) }) }
             composable<Contas> { AccountsScreen() }
             composable<Categorias> { CategoriesScreen() }

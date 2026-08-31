@@ -532,12 +532,45 @@ cursor. Virou `autoFocus`, desligado por padrão.
 ### T-017 — Dashboard
 **Fase** F0 · **Depende de** T-014, T-015 · **REQ** REQ-UI-004, REQ-UI-006
 
-Blocos de cartão e orçamento entram vazios na F0 e são preenchidos na F1.
-
 Existe hoje um `HomeScreen` **mínimo**, criado pela T-013 só para o fluxo de três
-toques ter de onde partir: saldo total e o botão de lançar. Os seis blocos em
-ordem de REQ-UI-004 são desta task. O saldo já vem de `totalBalance`, o caso de
-uso puro da T-008 — não de um `SUM` em `@Query`.
+toques ter de onde partir: saldo total e o botão de lançar. Os blocos em ordem de
+REQ-UI-004 são desta task. O saldo já vem de `totalBalance`, o caso de uso puro
+da T-008 — não de um `SUM` em `@Query`.
+
+Quatro dos seis blocos entram: saldo, cartões, comparativo e últimas transações.
+**Orçamento e próximas contas não entram nem vazios** — a linha original desta
+task dizia "blocos de cartão e orçamento entram vazios", e ela é anterior à
+T-015: cartão hoje tem dado na F0, porque `AccountFormSheet` já cria conta
+`CREDIT_CARD` com dia de fechamento e vencimento, e `cardDebt` já calcula a
+dívida desde a T-008 sem nunca ter tido um chamador. Orçamento não tem nem DAO
+(T-028), e nada cria `cleared = 0` antes da T-031 — os dois ficariam mudos para
+sempre, que é o oposto de REQ-UI-006. A regra está registrada em REQ-UI-004
+(Art. 3).
+
+`comparativo do período` não estava definido em lugar nenhum da spec — Art. 5.
+Resolvido com o dono do produto em 2026-08-31: receitas × despesas do período
+**e** a variação do líquido contra o anterior. Registrado em REQ-UI-004.
+
+**Pronto quando**
+- [x] `comparativoDe` é caso de uso puro em `domain/usecase`, não conta no
+      ViewModel nem `SUM` em `@Query` (Art. 9). O saldo continua vindo de
+      `totalBalance` pela mesma razão
+- [x] `PeriodSummaryTest` prova o invariante do Art. 7 — particionar por sinal
+      não altera a soma —, que transferência vale zero dos dois lados e que
+      previsto fica fora (REQ-TXN-006)
+- [x] A partição é por **sinal do efeito**, não por `Txn.type`: `INCOME`
+      negativo é estorno, e classificar por tipo infla os dois lados do bloco
+- [x] A linha de transação virou `core/ui/component/TxnRow.kt` em vez de ser
+      copiada — o dashboard é o segundo chamador, mesma régua que promoveu
+      `Chips`. Duas cópias divergiriam, e a errada seria a que ninguém abre
+- [x] Todo bloco vazio traz a ação que o preenche (REQ-UI-006): sem cartão,
+      "Adicionar cartão"; sem lançamento nenhum, "Lançar"
+- [x] Variação do mês chega **por palavra** além do sinal, e o valor fica em
+      tinta neutra — cor não é sinal único (REQ-A11Y-003, REQ-DS-007)
+- [x] FAB fora da rolagem: os três toques do Art. 18 não podem custar um quarto
+      para trazer o botão de volta à vista
+- [ ] Conferido no aparelho: 3 toques até salvar, fonte a 200% sem truncar,
+      TalkBack percorrendo os quatro blocos
 
 ### T-018 — Segurança do app ⇉
 **Fase** F0 · **Depende de** T-011 · **REQ** REQ-SEC-003, REQ-SEC-004, REQ-SEC-005, REQ-SEC-006

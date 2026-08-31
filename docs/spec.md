@@ -942,6 +942,20 @@ O SISTEMA DEVE exibir na tela inicial, nesta ordem: saldo total, cartões,
 comparativo do período, orçamentos mais próximos do estouro, próximas contas e
 últimas transações.
 
+O comparativo do período traz receitas e despesas do período corrente e a
+variação do líquido contra o período anterior. Transferência entre contas
+próprias não entra em nenhum dos dois — mesma regra de
+[REQ-RPT-001](#req-rpt-001--despesas-por-categoria), e pelo mesmo motivo:
+dinheiro mudando de bolso não é gasto.
+
+Um bloco cuja fonte de dados ainda não existe **não é exibido vazio**. Orçamento
+depende de [REQ-BUD-001](#req-bud-001--teto-por-categoria-e-mês) e próximas
+contas de [REQ-REC-008](#req-rec-008--próximas-contas), ambos `F1`: antes deles
+não há nem dado a mostrar nem ação que os preencha, e um bloco permanentemente
+mudo é exatamente o que [REQ-UI-006](#req-ui-006--estados-vazios-acionáveis)
+proíbe. A ordem acima é a ordem relativa dos blocos presentes; cada bloco entra
+com a task que lhe dá dados.
+
 ### REQ-UI-005 — Onboarding
 
 `F0` · `MUST` · Teste: `manual`
