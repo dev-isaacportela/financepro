@@ -9,11 +9,13 @@ import app.financepro.data.db.BudgetDao
 import app.financepro.data.db.BudgetEntity
 import app.financepro.data.db.CategoryDao
 import app.financepro.data.db.CategoryEntity
+import app.financepro.data.db.PayeeRuleDao
 import app.financepro.data.db.RecurringDao
 import app.financepro.data.db.RecurringRuleEntity
 import app.financepro.data.db.TxnDao
 import app.financepro.data.db.TxnEntity
 import app.financepro.data.db.toDomain
+import app.financepro.data.ingest.normalize
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.model.Budget
@@ -228,8 +230,51 @@ class BudgetRepository @Inject constructor(private val dao: BudgetDao) {
     }
 }
 
+/**
+ * Aprendizado por estabelecimento. REQ-ACT-001 · REQ-ACT-002 · REQ-ACT-004
+ *
+ * A chave é a **mesma** `normalize` do dedupe, e é isso que REQ-ACT-004 exige:
+ * duas normalizações divergentes fariam a importação descartar como duplicata o
+ * que o aprendizado trata como loja nova.
+ */
 @Singleton
-class TxnRepository @Inject constructor(private val dao: TxnDao) {
+class PayeeRuleRepository @Inject constructor(private val dao: PayeeRuleDao) {
+
+    /**
+     * A categoria que o app sugere para esta descrição, se já souber.
+     * REQ-ACT-002
+     *
+     * Nula é resposta legítima e não um erro: a tela de revisão destaca a linha
+     * como sem categoria, e é o usuário quem ensina — a próxima importação já
+     * vem preenchida.
+     *
+     * O casamento é por **palavra contida**, e a chave mais longa ganha: as
+     * regras semeadas são palavras-chave e as aprendidas são descrições
+     * inteiras. Ver o KDoc de `PayeeRuleDao.categoriaDe`.
+     */
+    suspend fun sugerir(descricao: String): Long? =
+        normalize(descricao).takeIf { it.isNotBlank() }?.let { dao.categoriaDe(it) }
+
+    /**
+     * Guarda o que o usuário escolheu. REQ-ACT-001
+     *
+     * Categoria nula não ensina nada — transferência não tem categoria
+     * (REQ-TXN-004) —, e descrição que normaliza para vazio ensina pior ainda:
+     * a chave `""` casaria com toda linha sem descrição de todo extrato futuro,
+     * e o app passaria a sugerir uma categoria para tudo.
+     */
+    suspend fun aprender(descricao: String, categoryId: Long?) {
+        val chave = normalize(descricao)
+        if (categoryId == null || chave.isBlank()) return
+        dao.aprender(chave, categoryId)
+    }
+}
+
+@Singleton
+class TxnRepository @Inject constructor(
+    private val dao: TxnDao,
+    private val pagadores: PayeeRuleRepository,
+) {
 
     /**
      * As linhas da última exclusão, à espera do desfazer. Ver [excluir].
@@ -284,7 +329,14 @@ class TxnRepository @Inject constructor(private val dao: TxnDao) {
     suspend fun salvar(txn: Txn): Long {
         val agora = System.currentTimeMillis()
         val existente = txn.id.takeIf { it != 0L }?.let { dao.byId(it) }
-        return dao.upsert(existente?.aplicar(txn, agora) ?: txn.toEntity(agora))
+        val id = dao.upsert(existente?.aplicar(txn, agora) ?: txn.toEntity(agora))
+        // REQ-ACT-001 — o aprendizado mora **aqui**, e não em quem chama, pela
+        // mesma razão da leitura-antes-de-escrever logo acima: é por aqui que
+        // passa todo chamador, inclusive os que ainda não existem. Corrigir a
+        // categoria de uma transação importada é justamente o momento em que o
+        // app mais tem a aprender, e é um caminho que não passa por tela nova.
+        pagadores.aprender(txn.description, txn.categoryId)
+        return id
     }
 
     /**
@@ -299,6 +351,10 @@ class TxnRepository @Inject constructor(private val dao: TxnDao) {
         val grupo = UUID.randomUUID().toString()
         val agora = System.currentTimeMillis()
         dao.upsertAll(parcelas.map { it.toEntity(agora).copy(installmentGroupId = grupo) })
+        // Uma compra, um aprendizado: as doze parcelas são o mesmo
+        // estabelecimento, e contá-las doze vezes inflaria o `hitCount` sem
+        // ensinar nada de novo.
+        parcelas.firstOrNull()?.let { pagadores.aprender(it.description, it.categoryId) }
     }
 
     /**

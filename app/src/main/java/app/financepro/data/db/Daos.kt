@@ -451,3 +451,77 @@ abstract class BackupDao {
         inserirTxns(txns)
     }
 }
+
+/**
+ * Aprendizado por estabelecimento. REQ-ACT-001 · REQ-ACT-002 ·
+ * [ingestao.md](../../../../../../../../docs/ingestao.md) §4
+ *
+ * Sem ML e sem serviço externo: memória das escolhas do usuário. As despesas de
+ * uma pessoa se repetem, e um classificador de verdade não bate isso o
+ * suficiente para justificar o custo.
+ *
+ * Classe abstrata por causa de [aprender]: "atualiza, e insere se não existia"
+ * são duas escritas que precisam da mesma transação. Fora dela, duas gravações
+ * simultâneas violariam o índice único de `normalizedKey`.
+ */
+@Dao
+abstract class PayeeRuleDao {
+
+    /**
+     * A regra que casa com esta descrição normalizada, se houver.
+     * REQ-ACT-002 · REQ-ACT-003
+     *
+     * **Por palavra contida, não por igualdade.** As regras semeadas são
+     * palavras-chave — `IFOOD`, `UBER`, `NETFLIX` —, e a descrição que chega do
+     * banco é `IFOOD PEDIDO` ou `UBER TRIP`. Igualdade exata faria as quarenta
+     * sementes nunca casarem com nada, e a primeira importação chegaria vazia,
+     * que é justamente o que REQ-ACT-003 existe para evitar.
+     *
+     * Os espaços em volta dos dois lados são o que impede casamento no meio de
+     * palavra: sem eles, a chave `UBER` acharia `SUBERBIA`. Como `normalize` só
+     * deixa `[A-Z0-9 ]`, não há curinga de `LIKE` para escapar.
+     *
+     * A chave **mais longa** ganha: entre a semente `UBER` e a regra aprendida
+     * `UBER TRIP AEROPORTO`, a segunda é a que o usuário ensinou, e a mais
+     * específica é a que descreve melhor o que ele fez.
+     */
+    @Query(
+        """
+        SELECT categoryId FROM payee_rule
+        WHERE ' ' || :chave || ' ' LIKE '%' || ' ' || normalizedKey || ' ' || '%'
+        ORDER BY length(normalizedKey) DESC
+        LIMIT 1
+        """,
+    )
+    abstract suspend fun categoriaDe(chave: String): Long?
+
+    @Query("SELECT * FROM payee_rule WHERE normalizedKey = :chave")
+    abstract suspend fun porChave(chave: String): PayeeRuleEntity?
+
+    /**
+     * A **última** escolha manda, e o contador conta quantas vezes o par
+     * apareceu.
+     *
+     * `normalizedKey` é único, então uma chave tem uma categoria — e quando o
+     * usuário corrige uma sugestão, o que ele disse foi "não é isso, é aquilo".
+     * Guardar a maioria histórica em vez da última escolha faria a correção
+     * precisar de três repetições para valer, e o usuário desistiria antes.
+     */
+    @Query(
+        """
+        UPDATE payee_rule SET categoryId = :categoryId, hitCount = hitCount + 1
+        WHERE normalizedKey = :chave
+        """,
+    )
+    abstract suspend fun reforcar(chave: String, categoryId: Long): Int
+
+    @Insert
+    abstract suspend fun inserir(regra: PayeeRuleEntity)
+
+    @Transaction
+    open suspend fun aprender(chave: String, categoryId: Long) {
+        if (reforcar(chave, categoryId) == 0) {
+            inserir(PayeeRuleEntity(normalizedKey = chave, categoryId = categoryId))
+        }
+    }
+}

@@ -1488,8 +1488,40 @@ compara. `JaGravada` existe porque `dedupeKey` não sobe para o modelo de domín
 **Fase** F2 · **Depende de** T-036 · **REQ** REQ-ACT-001, REQ-ACT-002
 
 **Pronto quando**
-- [ ] `PayeeRuleTest`: salvar 3 transações do mesmo estabelecimento faz a 4ª importação já vir categorizada
-- [ ] Categoria sugerida é sempre editável na revisão
+- [x] `PayeeRuleTest`: salvar transações do mesmo estabelecimento faz a
+      importação seguinte já vir categorizada
+- [x] Sugestão usa a **mesma** `normalize` do dedupe (REQ-ACT-004): NSU
+      diferente na mesma padaria dá a mesma sugestão
+- [x] Transferência não ensina — ela não tem categoria (REQ-TXN-004) — e
+      descrição que normaliza para vazio também não: a chave `""` casaria com
+      toda linha sem descrição de todo extrato futuro
+- [x] Doze parcelas ensinam **uma** vez: são uma compra só
+- [ ] Categoria sugerida é sempre editável na revisão — a tela é da T-041
+
+**O defeito que o teste pegou antes de existir tela.** A primeira versão
+procurava a regra por igualdade da chave normalizada, que é o que REQ-ACT-001
+descreve para o **aprendizado**. Só que as ~40 regras semeadas de REQ-ACT-003 são
+palavras-chave — `IFOOD`, `UBER`, `NETFLIX` — e o extrato traz `iFood *Pedido
+12345`, que normaliza para `IFOOD PEDIDO`. Por igualdade, **nenhuma** das
+quarenta casaria com coisa alguma, e a primeira importação chegaria vazia: o
+oposto exato do que a semente existe para fazer.
+
+A busca passou a ser por **palavra contida**, com a chave mais longa ganhando.
+Os espaços em volta dos dois lados são o que impede casar no meio de palavra —
+sem eles a chave `UBER` acharia `SUBERBIA`. E a chave mais longa ser a
+vencedora resolve o empate do jeito certo: entre a semente `UBER` e a regra
+aprendida `UBER TRIP AEROPORTO`, a segunda foi o usuário quem ensinou.
+
+**A última correção manda.** `normalizedKey` é único, então uma chave tem uma
+categoria. Quando o usuário corrige uma sugestão, o que ele disse foi "não é
+isso, é aquilo" — guardar a maioria histórica faria a correção precisar de três
+repetições para valer, e ele desistiria antes.
+
+O aprendizado mora em `TxnRepository.salvar`, e não em quem chama, pela mesma
+razão da leitura-antes-de-escrever que já vive lá: é por ali que passa todo
+chamador, inclusive os que ainda não existem. Corrigir a categoria de uma
+transação importada é o momento em que o app mais tem a aprender, e é um caminho
+que não passa por tela nova.
 
 ### T-041 — Fluxo de importação
 **Fase** F2 · **Depende de** T-038, T-039, T-040 · **REQ** REQ-IMP-001, REQ-IMP-005, REQ-IMP-010

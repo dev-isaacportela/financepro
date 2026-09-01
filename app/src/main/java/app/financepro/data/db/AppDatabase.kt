@@ -42,6 +42,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun backupDao(): BackupDao
 
+    abstract fun payeeRuleDao(): PayeeRuleDao
+
     companion object {
         const val NAME = "finance.db"
 

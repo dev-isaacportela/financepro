@@ -31,7 +31,7 @@ class RepositoryTest : DbTest() {
     @Test
     fun `intervalo de datas atravessa a fronteira LocalDate - epochDay`() = runBlocking {
         val contas = AccountRepository(db.accountDao())
-        val txns = TxnRepository(db.txnDao())
+        val txns = TxnRepository(db.txnDao(), PayeeRuleRepository(db.payeeRuleDao()))
         val conta = db.accountDao().upsert(CONTA)
         val naConta = LANCAMENTO.copy(accountId = conta)
         db.txnDao().upsert(naConta.copy(date = dia(2026, 2, 28), description = "fora"))
@@ -48,7 +48,7 @@ class RepositoryTest : DbTest() {
     @Test
     fun `saldo calculado sobre o que o repositorio devolve fecha com a formula`() = runBlocking {
         val contas = AccountRepository(db.accountDao())
-        val txns = TxnRepository(db.txnDao())
+        val txns = TxnRepository(db.txnDao(), PayeeRuleRepository(db.payeeRuleDao()))
         val origem = db.accountDao().upsert(CONTA.copy(name = "Corrente", initialBalanceCents = 100_000))
         val destino = db.accountDao().upsert(CONTA.copy(name = "Poupança", type = AccountType.SAVINGS))
         val cat = db.categoryDao().upsert(CATEGORIA)
@@ -81,7 +81,7 @@ class RepositoryTest : DbTest() {
     @Req("REQ-TXN-010")
     @Test
     fun `desfazer repoe a linha inteira, com id e colunas que o dominio nao carrega`() = runBlocking {
-        val txns = TxnRepository(db.txnDao())
+        val txns = TxnRepository(db.txnDao(), PayeeRuleRepository(db.payeeRuleDao()))
         val conta = db.accountDao().upsert(CONTA)
         val id = db.txnDao().insert(
             LANCAMENTO.copy(
@@ -119,7 +119,7 @@ class RepositoryTest : DbTest() {
     @Test
     fun `salvar sobre id existente atualiza a linha e preserva o que o dominio nao carrega`() =
         runBlocking {
-            val txns = TxnRepository(db.txnDao())
+            val txns = TxnRepository(db.txnDao(), PayeeRuleRepository(db.payeeRuleDao()))
             val conta = db.accountDao().upsert(CONTA)
             val id = db.txnDao().insert(
                 LANCAMENTO.copy(
@@ -153,7 +153,7 @@ class RepositoryTest : DbTest() {
 
     @Test
     fun `desfazer duas vezes repoe uma vez, e sem exclusao pendente nao faz nada`() = runBlocking {
-        val txns = TxnRepository(db.txnDao())
+        val txns = TxnRepository(db.txnDao(), PayeeRuleRepository(db.payeeRuleDao()))
         val conta = db.accountDao().upsert(CONTA)
         val id = db.txnDao().insert(LANCAMENTO.copy(accountId = conta))
 

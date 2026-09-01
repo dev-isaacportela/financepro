@@ -10,6 +10,7 @@ import app.financepro.data.db.dia
 import app.financepro.data.db.toDomain
 import app.financepro.data.repo.AccountRepository
 import app.financepro.data.repo.CategoryRepository
+import app.financepro.data.repo.PayeeRuleRepository
 import app.financepro.data.repo.TxnRepository
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.model.Txn
@@ -46,7 +47,7 @@ class InstallmentScopeTest : DbTest() {
     @Before
     fun montar() {
         SeedCallback.onCreate(db.openHelper.writableDatabase)
-        txns = TxnRepository(db.txnDao())
+        txns = TxnRepository(db.txnDao(), PayeeRuleRepository(db.payeeRuleDao()))
         runBlocking {
             cartao = db.accountDao().upsert(
                 CONTA.copy(

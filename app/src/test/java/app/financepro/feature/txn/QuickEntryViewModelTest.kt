@@ -10,6 +10,7 @@ import app.financepro.data.db.dia
 import app.financepro.data.db.toDomain
 import app.financepro.data.repo.AccountRepository
 import app.financepro.data.repo.CategoryRepository
+import app.financepro.data.repo.PayeeRuleRepository
 import app.financepro.data.repo.TxnRepository
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.model.CategoryKind
@@ -62,7 +63,7 @@ class QuickEntryViewModelTest : DbTest() {
         vm = QuickEntryViewModel(
             AccountRepository(db.accountDao()),
             CategoryRepository(db.categoryDao(), db.txnDao()),
-            TxnRepository(db.txnDao()),
+            TxnRepository(db.txnDao(), PayeeRuleRepository(db.payeeRuleDao())),
         )
         esperar("contas e categorias chegarem ao estado") {
             vm.state.value.contas.isNotEmpty() && vm.state.value.categorias.isNotEmpty()

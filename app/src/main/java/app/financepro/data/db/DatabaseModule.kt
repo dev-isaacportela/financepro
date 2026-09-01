@@ -44,4 +44,7 @@ object DatabaseModule {
 
     @Provides
     fun backupDao(db: AppDatabase): BackupDao = db.backupDao()
+
+    @Provides
+    fun payeeRuleDao(db: AppDatabase): PayeeRuleDao = db.payeeRuleDao()
 }
