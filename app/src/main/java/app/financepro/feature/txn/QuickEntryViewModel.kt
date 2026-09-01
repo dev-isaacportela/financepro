@@ -10,7 +10,10 @@ import app.financepro.domain.model.Category
 import app.financepro.domain.model.CategoryKind
 import app.financepro.domain.model.Txn
 import app.financepro.domain.model.TxnType
+import app.financepro.domain.usecase.EscopoDeParcela
 import app.financepro.domain.usecase.ValidationError
+import app.financepro.domain.usecase.aplicarNasParcelas
+import app.financepro.domain.usecase.parcelasNoEscopo
 import app.financepro.domain.usecase.sanitize
 import app.financepro.domain.usecase.splitInstallments
 import app.financepro.domain.usecase.validateTxn
@@ -48,6 +51,10 @@ data class QuickEntryState(
     val parcelas: Int = 1,
     /** A linha carregada do banco, quando isto é uma edição. Nula ao criar. */
     val original: Txn? = null,
+    /** As irmãs de uma compra parcelada, quando [original] é uma delas. */
+    val grupo: List<Txn> = emptyList(),
+    /** REQ-TXN-009 — a que parcelas a edição se aplica. */
+    val escopo: EscopoDeParcela = EscopoDeParcela.SO_ESTA,
     val erros: List<ValidationError> = emptyList(),
     val salvo: Boolean = false,
 ) {
@@ -60,13 +67,12 @@ data class QuickEntryState(
     val editando: Boolean get() = original != null
 
     /**
-     * Parcela abre para ler, não para editar. REQ-TXN-007
+     * Editando uma parcela de uma compra parcelada. REQ-TXN-009
      *
-     * Escolher entre "esta parcela" e "todas as doze" é da T-027, que é dona do
-     * escopo de parcela. Sem essa escolha, salvar uma parcela sozinha deixaria as
-     * outras onze inconsistentes — pior que não deixar editar.
+     * A T-050 abriu estas somente leitura porque não havia quem perguntasse o
+     * escopo; a T-027 é essa pergunta, e a folha passa a editar.
      */
-    val somenteLeitura: Boolean get() = original?.installmentGroupId != null
+    val ehParcela: Boolean get() = original?.installmentGroupId != null
 
     /**
      * REQ-UI-003 — os três campos condicionais, decididos num lugar só.
@@ -152,10 +158,15 @@ class QuickEntryViewModel @Inject constructor(
                 categoriaId = txn.categoryId,
                 descricao = txn.description,
                 parcelas = 1,
+                grupo = txn.installmentGroupId?.let { txns.grupoDeParcelas(it) }.orEmpty(),
+                escopo = EscopoDeParcela.SO_ESTA,
                 erros = emptyList(),
             )
         }
     }
+
+    /** REQ-TXN-009 — o padrão é o menor estrago: só esta. */
+    fun escopo(novo: EscopoDeParcela) = _state.update { it.copy(escopo = novo) }
 
     fun valor(cents: Long) = _state.update { it.copy(cents = cents, erros = emptyList()) }
 
@@ -225,7 +236,13 @@ class QuickEntryViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            if (atual.mostraParcelas && atual.parcelas > 1) {
+            if (atual.ehParcela) {
+                // REQ-TXN-009 — só o escopo escolhido muda. A data e o `id` de
+                // cada irmã ficam de fora da propagação: espalhá-los colapsaria
+                // as doze parcelas no mesmo dia.
+                val alvos = parcelasNoEscopo(txn, atual.grupo, atual.escopo)
+                txns.salvarVarias(aplicarNasParcelas(txn, alvos))
+            } else if (atual.mostraParcelas && atual.parcelas > 1) {
                 // A divisão é a da T-026, testada em 792 combinações — a sobra
                 // cai na última parcela, nunca na primeira, porque é a primeira
                 // que quem confere compara com o valor anunciado na compra.

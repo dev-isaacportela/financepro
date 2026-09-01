@@ -165,9 +165,15 @@ class CategoryRepository @Inject constructor(
 @Singleton
 class TxnRepository @Inject constructor(private val dao: TxnDao) {
 
-    /** A linha da última exclusão, à espera do desfazer. Ver [excluir]. */
+    /**
+     * As linhas da última exclusão, à espera do desfazer. Ver [excluir].
+     *
+     * Lista, e não uma linha: excluir uma compra parcelada com escopo "todas"
+     * (REQ-TXN-009) apaga doze de uma vez, e um desfazer que repõe uma delas
+     * seria pior que nenhum.
+     */
     @Volatile
-    private var ultimaExcluida: TxnEntity? = null
+    private var ultimaExcluida: List<TxnEntity> = emptyList()
 
     /**
      * O intervalo chega como `LocalDate` e vira `epochDay` aqui: a conversão é
@@ -246,10 +252,18 @@ class TxnRepository @Inject constructor(private val dao: TxnDao) {
      * o snackbar comporta, que mostra uma de cada vez. Vira pilha se a T-042
      * (desfazer de lote de importação) precisar.
      */
-    suspend fun excluir(id: Long) {
-        val alvo = dao.byId(id) ?: return
-        ultimaExcluida = alvo
-        dao.delete(alvo)
+    /**
+     * Exclui um escopo de parcelas de uma vez. REQ-TXN-009
+     *
+     * Uma escrita só, pela mesma razão de [salvarParcelado]: metade de uma
+     * compra parcelada apagada é dinheiro inventado no extrato. E um desfazer
+     * só, que repõe exatamente o que saiu.
+     */
+    suspend fun excluirVarias(ids: List<Long>) {
+        val alvos = ids.mapNotNull { dao.byId(it) }
+        if (alvos.isEmpty()) return
+        ultimaExcluida = alvos
+        dao.deleteAll(alvos)
     }
 
     /**
@@ -261,10 +275,28 @@ class TxnRepository @Inject constructor(private val dao: TxnDao) {
      * palavra significa.
      */
     suspend fun desfazerExclusao(): Boolean {
-        val alvo = ultimaExcluida ?: return false
-        ultimaExcluida = null
-        dao.insert(alvo)
+        val alvos = ultimaExcluida
+        if (alvos.isEmpty()) return false
+        ultimaExcluida = emptyList()
+        dao.insertAll(alvos)
         return true
+    }
+
+    /** As irmãs de uma compra parcelada, em ordem. REQ-TXN-009 */
+    suspend fun grupoDeParcelas(groupId: String): List<Txn> =
+        dao.installmentGroup(groupId).map { it.toDomain() }
+
+    /**
+     * Grava um escopo de parcelas de uma vez. REQ-TXN-009
+     *
+     * Passa pela mesma leitura-antes-de-escrever de [salvar], e pela mesma
+     * razão: sem ela o `@Upsert` zeraria `notes`, `dedupeKey`, `importBatchId`
+     * e `recurringRuleId` de doze linhas em silêncio, em vez de uma.
+     */
+    suspend fun salvarVarias(txns: List<Txn>) {
+        val agora = System.currentTimeMillis()
+        val linhas = txns.mapNotNull { txn -> dao.byId(txn.id)?.aplicar(txn, agora) }
+        if (linhas.isNotEmpty()) dao.upsertAll(linhas)
     }
 }
 

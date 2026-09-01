@@ -11,10 +11,12 @@ import app.financepro.domain.model.Account
 import app.financepro.domain.model.Category
 import app.financepro.domain.model.Txn
 import app.financepro.domain.usecase.DiaDeTransacoes
+import app.financepro.domain.usecase.EscopoDeParcela
 import app.financepro.domain.usecase.Filtro
 import app.financepro.domain.usecase.agruparPorDia
 import app.financepro.domain.usecase.extrato
 import app.financepro.domain.usecase.filtrar
+import app.financepro.domain.usecase.parcelasNoEscopo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,6 +49,10 @@ data class TransactionsState(
     val todas: List<Txn> = emptyList(),
     /** Muda a cada exclusão. É o gatilho do snackbar de desfazer — ver [TransactionsViewModel.excluir]. */
     val exclusoes: Int = 0,
+    /** Quantas linhas a última exclusão levou. Uma parcela pode levar doze. */
+    val ultimaQuantidade: Int = 1,
+    /** REQ-TXN-009 — a parcela esperando a escolha de escopo. */
+    val excluindo: Txn? = null,
 ) {
     /**
      * ponytail: `monthStartDay` fixo em 1 até existir tela de ajustes.
@@ -127,9 +133,31 @@ class TransactionsViewModel @Inject constructor(
      * efeito da tela — o snackbar da primeira continuaria contando, e a segunda
      * exclusão ficaria sem desfazer nenhum. Um valor que muda sempre reinicia.
      */
-    fun excluir(txn: Txn) = viewModelScope.launch {
-        txns.excluir(txn.id)
-        _state.update { it.copy(exclusoes = it.exclusoes + 1) }
+    fun excluir(txn: Txn) {
+        // REQ-TXN-009 — parcela pergunta o escopo antes de qualquer escrita. A
+        // linha só sai da tela quando o banco disser que ela saiu, nos dois
+        // casos: quem manda na lista é o dado, não o gesto.
+        if (txn.installmentGroupId != null) {
+            _state.update { it.copy(excluindo = txn) }
+        } else {
+            viewModelScope.launch { apagar(listOf(txn.id)) }
+        }
+    }
+
+    /** REQ-TXN-009 — só o escopo escolhido sai. */
+    fun excluirComEscopo(escopo: EscopoDeParcela) = viewModelScope.launch {
+        val alvo = _state.value.excluindo ?: return@launch
+        val grupo = alvo.installmentGroupId?.let { txns.grupoDeParcelas(it) }.orEmpty()
+        val ids = parcelasNoEscopo(alvo, grupo, escopo).map { it.id }
+        _state.update { it.copy(excluindo = null) }
+        apagar(ids)
+    }
+
+    fun cancelarExclusao() = _state.update { it.copy(excluindo = null) }
+
+    private suspend fun apagar(ids: List<Long>) {
+        txns.excluirVarias(ids)
+        _state.update { it.copy(exclusoes = it.exclusoes + 1, ultimaQuantidade = ids.size) }
     }
 
     fun desfazer() = viewModelScope.launch { txns.desfazerExclusao() }

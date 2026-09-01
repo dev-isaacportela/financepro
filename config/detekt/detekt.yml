@@ -16,6 +16,15 @@ complexity:
     ignoreAnnotated: ['Composable']
   TooManyFunctions:
     ignoreAnnotatedFunctions: ['Composable']
+    # O padrão do detekt é 11, e ele mede **largura**, não complexidade. Um
+    # ViewModel de formulário é uma fileira de setters de uma linha (`valor`,
+    # `conta`, `categoria`, `escopo`…) e um DAO é uma fileira de queries: os dois
+    # passam de 11 sem nenhuma função difícil de ler. Quebrá-los em duas classes
+    # para caber no número faria o código pior para agradar a régua errada.
+    # `LongMethod` e `CyclomaticComplexMethod` continuam nos valores padrão, e são
+    # eles que pegam função complicada de verdade.
+    thresholdInClasses: 14
+    thresholdInInterfaces: 14
 
 style:
   MagicNumber:

@@ -940,9 +940,45 @@ abriria a folha em R$ 0,00.
 ### T-027 — UI de parcelamento
 **Fase** F1 · **Depende de** T-026, T-013 · **REQ** REQ-TXN-009
 
+Destrava a T-050: era ela quem abria parcela somente leitura, por não haver
+quem perguntasse o escopo.
+
 **Pronto quando**
-- [ ] Campo de parcelas só para `CREDIT_CARD`
-- [ ] Editar/excluir parcela pergunta escopo, e `InstallmentScopeTest` prova que só o escopo escolhido muda
+- [x] Campo de parcelas só para `CREDIT_CARD`, e some ao **editar** — parcelar é
+      da criação. A lista de chips passou de sete "comuns" para a faixa inteira,
+      e sai do mesmo `INSTALLMENT_RANGE` que `splitInstallments` valida: a tela
+      não pode oferecer um número que a divisão recusa
+- [x] Editar/excluir parcela pergunta escopo, e `InstallmentScopeTest` prova que
+      só o escopo escolhido muda. O teste vai até o **banco**: a regra de escopo
+      é fácil de acertar isolada e fácil de perder entre o ViewModel que escolhe
+      os alvos e o repositório que grava, e "escolhi só esta e mudaram as três"
+      só aparece depois da escrita
+
+O que **não** atravessa na propagação é o que é de cada parcela: `id`, `date` e a
+posição no grupo. Espalhar a data colapsaria as doze no mesmo dia — o oposto do
+espaçamento de REQ-TXN-007, e um jeito silencioso de destruir uma compra
+parcelada inteira. Tem teste próprio.
+
+O desfazer virou lista. Excluir com escopo "todas" apaga doze linhas de uma vez,
+e o desfazer que repunha uma só seria pior que nenhum — o `ponytail:` da T-014
+previa a pilha para a T-042, e foi esta task que precisou primeiro.
+
+Dois achados fora do texto da task.
+
+- **O deslize travava a linha.** A caixa confirmava a dispensa e guardava
+  "dispensada" no `remember` da linha; um "Desfazer" tocado um segundo depois,
+  antes de o Room emitir a lista sem ela, devolvia a transação para uma linha que
+  continuava desenhada como o fundo de "Excluir", travada assim até outra
+  recomposição. Agora o gesto **nunca** confirma: ele pede a exclusão, e quem
+  tira a linha da tela é o banco. Serve também à parcela, que pergunta antes e
+  pode nem excluir. Encontrado no aparelho.
+- **`TooManyFunctions` subiu de 11 para 14** em `config/detekt/detekt.yml`. O
+  padrão mede largura, não complexidade: um ViewModel de formulário é uma fileira
+  de setters de uma linha e um DAO é uma fileira de queries, e os dois passam de
+  11 sem nenhuma função difícil de ler. Quebrá-los em duas classes para caber no
+  número faria o código pior para agradar a régua errada. `LongMethod` e
+  `CyclomaticComplexMethod` ficam nos valores padrão, e são eles que pegam função
+  complicada de verdade.
 
 ### T-028 — Orçamento: dados e cálculo ⇉
 **Fase** F1 · **Depende de** T-003, T-004 · **REQ** REQ-BUD-001, REQ-BUD-002, REQ-BUD-004

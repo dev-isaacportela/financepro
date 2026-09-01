@@ -27,14 +27,14 @@ import app.financepro.core.ui.component.CategorySticker
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyField
-import app.financepro.core.ui.component.MoneyText
-import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.domain.model.Txn
 import app.financepro.domain.model.TxnType
+import app.financepro.domain.usecase.EscopoDeParcela
+import app.financepro.domain.usecase.INSTALLMENT_RANGE
 import app.financepro.domain.usecase.ValidationError
 
 /**
@@ -91,43 +91,8 @@ fun QuickEntrySheet(
         contentColor = Slush.ink,
         tonalElevation = 0.dp,
     ) {
-        if (state.somenteLeitura) Parcela(state, onDismiss) else Formulario(state, vm)
+        Formulario(state, vm)
     }
-}
-
-/**
- * Parcela abre para ler. REQ-TXN-007
- *
- * O motivo vai **na tela**, e não num campo desabilitado: um chip apagado diz
- * que não dá, e não diz por quê nem quando vai dar. Bloco próprio, e não os
- * mesmos campos com `enabled = false`, porque desabilitar um por um custaria
- * mais código para comunicar menos.
- */
-@Composable
-private fun Parcela(state: QuickEntryState, onFechar: () -> Unit) {
-    val txn = state.original ?: return
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(txn.description.ifBlank { rotulo(txn.type) }, style = Subheading, color = Slush.ink)
-        MoneyText(cents = txn.amountCents)
-        Text(motivoDaParcela(txn), style = Body, color = Slush.ink)
-        GhostButton(text = "Fechar", onClick = onFechar, modifier = Modifier.fillMaxWidth())
-    }
-}
-
-/** `installmentIndex` é 1-based, como o usuário lê ("3 de 12"). */
-private fun motivoDaParcela(txn: Txn): String {
-    val indice = txn.installmentIndex
-    val total = txn.installmentTotal
-    val posicao = if (indice != null && total != null) "Parcela $indice de $total." else "Compra parcelada."
-    return "$posicao Editar uma parcela sozinha deixaria as outras inconsistentes — " +
-        "escolher entre esta e todas chega na próxima fase."
 }
 
 /**
@@ -185,28 +150,21 @@ private fun Formulario(state: QuickEntryState, vm: QuickEntryViewModel) {
             Erro(state.erroDe(ValidationError.Campo.CONTA_DESTINO))
         }
 
-        if (state.mostraCategoria) {
-            Rotulo("Categoria")
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(state.categorias, key = { it.id }) { categoria ->
-                    CategorySticker(
-                        category = categoria,
-                        selecionado = categoria.id == state.categoriaId,
-                        onClick = { vm.categoria(categoria.id) },
-                    )
-                }
-            }
-            Erro(state.erroDe(ValidationError.Campo.CATEGORIA))
-        }
+        if (state.mostraCategoria) Categorias(state, vm)
 
         if (state.mostraParcelas) {
             Rotulo("Parcelas")
             Chips(
-                itens = PARCELAS_COMUNS.map { it to "${it}x" },
+                itens = PARCELAS.map { it to "${it}x" },
                 selecionado = state.parcelas,
                 onClick = vm::parcelas,
             )
         }
+
+        // REQ-TXN-009 — editar uma parcela **pergunta** o escopo. Sem a pergunta
+        // a T-050 abria a folha somente leitura, porque salvar uma parcela
+        // sozinha deixaria as outras onze inconsistentes.
+        if (state.ehParcela) Escopo(state, vm::escopo)
 
         FilledCta(text = "Salvar", onClick = { vm.salvar() }, modifier = Modifier.fillMaxWidth())
     }
@@ -251,5 +209,54 @@ private fun Erro(mensagem: String?) {
     }
 }
 
-/** 1x até 12x cobre quase toda compra parcelada; o resto é da T-027. */
-private val PARCELAS_COMUNS = listOf(1, 2, 3, 4, 6, 10, 12)
+/** O grid ordenado por uso (REQ-CAT-006), e o erro do campo logo abaixo. */
+@Composable
+private fun Categorias(state: QuickEntryState, vm: QuickEntryViewModel) {
+    Rotulo("Categoria")
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(state.categorias, key = { it.id }) { categoria ->
+            CategorySticker(
+                category = categoria,
+                selecionado = categoria.id == state.categoriaId,
+                onClick = { vm.categoria(categoria.id) },
+            )
+        }
+    }
+    Erro(state.erroDe(ValidationError.Campo.CATEGORIA))
+}
+
+/**
+ * REQ-TXN-009 — a que parcelas a edição se aplica.
+ *
+ * O rótulo diz **qual** parcela está aberta ("Parcela 3 de 12"), porque a
+ * pergunta só faz sentido sabendo de onde ela parte.
+ */
+@Composable
+private fun Escopo(state: QuickEntryState, onEscopo: (EscopoDeParcela) -> Unit) {
+    val txn = state.original
+    val indice = txn?.installmentIndex
+    val total = txn?.installmentTotal
+    Rotulo(if (indice != null && total != null) "Parcela $indice de $total · aplicar a" else "Aplicar a")
+    Chips(
+        itens = EscopoDeParcela.entries.map { it to rotuloDoEscopo(it) },
+        selecionado = state.escopo,
+        onClick = onEscopo,
+    )
+}
+
+/**
+ * REQ-TXN-007 — a faixa inteira que a spec manda aceitar, e a **mesma**
+ * `INSTALLMENT_RANGE` que `splitInstallments` valida: a tela não pode oferecer
+ * um número que a divisão recusa.
+ *
+ * Todos os números, e não uma seleção de "comuns": é um `LazyRow`, então setenta
+ * e dois chips custam o mesmo que sete, e curar a lista abriria a pergunta de
+ * por que 13 não está lá.
+ */
+private val PARCELAS = INSTALLMENT_RANGE.toList()
+
+private fun rotuloDoEscopo(escopo: EscopoDeParcela) = when (escopo) {
+    EscopoDeParcela.SO_ESTA -> "Só esta"
+    EscopoDeParcela.ESTA_E_FUTURAS -> "Esta e as futuras"
+    EscopoDeParcela.TODAS -> "Todas"
+}

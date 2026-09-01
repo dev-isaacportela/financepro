@@ -1,5 +1,6 @@
 package app.financepro.domain.usecase
 
+import app.financepro.domain.model.Txn
 import java.time.LocalDate
 
 /**
@@ -72,6 +73,68 @@ fun splitInstallments(
             count = count,
             amountCents = if (i == count) last else base,
             date = firstDate.plusMonths((i - 1).toLong()),
+        )
+    }
+}
+
+/**
+ * Escopo de edição e exclusão de parcela. REQ-TXN-009 · Art. 9
+ *
+ * Uma compra parcelada é um grupo de linhas irmãs (ADR-005), e mexer numa delas
+ * sem perguntar o escopo deixa as outras onze inconsistentes — foi por isso que
+ * a T-050 abriu parcela somente leitura em vez de adivinhar. Esta é a task que
+ * pergunta.
+ *
+ * A escolha é do usuário; o que mora aqui é **quais linhas** cada escolha
+ * alcança, e o que de uma edição atravessa para as irmãs. Regra, não tela.
+ */
+enum class EscopoDeParcela { SO_ESTA, ESTA_E_FUTURAS, TODAS }
+
+/**
+ * As parcelas que [escopo] alcança, a partir de [alvo].
+ *
+ * "Futuras" é pela **posição no grupo**, não pela data: `installmentIndex` é o
+ * que ordena a compra parcelada, e comparar datas daria outro conjunto no dia em
+ * que alguém corrigisse a data de uma parcela do meio. Sem índice — grupo
+ * corrompido ou linha solta — só a própria linha é alcançada, que é a leitura
+ * segura.
+ */
+fun parcelasNoEscopo(alvo: Txn, grupo: List<Txn>, escopo: EscopoDeParcela): List<Txn> = when (escopo) {
+    EscopoDeParcela.SO_ESTA -> listOf(alvo)
+    EscopoDeParcela.TODAS -> grupo.ifEmpty { listOf(alvo) }
+    EscopoDeParcela.ESTA_E_FUTURAS -> {
+        val posicao = alvo.installmentIndex
+        if (posicao == null) {
+            listOf(alvo)
+        } else {
+            grupo.filter { (it.installmentIndex ?: Int.MIN_VALUE) >= posicao }.ifEmpty { listOf(alvo) }
+        }
+    }
+}
+
+/**
+ * Espalha a edição de [editada] sobre as parcelas de [alvos]. REQ-TXN-009
+ *
+ * O que **não** atravessa é o que é de cada parcela: `id`, `date` e a posição no
+ * grupo. Propagar a data colapsaria as doze parcelas no mesmo dia — o oposto do
+ * espaçamento de um mês que REQ-TXN-007 exige, e um jeito silencioso de destruir
+ * uma compra parcelada inteira.
+ *
+ * O valor atravessa, e é a leitura literal de "aplicar a mudança ao escopo
+ * escolhido": trocar a parcela para R$ 350 com escopo `TODAS` deixa doze de
+ * R$ 350. Redividir um novo total entre as parcelas é outra operação, e nenhum
+ * requisito a pede.
+ */
+fun aplicarNasParcelas(editada: Txn, alvos: List<Txn>): List<Txn> = alvos.map { alvo ->
+    if (alvo.id == editada.id) {
+        editada
+    } else {
+        alvo.copy(
+            accountId = editada.accountId,
+            categoryId = editada.categoryId,
+            description = editada.description,
+            amountCents = editada.amountCents,
+            cleared = editada.cleared,
         )
     }
 }

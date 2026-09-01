@@ -14,6 +14,7 @@ import app.financepro.data.repo.TxnRepository
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.model.CategoryKind
 import app.financepro.domain.model.TxnType
+import app.financepro.domain.usecase.EscopoDeParcela
 import app.financepro.domain.usecase.balanceOf
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -205,7 +206,7 @@ class QuickEntryViewModelTest : DbTest() {
     }
 
     @Test
-    fun `parcela abre somente leitura`() {
+    fun `parcela abre editavel, com o grupo carregado e o escopo no menor estrago`() {
         val id = runBlocking {
             db.txnDao().insert(
                 LANCAMENTO.copy(
@@ -221,9 +222,11 @@ class QuickEntryViewModelTest : DbTest() {
         vm.editar(id)
         esperar("a transação carregar na folha") { vm.state.value.editando }
 
-        // T-027 destrava. Salvar uma parcela sozinha deixaria as outras onze
-        // inconsistentes, e o campo de parcelas some junto: parcelar é da criação.
-        assertTrue(vm.state.value.somenteLeitura)
+        // A T-050 abria isto somente leitura por não ter quem perguntasse o
+        // escopo; a T-027 pergunta (REQ-TXN-009). O padrão é o menor estrago.
+        assertTrue(vm.state.value.ehParcela)
+        assertEquals(EscopoDeParcela.SO_ESTA, vm.state.value.escopo)
+        // O campo de parcelas some ao editar: parcelar é da criação.
         assertFalse(vm.state.value.mostraParcelas)
     }
 

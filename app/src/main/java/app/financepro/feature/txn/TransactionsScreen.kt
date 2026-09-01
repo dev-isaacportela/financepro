@@ -9,10 +9,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarDuration
@@ -53,6 +55,7 @@ import app.financepro.core.ui.theme.SlushShapes
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.domain.model.Txn
 import app.financepro.domain.usecase.DiaDeTransacoes
+import app.financepro.domain.usecase.EscopoDeParcela
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -90,9 +93,12 @@ fun TransactionsScreen(
     // efeito, e a segunda exclusão ficaria sem desfazer nenhum.
     LaunchedEffect(state.exclusoes) {
         if (state.exclusoes == 0) return@LaunchedEffect
+        val quantidade = state.ultimaQuantidade
         val resposta = withTimeoutOrNull(DESFAZER_MS) {
             snackbar.showSnackbar(
-                message = "Transação excluída",
+                // Doze linhas apagadas anunciadas no singular seriam a barra
+                // dizendo menos do que aconteceu, logo antes de o desfazer sumir.
+                message = if (quantidade > 1) "$quantidade parcelas excluídas" else "Transação excluída",
                 actionLabel = "Desfazer",
                 duration = SnackbarDuration.Indefinite,
             )
@@ -124,6 +130,15 @@ fun TransactionsScreen(
                 Lista(state = state, dias = dias, onExcluir = vm::excluir, onEditar = onEditar)
             }
         }
+    }
+
+    // REQ-TXN-009 — a pergunta antes de apagar uma parcela.
+    state.excluindo?.let { parcela ->
+        EscopoDeExclusaoSheet(
+            parcela = parcela,
+            onEscopo = vm::excluirComEscopo,
+            onDismiss = vm::cancelarExclusao,
+        )
     }
 
     if (filtrando) {
@@ -247,8 +262,18 @@ private fun CabecalhoDoDia(dia: DiaDeTransacoes) {
 @Composable
 private fun Deslizavel(onExcluir: () -> Unit, conteudo: @Composable () -> Unit) {
     val estado = rememberSwipeToDismissBoxState(
+        // **Nunca** confirma a dispensa: o gesto pede a exclusão, e quem tira a
+        // linha da tela é o banco emitindo a lista sem ela.
+        //
+        // Confirmando, a caixa guarda "dispensada" no `remember` da linha — e um
+        // desfazer rápido, antes de o Room emitir, devolvia a transação para uma
+        // linha que continuava desenhada como o fundo vermelho de "Excluir",
+        // travada assim até outra recomposição. Encontrado no aparelho tocando
+        // "Desfazer" um segundo depois do deslize. Serve também à parcela, que
+        // primeiro pergunta o escopo (REQ-TXN-009) e pode nem excluir.
         confirmValueChange = { valor ->
-            (valor == SwipeToDismissBoxValue.EndToStart).also { if (it) onExcluir() }
+            if (valor == SwipeToDismissBoxValue.EndToStart) onExcluir()
+            false
         },
     )
     SwipeToDismissBox(
@@ -260,6 +285,59 @@ private fun Deslizavel(onExcluir: () -> Unit, conteudo: @Composable () -> Unit) 
         },
         content = { conteudo() },
     )
+}
+
+/**
+ * REQ-TXN-009 — excluir parcela pergunta o escopo.
+ *
+ * Folha com as três opções escritas por extenso, e não um diálogo de "tem
+ * certeza?": a pergunta aqui não é se apaga, é **o que** apaga, e uma escolha de
+ * três não cabe em sim/não. Cada opção é um alvo de largura inteira, o que
+ * também resolve o toque de 48dp (REQ-A11Y-002).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EscopoDeExclusaoSheet(
+    parcela: Txn,
+    onEscopo: (EscopoDeParcela) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        shape = SlushShapes.extraLarge,
+        containerColor = Slush.paper,
+        contentColor = Slush.ink,
+        tonalElevation = 0.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text("Excluir o quê?", style = Subheading, color = Slush.ink)
+            val indice = parcela.installmentIndex
+            val total = parcela.installmentTotal
+            if (indice != null && total != null) {
+                Text("Esta é a parcela $indice de $total.", style = Body, color = Slush.ink)
+            }
+            EscopoDeParcela.entries.forEach { escopo ->
+                GhostButton(
+                    text = rotuloDoEscopo(escopo),
+                    onClick = { onEscopo(escopo) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
+private fun rotuloDoEscopo(escopo: EscopoDeParcela) = when (escopo) {
+    EscopoDeParcela.SO_ESTA -> "Só esta parcela"
+    EscopoDeParcela.ESTA_E_FUTURAS -> "Esta e as futuras"
+    EscopoDeParcela.TODAS -> "Todas as parcelas"
 }
 
 /** A palavra, não só o fundo: cor nunca é sinal único (REQ-A11Y-003). */

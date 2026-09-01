@@ -155,6 +155,10 @@ interface TxnDao {
     @Insert
     suspend fun insert(txn: TxnEntity): Long
 
+    /** Repõe um grupo de parcelas de uma vez. Ver `TxnRepository.desfazerExclusao`. */
+    @Insert
+    suspend fun insertAll(txns: List<TxnEntity>)
+
     @Upsert
     suspend fun upsert(txn: TxnEntity): Long
 
@@ -163,6 +167,16 @@ interface TxnDao {
 
     @Delete
     suspend fun delete(txn: TxnEntity)
+
+    /**
+     * Exclui um grupo inteiro numa escrita só. REQ-TXN-009
+     *
+     * Meia compra parcelada excluída é dinheiro inventado no extrato, do mesmo
+     * jeito que meia compra parcelada criada — é a razão de `upsertAll` existir
+     * ao lado de `upsert`.
+     */
+    @Delete
+    suspend fun deleteAll(txns: List<TxnEntity>)
 
     /**
      * Recategorização em lote. REQ-CAT-005

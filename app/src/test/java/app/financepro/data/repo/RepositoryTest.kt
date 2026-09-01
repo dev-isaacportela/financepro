@@ -95,7 +95,7 @@ class RepositoryTest : DbTest() {
         )
         val original = db.txnDao().byId(id)
 
-        txns.excluir(id)
+        txns.excluirVarias(listOf(id))
         assertNull(db.txnDao().byId(id))
 
         assertTrue(txns.desfazerExclusao())
@@ -160,7 +160,7 @@ class RepositoryTest : DbTest() {
         // Sem nada pendente: no-op, e não um `insert` de lixo.
         assertFalse(txns.desfazerExclusao())
 
-        txns.excluir(id)
+        txns.excluirVarias(listOf(id))
         assertTrue(txns.desfazerExclusao())
         // O segundo desfazer não pode duplicar a linha — "desfazer" repõe uma vez.
         assertFalse(txns.desfazerExclusao())
