@@ -9,7 +9,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Req("REQ-ACC-001", "REQ-ACC-002")
+@Req("REQ-ACC-001", "REQ-ACC-002", "REQ-CARD-001")
 class AccountDaoTest : DbTest() {
 
     private val dao get() = db.accountDao()

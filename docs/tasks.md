@@ -819,9 +819,29 @@ ligado a linha continua ativável e abre a folha.
 ### T-022 — Configuração de cartão
 **Fase** F1 · **Depende de** T-015 · **REQ** REQ-CARD-001, REQ-CARD-002
 
+A T-015 deixou a validação de conta escrita dentro do `AccountsViewModel`, com o
+comentário dizendo que a faixa de dia era desta task e que duplicar metade da
+regra no domínio criaria a segunda fonte de verdade a reconciliar. Esta é a
+reconciliação: `validateAccount` vira função pura em `domain/usecase`, a tela
+chama, e a régua passa a valer também para o dia que chegar por fora da tela —
+importação (F2) e restauração de backup (T-035).
+
 **Pronto quando**
-- [ ] `ValidateAccountTest` recusa dia 0, 29, 31 e negativo
-- [ ] Campos de cartão só aparecem para `CREDIT_CARD`
+- [x] `ValidateAccountTest` recusa dia 0, 29, 31 e negativo, nos **dois** campos,
+      com a mensagem que REQ-CARD-002 soletra. As bordas 1 e 28 passam: um
+      `until` no lugar do `..` recusaria o dia 28, que é o mais comum em fatura
+- [x] Campos de cartão só aparecem para `CREDIT_CARD`, e os chips de dia saem de
+      `DIAS_DE_FATURA` em vez de uma lista própria da tela — a interface não
+      pode oferecer o dia que a regra recusa depois
+- [x] REQ-CARD-001 já tinha o teste de persistência das quatro colunas no
+      `AccountDaoTest` desde a T-004; faltava o `@Req`, e a rastreabilidade não
+      via o que o código cobria
+
+`paymentAccountId` continua **sem tela**. A coluna existe e é gravada, que é o
+que REQ-CARD-001 pede, mas escolher a conta que quita a fatura só tem sentido
+onde a fatura é paga: a T-025. Um campo aqui, sem consumidor, seria configuração
+que ninguém sabe para que serve — o mesmo motivo pelo qual esta task existiu em
+vez de a T-015 adivinhar a regra de cartão.
 
 ### T-023 — Competência e vencimento
 **Fase** F1 · **Depende de** T-003 · **REQ** REQ-CARD-003, REQ-CARD-004

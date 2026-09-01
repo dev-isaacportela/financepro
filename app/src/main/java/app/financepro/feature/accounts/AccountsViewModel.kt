@@ -10,6 +10,7 @@ import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.model.Txn
 import app.financepro.domain.usecase.balanceOf
+import app.financepro.domain.usecase.validateAccount
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -91,7 +92,7 @@ class AccountsViewModel @Inject constructor(
 
     fun salvar() {
         val conta = _state.value.editando ?: return
-        val erro = validar(conta)
+        val erro = validateAccount(conta)
         if (erro != null) {
             _state.update { it.copy(erro = erro) }
             return
@@ -100,23 +101,6 @@ class AccountsViewModel @Inject constructor(
             contas.salvar(conta)
             _state.update { it.copy(editando = null, erro = null) }
         }
-    }
-
-    /**
-     * REQ-ACC-002 — cartão exige limite, fechamento e vencimento.
-     *
-     * Fica aqui e não em `domain/usecase` porque a regra completa de cartão —
-     * faixa de dia, dia 29 a 31, conta de pagamento — é da T-022, com teste
-     * próprio. Duplicar metade dela no domínio agora criaria a segunda fonte de
-     * verdade que a T-022 teria de reconciliar.
-     */
-    private fun validar(conta: Account): String? = when {
-        conta.name.isBlank() -> "Dê um nome à conta"
-        !conta.isCard -> null
-        conta.creditLimitCents == null -> "Informe o limite do cartão"
-        conta.closingDay == null -> "Informe o dia de fechamento"
-        conta.dueDay == null -> "Informe o dia de vencimento"
-        else -> null
     }
 
     private fun saldos(cs: List<Account>, ts: List<Txn>) = cs.associate { it.id to balanceOf(it, ts) }
