@@ -9,6 +9,8 @@ import app.financepro.data.db.BudgetDao
 import app.financepro.data.db.BudgetEntity
 import app.financepro.data.db.CategoryDao
 import app.financepro.data.db.CategoryEntity
+import app.financepro.data.db.RecurringDao
+import app.financepro.data.db.RecurringRuleEntity
 import app.financepro.data.db.TxnDao
 import app.financepro.data.db.TxnEntity
 import app.financepro.data.db.toDomain
@@ -18,6 +20,9 @@ import app.financepro.domain.model.Budget
 import app.financepro.domain.model.Category
 import app.financepro.domain.model.CategoryKind
 import app.financepro.domain.model.Txn
+import app.financepro.domain.usecase.RecurringRule
+import app.financepro.domain.usecase.occurrenceAt
+import app.financepro.domain.usecase.pendingOccurrences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import app.financepro.data.db.toYearMonthInt
@@ -360,6 +365,93 @@ class TxnRepository @Inject constructor(private val dao: TxnDao) {
         if (linhas.isNotEmpty()) dao.upsertAll(linhas)
     }
 }
+
+/**
+ * Regras de recorrência e a materialização delas.
+ * REQ-REC-001 · REQ-REC-003 · REQ-REC-004 · REQ-REC-005 · REQ-REC-007
+ *
+ * A borda impura da [pendingOccurrences]: aqui moram o relógio, o banco e a
+ * transação. A decisão de **quais** datas gerar continua pura e testável em
+ * JVM, que é o que o Art. 9 pede.
+ */
+@Singleton
+class RecurringRepository @Inject constructor(private val dao: RecurringDao) {
+
+    /**
+     * Materializa o que falta em todas as regras ativas. Devolve quantas
+     * linhas nasceram. REQ-REC-003 · REQ-REC-004 · REQ-REC-005
+     *
+     * Roda na abertura do app, e roda quantas vezes for: a segunda execução do
+     * mesmo dia não acha ocorrência pendente e devolve zero.
+     *
+     * Uma transação **por regra**, e não uma para todas: uma regra com data
+     * inválida não pode desfazer a geração das outras, e cada
+     * `lastGeneratedDate` só faz sentido junto das linhas daquela regra.
+     */
+    suspend fun gerarPendentes(hoje: LocalDate): Int {
+        val agora = System.currentTimeMillis()
+        var criadas = 0
+        for (linha in dao.ativas()) {
+            val regra = linha.toDomain()
+            val datas = pendingOccurrences(regra, hoje)
+            if (datas.isEmpty()) continue
+            dao.materializar(
+                ruleId = regra.id,
+                txns = datas.map {
+                    regra.occurrenceAt(it).toEntity(agora).copy(recurringRuleId = regra.id)
+                },
+                ate = datas.last().toEpochDay(),
+            )
+            criadas += datas.size
+        }
+        return criadas
+    }
+
+    /**
+     * Cria ou altera a regra, e deixa as ocorrências coerentes com ela.
+     * REQ-REC-001 · REQ-REC-007 · Devolve o id.
+     *
+     * Alterar reescreve: as futuras não efetivadas saem, a marca recua até a
+     * última que sobrou, e a geração logo abaixo repõe pela regra nova. O que
+     * já foi efetivado não é tocado — mudar o valor do aluguel hoje não
+     * reescreve o que foi pago em março.
+     *
+     * A geração vem junto porque o contrário seria uma tela mostrando uma regra
+     * nova sem nenhuma próxima conta até o app ser reaberto.
+     */
+    suspend fun salvar(regra: RecurringRule, hoje: LocalDate): Long {
+        val id = dao.salvar(regra.toEntity(), hoje.toEpochDay())
+        gerarPendentes(hoje)
+        return id
+    }
+}
+
+/**
+ * Domínio → entidade. Ver [RecurringRepository.salvar].
+ *
+ * O `spec` desmonta nas colunas soltas que o schema tem: `freq` como texto,
+ * `weekday` como inteiro ISO (1 = segunda), datas como `epochDay`. A volta é a
+ * `toDomain` de `Mappers.kt`, e as duas juntas são o contrato do formato.
+ */
+private fun RecurringRule.toEntity() = RecurringRuleEntity(
+    id = id,
+    accountId = accountId,
+    counterAccountId = counterAccountId,
+    categoryId = categoryId,
+    type = type,
+    amountCents = amountCents,
+    description = description,
+    freq = spec.frequency.name,
+    interval = spec.interval,
+    dayOfMonth = spec.dayOfMonth,
+    weekday = spec.weekday?.value,
+    monthOfYear = spec.monthOfYear,
+    startDate = spec.startDate.toEpochDay(),
+    endDate = spec.endDate?.toEpochDay(),
+    lastGeneratedDate = lastGeneratedDate?.toEpochDay(),
+    autoPost = autoPost,
+    active = active,
+)
 
 /**
  * Aplica sobre a linha existente **só** o que o domínio carrega.

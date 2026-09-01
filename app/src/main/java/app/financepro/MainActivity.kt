@@ -10,9 +10,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import app.financepro.core.ui.theme.SlushTheme
 import app.financepro.data.prefs.SecurityPrefs
+import app.financepro.data.repo.RecurringRepository
 import app.financepro.feature.FinanceNav
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 /**
@@ -30,15 +32,39 @@ class MainActivity : FragmentActivity() {
     @Inject
     lateinit var seguranca: SecurityPrefs
 
+    @Inject
+    lateinit var recorrencias: RecurringRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         protegerJanela()
+        gerarRecorrencias()
         setContent {
             SlushTheme {
                 FinanceNav()
             }
         }
+    }
+
+    /**
+     * REQ-REC-003 — a geração roda na abertura do app.
+     *
+     * Sem guarda contra rodar de novo, e é de propósito: a idempotência é o
+     * requisito, não uma otimização. Uma checagem aqui daria a impressão de que
+     * o gerador precisa dela, e o dia em que a rotação da tela recriasse a
+     * `Activity` duas vezes já era.
+     *
+     * ponytail: sem o `WorkManager` diário do ADR-006. Nada no app produz saída
+     * com ele fechado — não há notificação de conta a vencer, e a permissão de
+     * rede está barrada até a F4 —, então materializar em segundo plano grava
+     * linhas que ninguém vê antes da próxima abertura, que é justamente quando
+     * isto aqui roda. O worker entra no dia em que existir consumidor de fundo
+     * (lembrete de vencimento, widget): é uma classe, e o gerador já está
+     * pronto para ser chamado por ela.
+     */
+    private fun gerarRecorrencias() = lifecycleScope.launch {
+        recorrencias.gerarPendentes(LocalDate.now())
     }
 
     /**

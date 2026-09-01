@@ -180,7 +180,7 @@ Isso é teste, não esperança (Art. 7, [REQ-TXN-008](spec.md#req-txn-008--soma-
 
 ## ADR-006 — Recorrência materializa sob demanda, com horizonte de 60 dias
 
-**Status** Aceita · **Afeta** `recurring_rule`, WorkManager
+**Status** Aceita, com o worker adiado (ver abaixo) · **Afeta** `recurring_rule`
 
 **Contexto.** Lançamentos fixos (salário, aluguel, assinatura) se repetem sem data
 final.
@@ -206,6 +206,20 @@ mês curto (28, 29 ou 30). Aqui o clamp é necessário — diferente do cartão
 
 **Consequência.** Alterar a regra não reescreve ocorrências já efetivadas.
 Reescreve as futuras não efetivadas. O histórico é imutável.
+
+**Revisão na T-031: o worker não entrou.** A abertura do app é o único gatilho.
+Materializar em segundo plano só valeria se alguma coisa lesse o resultado com o
+app fechado, e nada lê: não há lembrete de vencimento, não há widget, e a
+permissão de rede está barrada até a F4 ([ADR-010](#adr-010--sqlcipher-e-sem-permissão-de-rede-até-a-f4)).
+O worker gravaria linhas que ninguém vê antes da próxima abertura — que é
+exatamente quando o gatilho de abertura já roda.
+
+O preço de adiar é conhecido e é zero hoje: o `WorkManager` traria três
+dependências, uma `WorkerFactory` do Hilt, a remoção do inicializador padrão no
+manifesto e três permissões transitivas para o `ManifestTest` vigiar. O que ele
+mudaria de observável é nada. No dia em que existir consumidor de fundo — e o
+primeiro candidato é o lembrete de vencimento — ele entra como uma classe:
+`RecurringRepository.gerarPendentes(hoje)` já é o corpo inteiro do worker.
 
 ---
 

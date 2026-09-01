@@ -565,8 +565,11 @@ ocorrências ainda não materializadas, avançando `lastGeneratedDate`.
 SE a geração executar duas ou mais vezes no mesmo dia, ENTÃO O SISTEMA DEVE
 produzir exatamente o mesmo conjunto de transações da primeira execução.
 
-O gerador roda na abertura do app **e** no worker diário. Sem idempotência, quem
-abre o app três vezes ganha três aluguéis.
+O gerador roda **na abertura do app**. Sem idempotência, quem abre o app três
+vezes ganha três aluguéis.
+
+O worker diário previsto no [ADR-006](decisoes.md#adr-006--recorrência-materializa-sob-demanda-com-horizonte-de-60-dias)
+está adiado, e o requisito diz o que o app faz (Art. 3).
 
 ### REQ-REC-004 — Horizonte de materialização
 

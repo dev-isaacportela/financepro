@@ -11,7 +11,9 @@ import dagger.hilt.android.HiltAndroidApp
  * `onCreate` atrasaria o start de todo lançamento do app para um trabalho que a
  * primeira tela já dispara.
  *
- * A geração de recorrências entra na T-031, como Worker — não aqui.
+ * A geração de recorrências (T-031) roda na `MainActivity`, e não aqui: ela
+ * precisa do banco, e abri-lo no `onCreate` do processo atrasaria todo
+ * lançamento do app pelo mesmo motivo acima.
  */
 @HiltAndroidApp
 class FinanceApp : Application()

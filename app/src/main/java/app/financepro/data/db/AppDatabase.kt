@@ -38,6 +38,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun txnDao(): TxnDao
     abstract fun budgetDao(): BudgetDao
+    abstract fun recurringDao(): RecurringDao
 
     companion object {
         const val NAME = "finance.db"

@@ -38,4 +38,7 @@ object DatabaseModule {
 
     @Provides
     fun budgetDao(db: AppDatabase): BudgetDao = db.budgetDao()
+
+    @Provides
+    fun recurringDao(db: AppDatabase): RecurringDao = db.recurringDao()
 }

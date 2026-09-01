@@ -61,9 +61,9 @@ Só o inventário, sem falhar. Estado atual:
 
 ```
 spec.md   120 requisitos
-tasks.md  49 tasks, cobrindo 120
+tasks.md  50 tasks, cobrindo 120
 
-  F0   61 requisitos (53 MUST, 35 com teste automatizado)
+  F0   61 requisitos (53 MUST, 36 com teste automatizado)
   F1   33 requisitos (27 MUST, 30 com teste automatizado)
   F2   16 requisitos (14 MUST, 13 com teste automatizado)
   F3    6 requisitos ( 5 MUST,  4 com teste automatizado)

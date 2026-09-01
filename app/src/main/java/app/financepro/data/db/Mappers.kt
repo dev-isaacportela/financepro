@@ -4,6 +4,10 @@ import app.financepro.domain.model.Account
 import app.financepro.domain.model.Budget
 import app.financepro.domain.model.Category
 import app.financepro.domain.model.Txn
+import app.financepro.domain.usecase.Frequency
+import app.financepro.domain.usecase.RecurrenceSpec
+import app.financepro.domain.usecase.RecurringRule
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -76,4 +80,38 @@ fun TxnEntity.toDomain() = Txn(
     installmentGroupId = installmentGroupId,
     installmentIndex = installmentIndex,
     installmentTotal = installmentTotal,
+)
+
+/**
+ * REQ-REC-001
+ *
+ * As três colunas soltas — `freq` como texto, `weekday` como inteiro, as datas
+ * como `epochDay` — viram um [RecurrenceSpec] aqui, na borda. É o que permite a
+ * expansão e a geração trabalharem com `Frequency`, `DayOfWeek` e `LocalDate`
+ * sem nunca saber o formato da coluna.
+ *
+ * `Frequency.valueOf` **estoura** num texto desconhecido, e é o que se quer:
+ * uma frequência que o app não conhece viraria silenciosamente um lançamento
+ * mensal, e a conta apareceria no mês errado sem ninguém saber por quê.
+ */
+fun RecurringRuleEntity.toDomain() = RecurringRule(
+    id = id,
+    accountId = accountId,
+    type = type,
+    amountCents = amountCents,
+    description = description,
+    spec = RecurrenceSpec(
+        frequency = Frequency.valueOf(freq),
+        startDate = LocalDate.ofEpochDay(startDate),
+        interval = interval,
+        endDate = endDate?.let { LocalDate.ofEpochDay(it) },
+        dayOfMonth = dayOfMonth,
+        weekday = weekday?.let { DayOfWeek.of(it) },
+        monthOfYear = monthOfYear,
+    ),
+    counterAccountId = counterAccountId,
+    categoryId = categoryId,
+    autoPost = autoPost,
+    active = active,
+    lastGeneratedDate = lastGeneratedDate?.let { LocalDate.ofEpochDay(it) },
 )

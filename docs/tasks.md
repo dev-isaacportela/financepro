@@ -1072,12 +1072,44 @@ derivando de `DTSTART`). Evita o estado inconsistente de `dayOfMonth = 10` com
 ### T-031 — Geração de ocorrências
 **Fase** F1 · **Depende de** T-030 · **REQ** REQ-REC-003, REQ-REC-004, REQ-REC-005, REQ-REC-007
 
-Worker diário + gatilho na abertura do app.
+Gatilho na abertura do app. O worker diário ficou de fora — ver abaixo.
 
 **Pronto quando**
-- [ ] `GenerateRecurringTest` roda a geração 3× no mesmo dia e prova conjunto idêntico ao da 1ª
-- [ ] Nada gerado além de hoje + 60 dias
-- [ ] Alterar a regra não toca em ocorrência `cleared = 1`
+- [x] `GenerateRecurringTest` roda a geração 3× no mesmo dia e prova conjunto idêntico ao da 1ª.
+      Compara as **linhas**, não a contagem: uma geração que apagasse e recriasse
+      tudo daria o mesmo número e quebraria toda referência a `txn.id`
+- [x] Nada gerado além de hoje + 60 dias, em regra sem `endDate` — 61 linhas
+      numa diária, contando os dois extremos
+- [x] Alterar a regra não toca em ocorrência `cleared = 1`. Nem no passado
+      **não** efetivado: o requisito diz "futuras com `cleared = 0`", e apagar
+      uma conta vencida e não paga seria o app decidir que ela nunca existiu
+- [x] `autoPost` decide o `cleared` da linha nascida (REQ-REC-005)
+- [x] `RecurringDaoTest` fecha o teste que REQ-REC-001 nomeia: a regra vai e
+      volta sem perder campo. São duas traduções em arquivos diferentes —
+      `Mappers.kt` e `Repositories.kt` — e um `weekday` gravado como ordinal e
+      lido como ISO deslocaria toda conta semanal em um dia, sem erro nenhum
+
+**O worker diário não entrou**, e o [ADR-006](decisoes.md#adr-006--recorrência-materializa-sob-demanda-com-horizonte-de-60-dias)
+foi corrigido junto com a spec, no mesmo commit (Art. 3). Nada no app lê o
+resultado da geração com ele fechado: não há lembrete de vencimento, não há
+widget, e a rede está barrada até a F4. O worker gravaria linhas que ninguém vê
+antes da próxima abertura — que é quando o gatilho que entrou já roda. Fica um
+`ponytail:` na `MainActivity` dizendo o que o destrava.
+
+Um defeito que só o teste pegou: **`@Upsert` devolve `-1` no caminho de
+`UPDATE`**. A primeira versão usava esse retorno como id da regra na hora de
+limpar as ocorrências futuras, e limpava as da regra `-1` — que não existe. A
+alteração parecia ter funcionado, com as ocorrências antigas intactas e o valor
+novo em lugar nenhum. É a terceira aparição da mesma armadilha (`TxnDao.insert`,
+`BudgetRepository.definir`), e por isso a gravação da regra virou uma
+`@Transaction` no DAO, onde o id vem da entidade e não do retorno.
+
+A geração inteira de uma regra é **uma** escrita: as linhas novas e o
+`lastGeneratedDate` que as registra entram juntos. Separados, um processo morto
+no meio deixaria linhas gravadas com a marca antiga — e elas seriam geradas de
+novo na abertura seguinte, que é o defeito que REQ-REC-003 existe para fechar.
+Uma transação por regra, não uma para todas: uma regra defeituosa não pode
+desfazer a geração das outras.
 
 ### T-032 — Tela de recorrências
 **Fase** F1 · **Depende de** T-031 · **REQ** REQ-REC-008

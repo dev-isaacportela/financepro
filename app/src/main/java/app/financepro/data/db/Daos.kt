@@ -19,9 +19,9 @@ import kotlinx.coroutines.flow.Flow
  * parcela e orçamento moram em `domain/usecase` como função pura — é o que
  * torna cada uma testável em JVM sem banco. Aqui o SQL só filtra e ordena.
  *
- * DAOs de `budget`, `recurring_rule`, `import_batch` e `payee_rule` entram nas
- * tasks que os usam (T-028, T-031, T-041). As entidades já existem porque `txn`
- * aponta para elas, mas DAO sem chamador é código morto nascendo.
+ * DAOs de `import_batch` e `payee_rule` entram na task que os usa (T-041). As
+ * entidades já existem porque `txn` aponta para elas, mas DAO sem chamador é
+ * código morto nascendo.
  */
 
 /** REQ-ACC-001 · REQ-ACC-002 */
@@ -226,4 +226,93 @@ interface TxnDao {
      */
     @Query("UPDATE txn SET categoryId = :destino WHERE categoryId = :origem")
     suspend fun recategorizar(origem: Long, destino: Long): Int
+}
+
+/**
+ * REQ-REC-001 · REQ-REC-003 · REQ-REC-007
+ *
+ * Classe abstrata, não interface, pelas duas transações: materializar e
+ * reescrever precisam ser atômicas, e uma transação que atravessa dois métodos
+ * chamados de fora não é transação.
+ *
+ * Escreve em `txn` apesar de ser o DAO da regra. É deliberado: as linhas
+ * geradas e o `lastGeneratedDate` que as registra têm de entrar juntos, e um
+ * `TxnDao` injetado ao lado seriam duas conexões e duas transações.
+ *
+ * Sem `observeAll` nem `delete`: quem lista e quem apaga regra é a tela da
+ * T-032, e query sem chamador é código morto nascendo.
+ */
+@Dao
+abstract class RecurringDao {
+
+    /** As candidatas à geração. Regra inativa não materializa nada (REQ-REC-001). */
+    @Query("SELECT * FROM recurring_rule WHERE active = 1")
+    abstract suspend fun ativas(): List<RecurringRuleEntity>
+
+    @Query("SELECT * FROM recurring_rule WHERE id = :id")
+    abstract suspend fun byId(id: Long): RecurringRuleEntity?
+
+    @Upsert
+    abstract suspend fun upsert(rule: RecurringRuleEntity): Long
+
+    @Query("SELECT MAX(date) FROM txn WHERE recurringRuleId = :ruleId")
+    abstract suspend fun ultimaOcorrencia(ruleId: Long): Long?
+
+    @Query("UPDATE recurring_rule SET lastGeneratedDate = :ate WHERE id = :ruleId")
+    abstract suspend fun marcarGerado(ruleId: Long, ate: Long?)
+
+    @Query(
+        """
+        DELETE FROM txn
+        WHERE recurringRuleId = :ruleId AND cleared = 0 AND date >= :apartirDe
+        """,
+    )
+    abstract suspend fun apagarFuturasNaoEfetivadas(ruleId: Long, apartirDe: Long): Int
+
+    @Insert
+    abstract suspend fun inserirOcorrencias(txns: List<TxnEntity>)
+
+    /**
+     * As ocorrências novas e a marca de até onde se foi, numa escrita só.
+     * REQ-REC-003
+     *
+     * Separar as duas abriria a janela que quebra a idempotência: linhas
+     * gravadas com o `lastGeneratedDate` antigo — porque o processo morreu no
+     * meio — são regeradas na abertura seguinte, e aí o aluguel aparece duas
+     * vezes. É exatamente o defeito que o requisito existe para fechar.
+     */
+    @Transaction
+    open suspend fun materializar(ruleId: Long, txns: List<TxnEntity>, ate: Long) {
+        inserirOcorrencias(txns)
+        marcarGerado(ruleId, ate)
+    }
+
+    /**
+     * Grava a regra e, quando é alteração, descarta as ocorrências futuras
+     * ainda não efetivadas. REQ-REC-001 · REQ-REC-007 · Devolve o id.
+     *
+     * **O id não vem do `@Upsert`.** Ele devolve `-1` quando o caminho tomado
+     * foi `UPDATE`, e usar esse retorno faria a limpeza abaixo rodar contra a
+     * regra `-1` — que não existe: nada seria apagado, e a alteração pareceria
+     * ter funcionado enquanto as ocorrências antigas continuavam lá.
+     *
+     * `cleared = 0 AND date >= hoje` é o requisito literal: o que já foi
+     * efetivado é histórico e não muda, e o que já passou sem ser efetivado
+     * também fica — apagá-lo seria o app decidir que uma conta vencida e não
+     * paga nunca existiu.
+     *
+     * A marca volta para a **última ocorrência que sobrou**, e não para nulo:
+     * nulo faria a geração seguinte recomeçar do `startDate` e duplicar todo o
+     * histórico. Ela é recalculada aqui dentro justamente porque o `UPDATE`
+     * acabou de gravar o `lastGeneratedDate` que veio na regra, que é o valor
+     * que a tela leu antes de editar.
+     */
+    @Transaction
+    open suspend fun salvar(rule: RecurringRuleEntity, hoje: Long): Long {
+        val gerado = upsert(rule)
+        if (rule.id == 0L) return gerado
+        apagarFuturasNaoEfetivadas(rule.id, hoje)
+        marcarGerado(rule.id, ultimaOcorrencia(rule.id))
+        return rule.id
+    }
 }
