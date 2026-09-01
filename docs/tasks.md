@@ -983,10 +983,37 @@ Dois achados fora do texto da task.
 ### T-028 — Orçamento: dados e cálculo ⇉
 **Fase** F1 · **Depende de** T-003, T-004 · **REQ** REQ-BUD-001, REQ-BUD-002, REQ-BUD-004
 
+As entidades existem desde a T-004; o que faltava era o DAO, o repositório e a
+regra. Nenhuma tela — a T-029 é dona dela.
+
 **Pronto quando**
-- [ ] `BudgetProgressTest` prova que despesa em subcategoria conta no teto da mãe
-- [ ] Transferência nunca entra no consumo
-- [ ] Período respeita `monthStartDay`
+- [x] `BudgetProgressTest` prova que despesa em subcategoria conta no teto da
+      mãe. Sem isso o teto vira decoração: bastaria lançar tudo numa filha para
+      nunca estourar
+- [x] Transferência nunca entra no consumo. O filtro é por `type`, e não pela
+      ausência de categoria: uma linha vinda de importação com categoria
+      preenchida ainda seria transferência, e mover dinheiro entre bolsos não é
+      gasto
+- [x] Período respeita `monthStartDay`. `budgetProgress` recebe a `MonthRange`
+      pronta em vez de mês + dia de virada, e tira o mês de referência do início
+      dela — um segundo parâmetro seria a chance de a tela passar um mês que não
+      é o do período que ela mesma montou
+
+`BudgetDaoTest` cobre REQ-BUD-001 de escrita, e não só de índice: `@Upsert`
+sozinho não garante "no máximo um por par", porque em violação do índice único
+ele cai para um `UPDATE` pela chave primária que numa linha nova não casa com
+nada — a mesma armadilha já documentada em `TxnDao.insert`. Quem grava lê antes
+e reusa o id.
+
+Duas decisões que a DoD não previa.
+
+- **Teto zero ou negativo é recusado na escrita.** "Não gaste nada nesta
+  categoria" não é um teto, é a ausência dele, e é `remover` que diz isso. A
+  regra também mantém `percent` livre de divisão por zero, sem inventar um
+  percentual para um caso que não deveria existir.
+- **`diasRestantes` fica preso à faixa do período.** A tela navega meses: olhando
+  agosto em dezembro, "restantes" seria negativo e a divisão de REQ-BUD-004
+  quebraria; olhando em janeiro, passaria do tamanho do próprio período.
 
 ### T-029 — Tela de orçamento
 **Fase** F1 · **Depende de** T-028 · **REQ** REQ-BUD-003, REQ-BUD-005

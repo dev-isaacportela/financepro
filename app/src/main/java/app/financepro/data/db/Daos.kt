@@ -117,6 +117,38 @@ abstract class CategoryDao {
 
 /** REQ-TXN-001 · REQ-TXN-010 */
 @Dao
+interface BudgetDao {
+
+    /**
+     * Todos os tetos, de todos os meses. REQ-BUD-001
+     *
+     * A tela recorta o mês em memória, como a lista de transações faz: são
+     * poucas linhas — uma por categoria com teto, por mês — e um `Flow` por mês
+     * exigiria refazer a assinatura a cada troca de mês, com `flatMapLatest`, e
+     * um estado de carregamento por cima.
+     */
+    @Query("SELECT * FROM budget")
+    fun observeAll(): Flow<List<BudgetEntity>>
+
+    /**
+     * O teto de um par (categoria, mês), quando existe. REQ-BUD-001
+     *
+     * É o que torna "no máximo um por par" verdade na escrita. `@Upsert` sozinho
+     * não bastaria: em violação do índice único ele cai para um `UPDATE` pela
+     * chave primária, que numa linha nova (`id = 0`) não casa com nada — a mesma
+     * armadilha documentada em `TxnDao.insert`. Quem grava lê antes e reusa o id.
+     */
+    @Query("SELECT * FROM budget WHERE categoryId = :categoryId AND yearMonth = :yearMonth")
+    suspend fun byCategoryAndMonth(categoryId: Long, yearMonth: Int): BudgetEntity?
+
+    @Upsert
+    suspend fun upsert(budget: BudgetEntity): Long
+
+    @Delete
+    suspend fun delete(budget: BudgetEntity)
+}
+
+@Dao
 interface TxnDao {
 
     /** `date` é epochDay: o intervalo é comparação de inteiro, sem função de data. */

@@ -1,9 +1,11 @@
 package app.financepro.data.db
 
 import app.financepro.domain.model.Account
+import app.financepro.domain.model.Budget
 import app.financepro.domain.model.Category
 import app.financepro.domain.model.Txn
 import java.time.LocalDate
+import java.time.YearMonth
 
 /**
  * Entidade → modelo de domínio.
@@ -41,6 +43,24 @@ fun CategoryEntity.toDomain() = Category(
     iconKey = iconKey,
     parentId = parentId,
     archived = archived,
+)
+
+/**
+ * `yyyyMM`, ex. 202608. REQ-BUD-001
+ *
+ * Inteiro na coluna porque ordena e compara em SQL sem função de data, pela
+ * mesma razão de `date` ser `epochDay` — e a conversão fica **aqui**, na borda,
+ * uma vez para cada direção.
+ */
+fun YearMonth.toYearMonthInt(): Int = year * 100 + monthValue
+
+fun Int.toYearMonth(): YearMonth = YearMonth.of(this / 100, this % 100)
+
+fun BudgetEntity.toDomain() = Budget(
+    id = id,
+    categoryId = categoryId,
+    month = yearMonth.toYearMonth(),
+    limitCents = limitCents,
 )
 
 fun TxnEntity.toDomain() = Txn(

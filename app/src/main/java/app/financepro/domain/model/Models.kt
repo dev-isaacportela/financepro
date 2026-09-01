@@ -1,6 +1,7 @@
 package app.financepro.domain.model
 
 import java.time.LocalDate
+import java.time.YearMonth
 
 /**
  * Modelos de domínio. **Kotlin puro** — nenhuma anotação de Room, nenhum
@@ -59,6 +60,19 @@ data class Category(
     val iconKey: String,
     val parentId: Long? = null,
     val archived: Boolean = false,
+)
+
+/**
+ * O teto de uma categoria num mês. REQ-BUD-001
+ *
+ * [month] é `YearMonth` e não o `yyyyMM` inteiro da coluna: a conversão é de
+ * borda, e nenhuma regra de orçamento precisa saber que o banco guarda 202608.
+ */
+data class Budget(
+    val id: Long = 0,
+    val categoryId: Long,
+    val month: YearMonth,
+    val limitCents: Long,
 )
 
 enum class TxnType { INCOME, EXPENSE, TRANSFER }

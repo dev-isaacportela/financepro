@@ -5,6 +5,8 @@ import app.financepro.data.db.ACCOUNT_CASH_COLOR
 import app.financepro.data.db.ACCOUNT_CHECKING_COLOR
 import app.financepro.data.db.AccountDao
 import app.financepro.data.db.AccountEntity
+import app.financepro.data.db.BudgetDao
+import app.financepro.data.db.BudgetEntity
 import app.financepro.data.db.CategoryDao
 import app.financepro.data.db.CategoryEntity
 import app.financepro.data.db.TxnDao
@@ -12,12 +14,15 @@ import app.financepro.data.db.TxnEntity
 import app.financepro.data.db.toDomain
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
+import app.financepro.domain.model.Budget
 import app.financepro.domain.model.Category
 import app.financepro.domain.model.CategoryKind
 import app.financepro.domain.model.Txn
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import app.financepro.data.db.toYearMonthInt
 import java.time.LocalDate
+import java.time.YearMonth
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -159,6 +164,41 @@ class CategoryRepository @Inject constructor(
         }
         if (destino != null && presas > 0) txns.recategorizar(categoria.id, destino)
         dao.byId(categoria.id)?.let { dao.delete(it) }
+    }
+}
+
+@Singleton
+class BudgetRepository @Inject constructor(private val dao: BudgetDao) {
+
+    fun observeAll(): Flow<List<Budget>> = dao.observeAll().map { l -> l.map { it.toDomain() } }
+
+    /**
+     * Define o teto de uma categoria num mês. REQ-BUD-001
+     *
+     * Lê antes de gravar para reusar o id do par: sem isso o `@Upsert` cairia
+     * num `UPDATE` por chave primária que não casa com nada, e o índice único
+     * recusaria a linha — "no máximo um teto por par" viraria "no máximo um, e
+     * a segunda tentativa quebra".
+     *
+     * Teto zero ou negativo é recusado aqui, na borda de escrita: "não gaste
+     * nada nesta categoria" não é um teto, é a ausência dele — e é `remover` que
+     * diz isso. A regra também mantém `percent` livre de divisão por zero.
+     */
+    suspend fun definir(categoryId: Long, mes: YearMonth, limitCents: Long) {
+        require(limitCents > 0) { "teto deve ser maior que zero, recebido $limitCents" }
+        val existente = dao.byCategoryAndMonth(categoryId, mes.toYearMonthInt())
+        dao.upsert(
+            BudgetEntity(
+                id = existente?.id ?: 0,
+                categoryId = categoryId,
+                yearMonth = mes.toYearMonthInt(),
+                limitCents = limitCents,
+            ),
+        )
+    }
+
+    suspend fun remover(categoryId: Long, mes: YearMonth) {
+        dao.byCategoryAndMonth(categoryId, mes.toYearMonthInt())?.let { dao.delete(it) }
     }
 }
 

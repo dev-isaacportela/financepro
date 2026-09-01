@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "arquitetura.md",
+                "file": "tasks.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "arquitetura"
+              "title": "tasks"
             }
           }
         ]
@@ -190,6 +190,9 @@
   },
   "active": "179ab12f56f3facc",
   "lastOpenFiles": [
-    "spec.md"
+    "spec.md",
+    "decisoes.md",
+    "constitution.md",
+    "arquitetura.md"
   ]
 }
