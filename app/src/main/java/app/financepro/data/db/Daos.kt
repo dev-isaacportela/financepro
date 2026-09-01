@@ -239,11 +239,15 @@ interface TxnDao {
  * geradas e o `lastGeneratedDate` que as registra têm de entrar juntos, e um
  * `TxnDao` injetado ao lado seriam duas conexões e duas transações.
  *
- * Sem `observeAll` nem `delete`: quem lista e quem apaga regra é a tela da
- * T-032, e query sem chamador é código morto nascendo.
+ * Excluir a regra **não** leva as ocorrências junto: `txn.recurringRuleId` é
+ * `SET_NULL`, e o histórico do aluguel pago continua no extrato depois de o
+ * aluguel deixar de ser recorrente.
  */
 @Dao
 abstract class RecurringDao {
+
+    @Query("SELECT * FROM recurring_rule ORDER BY active DESC, description")
+    abstract fun observeAll(): Flow<List<RecurringRuleEntity>>
 
     /** As candidatas à geração. Regra inativa não materializa nada (REQ-REC-001). */
     @Query("SELECT * FROM recurring_rule WHERE active = 1")
@@ -254,6 +258,9 @@ abstract class RecurringDao {
 
     @Upsert
     abstract suspend fun upsert(rule: RecurringRuleEntity): Long
+
+    @Delete
+    abstract suspend fun delete(rule: RecurringRuleEntity)
 
     @Query("SELECT MAX(date) FROM txn WHERE recurringRuleId = :ruleId")
     abstract suspend fun ultimaOcorrencia(ruleId: Long): Long?

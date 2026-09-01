@@ -377,6 +377,8 @@ class TxnRepository @Inject constructor(private val dao: TxnDao) {
 @Singleton
 class RecurringRepository @Inject constructor(private val dao: RecurringDao) {
 
+    fun observeAll(): Flow<List<RecurringRule>> = dao.observeAll().map { l -> l.map { it.toDomain() } }
+
     /**
      * Materializa o que falta em todas as regras ativas. Devolve quantas
      * linhas nasceram. REQ-REC-003 · REQ-REC-004 · REQ-REC-005
@@ -423,6 +425,21 @@ class RecurringRepository @Inject constructor(private val dao: RecurringDao) {
         val id = dao.salvar(regra.toEntity(), hoje.toEpochDay())
         gerarPendentes(hoje)
         return id
+    }
+
+    /**
+     * Apaga a regra e deixa as ocorrências de pé.
+     *
+     * `txn.recurringRuleId` é `SET_NULL`: o aluguel pago em março continua no
+     * extrato depois de o aluguel deixar de ser recorrente. Apagar o histórico
+     * junto mudaria o saldo de um mês fechado, que é o que REQ-REC-007 recusa
+     * até para uma simples edição.
+     *
+     * Quem quer parar de gerar **sem** apagar nada usa `active = false`, que é
+     * o que a tela oferece primeiro.
+     */
+    suspend fun excluir(regra: RecurringRule) {
+        dao.byId(regra.id)?.let { dao.delete(it) }
     }
 }
 

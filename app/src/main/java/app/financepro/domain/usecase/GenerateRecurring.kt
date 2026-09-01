@@ -95,3 +95,35 @@ fun RecurringRule.occurrenceAt(date: LocalDate) = Txn(
     description = description,
     cleared = autoPost,
 )
+
+/**
+ * A próxima data em que a regra cai, a partir de [hoje]. REQ-REC-008
+ *
+ * Nula quando a regra já terminou — `endDate` no passado —, e é o que a lista
+ * de recorrências exibe como "Encerrada" em vez de uma data inventada.
+ *
+ * Não é o mesmo que a primeira de [pendingOccurrences]: aquela responde "o que
+ * falta materializar", que já pulou tudo até `lastGeneratedDate`. Esta responde
+ * "quando cai de novo", e uma ocorrência já materializada continua sendo a
+ * próxima até acontecer.
+ */
+fun RecurringRule.nextOccurrence(hoje: LocalDate): LocalDate? =
+    occurrences(spec).dropWhile { it < hoje }.firstOrNull()
+
+/** Janela de "próximas contas", em dias. REQ-REC-008 */
+const val PROXIMAS_DIAS = 7L
+
+/**
+ * As contas previstas da semana. REQ-REC-008 · REQ-TXN-006
+ *
+ * `cleared = 0` e nada mais: a origem não importa: uma recorrência sem
+ * `autoPost` e um lançamento previsto digitado à mão são a mesma promessa de
+ * pagamento, e separá-los faria o bloco mentir sobre o que vem por aí.
+ *
+ * A janela começa **em hoje**, como o requisito diz. Conta vencida e não paga
+ * fica de fora do bloco — ela continua na lista de transações, onde o filtro de
+ * previstas a alcança.
+ */
+fun proximasContas(txns: List<Txn>, hoje: LocalDate): List<Txn> =
+    txns.filter { !it.cleared && it.date >= hoje && it.date <= hoje.plusDays(PROXIMAS_DIAS) }
+        .sortedWith(compareBy({ it.date }, { it.id }))

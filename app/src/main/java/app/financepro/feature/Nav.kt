@@ -52,6 +52,7 @@ import app.financepro.feature.categories.CategoriesScreen
 import app.financepro.feature.home.HomeScreen
 import app.financepro.feature.lock.LockScreen
 import app.financepro.feature.onboarding.OnboardingScreen
+import app.financepro.feature.recurring.RecurringScreen
 import app.financepro.feature.txn.QuickEntrySheet
 import app.financepro.feature.txn.TransactionsScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -97,6 +98,9 @@ data object Contas
 
 @Serializable
 data object Categorias
+
+@Serializable
+data object Recorrencias
 
 /**
  * A fatura de um cartão. O único destino com argumento — e mesmo aqui o id vai
@@ -214,6 +218,7 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
             }
             composable<Contas> { AccountsScreen() }
             composable<Categorias> { CategoriesScreen() }
+            composable<Recorrencias> { RecurringScreen() }
             composable<Cartao> { CardScreen() }
             composable<Transacoes> {
                 TransactionsScreen(
@@ -244,9 +249,10 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
 /**
  * O "Mais" da barra: um índice, não uma tela.
  *
- * Contas e Categorias são destinos próprios em vez de abas porque a barra tem
- * quatro lugares (REQ-UI-001) e nenhum deles deve ser gasto com algo que se
- * mexe uma vez por mês.
+ * Contas, Categorias e Recorrências são destinos próprios em vez de abas porque
+ * a barra tem quatro lugares (REQ-UI-001) e nenhum deles deve ser gasto com algo
+ * que se mexe uma vez por mês. O que a recorrência produz aparece onde importa:
+ * o bloco "Próximas contas" do dashboard.
  */
 @Composable
 private fun MaisScreen(onIr: (Any) -> Unit, bloqueio: Boolean, onAlternarBloqueio: () -> Unit) {
@@ -259,6 +265,11 @@ private fun MaisScreen(onIr: (Any) -> Unit, bloqueio: Boolean, onAlternarBloquei
         GhostButton(
             text = "Categorias",
             onClick = { onIr(Categorias) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        GhostButton(
+            text = "Recorrências",
+            onClick = { onIr(Recorrencias) },
             modifier = Modifier.fillMaxWidth(),
         )
         // Uma preferência não é uma tela de ajustes. O estado vai **escrito** no

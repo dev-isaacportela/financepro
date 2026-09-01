@@ -11,6 +11,7 @@ import app.financepro.domain.model.Txn
 import app.financepro.domain.usecase.Comparativo
 import app.financepro.domain.usecase.cardDebt
 import app.financepro.domain.usecase.comparativoDe
+import app.financepro.domain.usecase.proximasContas
 import app.financepro.domain.usecase.totalBalance
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 
@@ -39,6 +41,7 @@ data class HomeState(
     val categorias: List<Category> = emptyList(),
     val txns: List<Txn> = emptyList(),
     val mes: YearMonth = YearMonth.now(),
+    val hoje: LocalDate = LocalDate.now(),
 ) {
     /**
      * Vem de `totalBalance`, o caso de uso puro da T-008 — nunca de um `SUM` em
@@ -62,6 +65,15 @@ data class HomeState(
         get() = txns.sortedWith(compareByDescending<Txn> { it.date }.thenByDescending { it.id })
             .take(ULTIMAS)
 
+    /**
+     * REQ-REC-008 — o que vence nos próximos 7 dias e ainda não foi efetivado.
+     *
+     * A regra é a mesma função pura que a spec nomeia, e não um filtro escrito
+     * aqui: o bloco do dashboard e qualquer outro lugar que venha a mostrar
+     * previstas precisam concordar sobre o que é "próxima conta".
+     */
+    val proximas: List<Txn> get() = proximasContas(txns, hoje)
+
     val vazio: Boolean get() = txns.isEmpty()
 
     fun contaDe(id: Long?): Account? = contas.firstOrNull { it.id == id }
@@ -78,7 +90,7 @@ data class HomeState(
 class HomeViewModel @Inject constructor(
     contas: AccountRepository,
     categorias: CategoryRepository,
-    txns: TxnRepository,
+    private val txns: TxnRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -95,5 +107,17 @@ class HomeViewModel @Inject constructor(
                     _state.update { it.copy(contas = cs, categorias = cats, txns = ts) }
                 }
         }
+    }
+
+    /**
+     * Efetiva uma conta prevista. REQ-REC-008 · REQ-TXN-006
+     *
+     * Só o `cleared`: a linha já existe, com valor, data, conta e categoria
+     * decididos quando foi gerada. Confirmar não é relançar — e passar pelo
+     * `salvar` de sempre é o que preserva `dedupeKey`, `recurringRuleId` e o
+     * `createdAt` original, que o repositório protege desde a T-050.
+     */
+    fun efetivar(txn: Txn) = viewModelScope.launch {
+        txns.salvar(txn.copy(cleared = true))
     }
 }

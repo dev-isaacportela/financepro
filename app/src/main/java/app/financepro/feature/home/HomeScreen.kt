@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,16 +32,18 @@ import app.financepro.core.ui.theme.MoneyBody
 import app.financepro.core.ui.theme.MoneyLg
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.Subheading
+import app.financepro.domain.model.Txn
 import app.financepro.domain.usecase.Comparativo
 
 /**
  * O dashboard. REQ-UI-004 · REQ-UI-006 · Art. 18
  *
- * A ordem dos blocos é a do requisito. Dois dos seis dele não aparecem aqui:
- * orçamento depende de REQ-BUD-001 e próximas contas de REQ-REC-008, ambos F1
- * — antes disso não há nem dado nem ação que os preencha, e um bloco
- * permanentemente mudo é o oposto do que REQ-UI-006 pede. A spec registra a
- * regra; eles entram com as tasks deles.
+ * A ordem dos blocos é a do requisito. Falta um dos seis: orçamento, que
+ * depende do dashboard saber qual teto está mais perto de estourar — a tela
+ * própria dele já existe (T-029), o bloco daqui não. Próximas contas entrou com
+ * a T-032, e aparece **só quando há alguma**: com a fonte de dados existindo, um
+ * bloco vazio todo dia para quem não tem conta a vencer é o ruído que
+ * REQ-UI-006 recusa, e a ação que o preenche mora em Mais › Recorrências.
  *
  * `Column` com `verticalScroll` e não `LazyColumn`: o conteúdo é limitado por
  * construção — dois cards e cinco linhas. `LazyColumn` custaria chaves,
@@ -76,6 +80,9 @@ fun HomeScreen(
                 Comeco(onNovoLancamento)
             } else {
                 ComparativoDoPeriodo(state.comparativo)
+                if (state.proximas.isNotEmpty()) {
+                    ProximasContas(state, vm::efetivar, onEditar)
+                }
                 Ultimas(state, onVerTransacoes, onEditar)
             }
         }
@@ -147,6 +154,45 @@ private fun ComparativoDoPeriodo(c: Comparativo) {
             style = Caption,
             color = Slush.ink.copy(alpha = SECUNDARIO_ALPHA),
         )
+    }
+}
+
+/**
+ * REQ-REC-008 · REQ-TXN-006 — o que vence na semana e ainda não foi pago.
+ *
+ * A mesma linha da lista de transações, com um botão embaixo. A alternativa
+ * seria uma linha própria com a ação dentro dela, e aí seriam duas linhas de
+ * transação no app para divergirem no primeiro ajuste.
+ *
+ * O botão leva `contentDescription` porque cinco botões "Efetivar" seguidos são
+ * cinco vezes a mesma palavra para quem ouve a tela, sem dizer qual conta
+ * (REQ-A11Y-001). O texto visível continua curto — a linha logo acima já diz o
+ * resto para quem enxerga.
+ */
+@Composable
+private fun ProximasContas(state: HomeState, onEfetivar: (Txn) -> Unit, onEditar: (Long) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("Próximas contas", style = Subheading, color = Slush.ink)
+        state.proximas.forEach { txn ->
+            val categoria = state.categoriaDe(txn.categoryId)
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                LinhaDeTransacao(
+                    txn = txn,
+                    categoria = categoria,
+                    conta = state.contaDe(txn.accountId),
+                    destino = state.contaDe(txn.counterAccountId),
+                    onClick = { onEditar(txn.id) },
+                )
+                GhostButton(
+                    text = "Efetivar",
+                    onClick = { onEfetivar(txn) },
+                    modifier = Modifier.semantics {
+                        contentDescription =
+                            "Efetivar " + txn.description.ifBlank { categoria?.name ?: "lançamento" }
+                    },
+                )
+            }
+        }
     }
 }
 

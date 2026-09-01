@@ -1112,10 +1112,67 @@ Uma transação por regra, não uma para todas: uma regra defeituosa não pode
 desfazer a geração das outras.
 
 ### T-032 — Tela de recorrências
-**Fase** F1 · **Depende de** T-031 · **REQ** REQ-REC-008
+**Fase** F1 · **Depende de** T-031 · **REQ** REQ-REC-001, REQ-REC-002, REQ-REC-005, REQ-REC-008
 
 Lista de regras, próxima ocorrência, e bloco "Próximas contas" no dashboard com
 ação de efetivar.
+
+**Pronto quando**
+- [x] Cadastro com os oito campos que REQ-REC-001 nomeia, mais o `interval` de
+      REQ-REC-002 e o `autoPost` de REQ-REC-005. Sem a tela, a T-031 gerava a
+      partir de uma tabela que nada preenchia: o gerador estava pronto e a
+      recorrência era inalcançável
+- [x] A lista diz **quando cai de novo**, e é outra pergunta que a geração:
+      `pendingOccurrences` pula tudo até `lastGeneratedDate` — a ocorrência já
+      materializada continua sendo a próxima até acontecer. `nextOccurrence`
+      responde a essa, e regra pausada ou encerrada não anuncia data nenhuma
+- [x] Bloco "Próximas contas" no dashboard, na posição que REQ-UI-004 manda, com
+      "Efetivar" por linha. Aparece **só quando há alguma**: com a fonte de dados
+      existindo, um bloco vazio todo dia para quem não tem conta a vencer é o
+      ruído que REQ-UI-006 recusa
+- [x] Efetivar mexe **só** no `cleared`. Passa pelo `salvar` de sempre, que é o
+      que preserva `dedupeKey`, `recurringRuleId` e o `createdAt` original
+- [x] `ProximasContasTest` trava a janela nos dois extremos, o filtro de
+      efetivadas e a ordem
+
+A validação da regra é a **da transação**: `validateTxn` aplicado à ocorrência
+que ela produziria no dia de início. Uma regra que gera doze lançamentos
+inválidos é uma regra inválida, e um segundo validador aqui divergiria do
+primeiro na primeira mudança de mensagem.
+
+O calendário é o `DatePicker` do Material, não um seletor próprio: ele já vem no
+`material3` que o app usa, já herda papel e tinta do `colorScheme`, e já traz
+teclado, leitor de tela e localização. A conversão é `epochDay × 86.400.000` nos
+dois sentidos — o seletor devolve meia-noite em **UTC**, e converter por
+`Instant` local deslocaria a data em um dia para o Brasil inteiro.
+
+Excluir a regra **não** leva as ocorrências junto (`recurringRuleId` é
+`SET_NULL`), e o rótulo do botão diz isso. Quem quer só parar de gerar tem
+"Pausar" antes, sem tocar em nada.
+
+Conferido no emulador: a regra "Assinaturas" mensal entrou pela folha, a lista
+mostrou "Todo mês · próxima 1 de setembro de 2026", o bloco apareceu no
+dashboard entre "Este mês" e "Últimas transações" com `contentDescription`
+"Efetivar Assinaturas", e efetivar levou o saldo de R$ 1.167,00 para R$ 666,92 —
+a prevista não contava no saldo (REQ-TXN-006) e passou a contar. Três reinícios
+do app depois, o saldo não se moveu: a idempotência da T-031 vale no aparelho,
+não só no teste.
+
+**O calendário fala a língua do aparelho, não a do app.** No emulador em inglês
+ele saiu "Select date / September 2026", enquanto o resto da tela estava em
+português — as datas do app são formatadas com `Locale.forLanguageTag("pt-BR")`
+explícito, e o componente do Material segue o sistema. Num aparelho brasileiro,
+que é o público, ele aparece em português. Não é defeito desta task e sim a
+ausência de estratégia de idioma no app inteiro: não há `values-pt-BR`, nem
+`localeConfig`, e todo texto é português cravado no código. Fica registrado
+aqui; forçar o idioma é decisão de app, não de tela.
+
+**Uma pergunta para o dono do produto, não resolvida por suposição** (Art. 5):
+REQ-REC-008 diz "dos próximos 7 dias", e a janela foi implementada literalmente —
+começa **em hoje**. Conta vencida e não paga fica de fora do bloco, embora
+continue na lista de transações pelo filtro de previstas. Se o esperado for
+"vencidas primeiro, depois a semana", é uma linha em `proximasContas` e uma
+frase em REQ-REC-008 — mas é mudança de requisito, e começa na spec.
 
 ### T-033 — Relatórios ⇉
 **Fase** F1 · **Depende de** T-017 · **REQ** REQ-RPT-001, REQ-RPT-002, REQ-RPT-003, REQ-RPT-004
