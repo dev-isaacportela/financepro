@@ -18,7 +18,7 @@ import java.time.YearMonth
  * para um `UPDATE` pela chave primária, que numa linha nova (`id = 0`) não casa
  * com nada — a mesma armadilha documentada em `TxnDao.insert`.
  */
-@Req("REQ-BUD-001")
+@Req("REQ-BUD-001", "REQ-BUD-005")
 class BudgetDaoTest : DbTest() {
 
     private val agosto = YearMonth.of(2026, 8)
@@ -89,6 +89,35 @@ class BudgetDaoTest : DbTest() {
             assertTrue("teto $valor deveria ser recusado", erro is IllegalArgumentException)
         }
         assertTrue(tetos().isEmpty())
+    }
+
+    @Test
+    fun `copiar do mes anterior traz os tetos, sem tocar no que ja existe`() = runBlocking {
+        val repo = repo()
+        val alimentacao = db.categoryDao().upsert(CATEGORIA.copy(name = "Alimentação"))
+        val transporte = db.categoryDao().upsert(CATEGORIA.copy(name = "Transporte"))
+        repo.definir(alimentacao, agosto, 600_00)
+        repo.definir(transporte, agosto, 300_00)
+        // Setembro já tem um teto ajustado à mão, diferente do de agosto.
+        repo.definir(alimentacao, setembro, 800_00)
+
+        assertEquals(1, repo.copiarDoMesAnterior(setembro))
+
+        val deSetembro = tetos().filter { it.yearMonth == 202609 }.associate { it.categoryId to it.limitCents }
+        // O ajustado fica: "copiar todos" que apaga o que a pessoa decidiu é uma
+        // ação destrutiva escondida atrás de um botão de conveniência.
+        assertEquals(800_00L, deSetembro[alimentacao])
+        assertEquals(300_00L, deSetembro[transporte])
+    }
+
+    @Test
+    fun `copiar de um mes anterior vazio nao faz nada`() = runBlocking {
+        val repo = repo()
+        val categoria = db.categoryDao().upsert(CATEGORIA)
+        repo.definir(categoria, setembro, 400_00)
+
+        assertEquals(0, repo.copiarDoMesAnterior(setembro))
+        assertEquals(1, tetos().size)
     }
 
     @Test

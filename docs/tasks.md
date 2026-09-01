@@ -1018,9 +1018,36 @@ Duas decisões que a DoD não previa.
 ### T-029 — Tela de orçamento
 **Fase** F1 · **Depende de** T-028 · **REQ** REQ-BUD-003, REQ-BUD-005
 
+Tira o último placeholder do `NavHost`: a aba Orçamento era a única que ainda
+mostrava só o próprio nome.
+
 **Pronto quando**
-- [ ] Âmbar em 80%, vermelho em 100%, **com ícone** além da cor
-- [ ] Copiar tetos do mês anterior em uma ação
+- [x] Âmbar em 80%, vermelho em 100%, **com ícone** além da cor — e com a
+      **palavra** junto do ícone. Um triângulo sozinho é cor com outra forma, e
+      quem usa leitor de tela ouviria "triângulo apontando para cima": a linha
+      diz "⚠ Atenção" e "▲ Estourou R$ 3,00", e a linha inteira vira uma frase só
+      para o leitor (REQ-A11Y-001, REQ-A11Y-003)
+- [x] Copiar tetos do mês anterior em uma ação, e o botão só aparece quando há o
+      que copiar
+
+A barra enche **só a partir dos 80%**; dentro do teto é contorno vazio, como
+design.md pede. Uma barra que enche desde o primeiro real gasto transforma
+"gastei um pouco" em alerta visual, e alerta que fica sempre ligado deixa de ser
+alerta.
+
+Um defeito que só a tela mostrou: REQ-BUD-003 pede barra com gasto, **limite** e
+percentual, e a primeira versão exibia gasto e percentual — o limite existia só
+na descrição falada. "82%" sem o número obriga a fazer a conta de cabeça para
+saber de quanto. A linha passou a dizer "R$ 33,00 de R$ 40,00".
+
+Copiar **não sobrescreve** o que o mês de destino já tem: "copiar todos" que
+apaga um teto ajustado à mão é uma ação destrutiva escondida atrás de um botão de
+conveniência. Quem já decidiu que este mês tem outro teto disse mais do que o mês
+passado.
+
+Valor zerado na folha é tratado como remoção, e não recusado: o repositório já
+diz que teto zero não é teto, e mandar procurar outro botão para dizer a mesma
+coisa transformaria a regra numa pegadinha.
 
 ### T-030 — Expansão de recorrência ⇉
 **Fase** F1 · **Depende de** T-003 · **REQ** REQ-REC-001, REQ-REC-002, REQ-REC-006

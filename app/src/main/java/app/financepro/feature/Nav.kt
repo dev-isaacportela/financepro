@@ -3,7 +3,6 @@ package app.financepro.feature
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,14 +32,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavGraphBuilder
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.SlushSurface
-import app.financepro.core.ui.theme.Display
 import app.financepro.core.ui.theme.Label
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
@@ -49,6 +46,7 @@ import app.financepro.core.ui.theme.Subheading
 import app.financepro.data.prefs.SecurityPrefs
 import app.financepro.data.repo.AccountRepository
 import app.financepro.feature.accounts.AccountsScreen
+import app.financepro.feature.budget.BudgetScreen
 import app.financepro.feature.card.CardScreen
 import app.financepro.feature.categories.CategoriesScreen
 import app.financepro.feature.home.HomeScreen
@@ -223,8 +221,7 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
                     onEditar = { editandoId = it },
                 )
             }
-            // A restante entra na sua task: T-029.
-            emDesenvolvimento<Orcamento>("Orçamento")
+            composable<Orcamento> { BudgetScreen() }
         }
     }
 
@@ -243,13 +240,6 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
         )
     }
 }
-
-private inline fun <reified T : Any> NavGraphBuilder.emDesenvolvimento(titulo: String) =
-    composable<T> {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(titulo, style = Display, color = Slush.ink, textAlign = TextAlign.Center)
-        }
-    }
 
 /**
  * O "Mais" da barra: um índice, não uma tela.

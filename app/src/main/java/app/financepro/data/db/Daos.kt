@@ -141,8 +141,15 @@ interface BudgetDao {
     @Query("SELECT * FROM budget WHERE categoryId = :categoryId AND yearMonth = :yearMonth")
     suspend fun byCategoryAndMonth(categoryId: Long, yearMonth: Int): BudgetEntity?
 
+    /** Os tetos de um mês. Base de REQ-BUD-005. */
+    @Query("SELECT * FROM budget WHERE yearMonth = :yearMonth")
+    suspend fun doMes(yearMonth: Int): List<BudgetEntity>
+
     @Upsert
     suspend fun upsert(budget: BudgetEntity): Long
+
+    @Upsert
+    suspend fun upsertAll(budgets: List<BudgetEntity>)
 
     @Delete
     suspend fun delete(budget: BudgetEntity)

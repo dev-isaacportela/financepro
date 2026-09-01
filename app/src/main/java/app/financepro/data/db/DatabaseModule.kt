@@ -35,4 +35,7 @@ object DatabaseModule {
 
     @Provides
     fun txnDao(db: AppDatabase): TxnDao = db.txnDao()
+
+    @Provides
+    fun budgetDao(db: AppDatabase): BudgetDao = db.budgetDao()
 }

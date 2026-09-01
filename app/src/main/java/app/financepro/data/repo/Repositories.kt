@@ -200,6 +200,27 @@ class BudgetRepository @Inject constructor(private val dao: BudgetDao) {
     suspend fun remover(categoryId: Long, mes: YearMonth) {
         dao.byCategoryAndMonth(categoryId, mes.toYearMonthInt())?.let { dao.delete(it) }
     }
+
+    /**
+     * Copia para [mes] os tetos do mês anterior. REQ-BUD-005 · Devolve quantos.
+     *
+     * **Não sobrescreve** o que já existe no mês de destino. "Copiar todos" que
+     * apaga um teto ajustado à mão é uma ação destrutiva escondida atrás de um
+     * botão de conveniência — quem já decidiu que este mês tem outro teto disse
+     * mais do que o mês passado.
+     *
+     * Uma escrita só: metade dos tetos copiados é um mês pela metade, e o botão
+     * não diz qual metade.
+     */
+    suspend fun copiarDoMesAnterior(mes: YearMonth): Int {
+        val destino = mes.toYearMonthInt()
+        val jaTem = dao.doMes(destino).map { it.categoryId }.toSet()
+        val novos = dao.doMes(mes.minusMonths(1).toYearMonthInt())
+            .filter { it.categoryId !in jaTem }
+            .map { BudgetEntity(categoryId = it.categoryId, yearMonth = destino, limitCents = it.limitCents) }
+        if (novos.isNotEmpty()) dao.upsertAll(novos)
+        return novos.size
+    }
 }
 
 @Singleton
