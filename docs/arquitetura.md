@@ -42,7 +42,7 @@ app.financepro/
     db/             AppDatabase, entities, DAOs, migrations, converters
     repo/           AccountRepository, TxnRepository, BudgetRepository, ...
     prefs/          SecurityPrefs (T-018), SettingsDataStore
-    import/         parsers OFX/CSV, dedupe, ImportBatch  -> ver ingestao.md
+    ingest/         parsers OFX/CSV, dedupe, ImportBatch  -> ver ingestao.md
     notif/          NotificationListenerService + parsers por banco
   domain/
     model/          modelos puros, sem anotação de Room
@@ -54,6 +54,10 @@ app.financepro/
   MainActivity.kt
   FinanceApp.kt
 ```
+
+`data/ingest/` e não `data/import/`, como esta árvore dizia até a T-036: `import`
+é palavra reservada em Kotlin, e um pacote com esse nome precisaria de crase em
+todo arquivo que o referencia.
 
 ## 3. Camadas
 

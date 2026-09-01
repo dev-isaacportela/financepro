@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?OFX OFXHEADER="200" VERSION="211" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"?>
+<OFX>
+  <CREDITCARDMSGSRSV1>
+    <CCSTMTTRNRS>
+      <TRNUID>1</TRNUID>
+      <CCSTMTRS>
+        <CURDEF>BRL</CURDEF>
+        <CCACCTFROM><ACCTID>5555000011112222</ACCTID></CCACCTFROM>
+        <BANKTRANLIST>
+          <DTSTART>20260801</DTSTART>
+          <DTEND>20260831</DTEND>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260810</DTPOSTED>
+            <TRNAMT>-89.90</TRNAMT>
+            <FITID>NU-1</FITID>
+            <MEMO>PADARIA &amp; CIA</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <DTPOSTED>20260812</DTPOSTED>
+            <TRNAMT>-12.34</TRNAMT>
+            <FITID>NU-2</FITID>
+            <MEMO>UBER   TRIP</MEMO>
+          </STMTTRN>
+        </BANKTRANLIST>
+      </CCSTMTRS>
+    </CCSTMTTRNRS>
+  </CREDITCARDMSGSRSV1>
+</OFX>

@@ -56,7 +56,7 @@ RE_LOG = re.compile(r"\bandroid\.util\.Log\b|\bLog\.(?:v|d|i|w|e|wtf|println)\s*
 # /data/export/ entra porque e por la que o dinheiro sai do app: um Double
 # entre o centavo e o arquivo corrompe o backup em silencio, e o arquivo e a
 # unica copia que sobra quando o aparelho se perde.
-MONEY_PATHS = ("/core/money/", "/domain/", "/data/import/", "/data/export/")
+MONEY_PATHS = ("/core/money/", "/domain/", "/data/ingest/", "/data/export/")
 
 PHASES = ["F0", "F1", "F2", "F3", "F4"]
 

@@ -1370,18 +1370,59 @@ Design em [ingestao.md](ingestao.md).
 Uma única função `normalize`, usada por dedupe e por auto-categorização.
 
 **Pronto quando**
-- [ ] `NormalizeTest` cobre as 4 linhas da tabela de REQ-IMP-008
-- [ ] Uma só implementação no código — duas fariam dedupe e aprendizado discordarem
+- [x] `NormalizeTest` cobre as 4 linhas da tabela de REQ-IMP-008
+- [x] Uma só implementação no código — duas fariam dedupe e aprendizado discordarem
+- [x] Acento sai por decomposição NFD, não por tabela de pares: a tabela
+      esqueceria o Ç na primeira revisão, e "AÇOUGUE" com e sem cedilha viraria
+      dois estabelecimentos
+- [x] Número **curto** fica. `\d{4,}` some porque é NSU, autorização e final de
+      cartão; três dígitos ou menos são nome de loja, e removê-los faria
+      `POSTO 24H` e `POSTO 12H` virarem a mesma chave
+- [x] Pontuação vira **espaço**, não some: `MERCADO-SUL` colado daria
+      `MERCADOSUL`, que não casa com `MERCADO SUL` do mesmo lugar noutro extrato
+
+O pacote é `data/ingest/` e não `data/import/` como a arquitetura escrevia
+(corrigida no mesmo commit): `import` é palavra reservada em Kotlin, e um pacote
+com esse nome precisaria de crase em todo arquivo que o referencia. O
+`MONEY_PATHS` do `trace.py` acompanhou — é por ali que valor de extrato entra no
+app, e a guarda do Art. 6 tem de cobrir o caminho de entrada como já cobre o de
+saída.
 
 ### T-037 — Parser OFX ⇉
 **Fase** F2 · **Depende de** T-002 · **REQ** REQ-IMP-002, REQ-IMP-003
 
 **Pronto quando**
-- [ ] `OfxParserTest` com arquivos reais de ao menos 3 bancos, como fixtures
-- [ ] OFX 1.x SGML e 2.x XML pelo mesmo caminho de código
-- [ ] Fixture com `CHARSET:1252` e acento produz "ALIMENTAÇÃO" correto
-- [ ] Arquivo multi-conta importa só a conta selecionada
-- [ ] `FITID` duplicado dentro do próprio arquivo não quebra a importação
+- [~] `OfxParserTest` com arquivos de três formatos, como fixtures — **mas
+      sintéticos**, não downloads reais. Ver a ressalva abaixo
+- [x] OFX 1.x SGML e 2.x XML pelo mesmo caminho de código
+- [x] Fixture com `CHARSET:1252` e acento produz "ALIMENTAÇÃO" correto
+- [x] Arquivo multi-conta vira um extrato por conta, e quem importa escolhe
+- [x] `FITID` duplicado dentro do próprio arquivo não quebra a importação
+
+**A diferença entre SGML e XML some** quando se lê o arquivo como "uma tag, e o
+texto até a próxima tag": `<TRNAMT>-187.50` e `<TRNAMT>-187.50</TRNAMT>` dão o
+mesmo par. Um parser de XML de verdade recusaria o 1.x, que é o que a maioria
+dos bancos brasileiros ainda exporta — e é o motivo de o scanner ser próprio, e
+não `XmlPullParser`.
+
+**A ressalva das fixtures, dita na cara.** As três são montadas à mão sobre os
+formatos que de fato divergem: 1.x SGML em CP1252, 2.x XML em UTF-8, e 1.x com
+vírgula decimal e duas contas no mesmo arquivo. Elas cobrem o que se conhece de
+antemão — acento em CP1252, tag de folha sem fechamento, `TRNTYPE` mentindo
+sobre o sinal, `FITID` repetido, multi-conta. O que elas **não** cobrem é a
+surpresa de um exportador específico, que é justamente o que um download real
+traria. A T-041, que liga a importação à tela, passa arquivos de verdade antes
+de isto chegar ao usuário.
+
+O parser é tolerante de propósito: `<STMTTRN>` novo fecha o anterior mesmo sem
+`</STMTTRN>`, e linha sem valor ou sem data é pulada em vez de derrubar o
+arquivo. Exportador que erra o fechamento é comum, e recusar o extrato inteiro
+por causa de uma linha é pior do que ler as outras trezentas.
+
+Charset desconhecido cai em **ISO-8859-1**, não em UTF-8: byte alto isolado é
+inválido em UTF-8 e viraria `?`, enquanto em ISO-8859-1 vira uma letra
+acentuada possivelmente errada — legível, e que o usuário corrige na revisão.
+
 
 ### T-038 — Parser CSV ⇉
 **Fase** F2 · **Depende de** T-002 · **REQ** REQ-IMP-006
