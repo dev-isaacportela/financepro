@@ -15,7 +15,7 @@ import org.junit.Test
 // conta. A combinação com categoria, tipo e busca é regra, e mora em
 // `TxnListTest` — o `LIKE` do SQLite não dobra acento, e a conversão de
 // texto para centavos não pode ter uma segunda implementação (Art. 6).
-@Req("REQ-TXN-001", "REQ-DATA-002", "REQ-TXN-012")
+@Req("REQ-TXN-001", "REQ-DATA-002", "REQ-TXN-012", "REQ-IMP-012")
 class TxnDaoTest : DbTest() {
 
     private val dao get() = db.txnDao()

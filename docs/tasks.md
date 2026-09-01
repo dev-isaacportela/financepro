@@ -1428,18 +1428,61 @@ acentuada possivelmente errada — legível, e que o usuário corrige na revisã
 **Fase** F2 · **Depende de** T-002 · **REQ** REQ-IMP-006
 
 **Pronto quando**
-- [ ] `CsvSniffTest` acerta separador, formato de data e decimal em amostras de 3 bancos
-- [ ] Sem biblioteca de CSV adicionada (Art. 10 / ladder)
+- [x] `CsvSniffTest` acerta separador, formato de data e decimal em três amostras
+      — sintéticas, com a mesma ressalva da T-037
+- [x] Sem biblioteca de CSV adicionada (Art. 10 / ladder)
+- [x] Aspas resolvidas de verdade: separador dentro do campo, aspa dobrada e
+      quebra de linha dentro das aspas
+- [x] O BOM que a própria exportação escreve (REQ-BAK-001) não vira parte da
+      primeira célula — reimportar o CSV do app é o teste mais provável de quem
+      está experimentando
+
+**O caso que justifica o farejador** é o extrato brasileiro típico: separador `;`
+com decimal `,`. Contando vírgulas, o arquivo pareceria ter duas colunas e
+`-187,50` viraria `-187` e `50` — valor errado em toda linha. A pontuação é
+`colunas × linhas que concordam`: só colunas escolheria a vírgula, só
+concordância escolheria qualquer caractere ausente, e o produto acerta.
+
+`temCabecalho` não está em REQ-IMP-006 e entrou assim mesmo: sem ele
+`Data;Descrição;Valor` viraria uma transação de valor nulo, e a primeira coisa
+que o usuário veria da importação seria uma linha errada.
+
+O decimal é detectado porque o requisito pede, **não** porque o parser precise:
+`parseCents` decide sozinho pelo último separador (REQ-IMP-004). Quem usa o
+palpite é a tela de mapeamento, que exibe o que entendeu para o usuário
+confirmar.
 
 ### T-039 — Motor de deduplicação
-**Fase** F2 · **Depende de** T-036, T-037 · **REQ** REQ-IMP-007, REQ-IMP-009, REQ-IMP-012
+**Fase** F2 · **Depende de** T-036, T-037 · **REQ** REQ-IMP-007, REQ-IMP-008, REQ-IMP-009, REQ-IMP-012
 
 Três níveis: `FITID`, hash exato, janela difusa ±3 dias.
 
 **Pronto quando**
-- [ ] `DedupeTest`: reimportar o mesmo OFX duas vezes não cria nenhuma transação nova
-- [ ] Nível 3 **nunca** descarta sozinho — marca e devolve o par para decisão
-- [ ] Índice único parcial rejeita duplicata mesmo com a checagem em código desativada no teste
+- [x] `DedupeTest`: reimportar o mesmo arquivo não cria nenhuma transação nova
+- [x] Nível 3 **nunca** descarta sozinho — marca e devolve o par para decisão
+- [x] Índice único rejeita duplicata mesmo se a checagem em código falhar. O
+      teste já existia no `TxnDaoTest` desde a T-004; faltava o `@Req`, e a
+      rastreabilidade não via o que o código cobria — mesma correção que a
+      REQ-CARD-001 precisou na T-022
+- [x] A mesma chave repetida **dentro do próprio arquivo** cai na segunda vez.
+      É o buraco que a T-037 deixou aberto de propósito: sem esta linha, a
+      segunda cópia passaria como novidade e só esbarraria no índice único, já
+      na gravação, com o lote pela metade
+
+**O nível 3 não filtra por "descrição diferente"**, como REQ-IMP-009 escreve, e a
+diferença é deliberada: descrição **igual** com a data deslocada em um dia é a
+duplicata mais óbvia que existe, e ela não bate no nível 1 porque a data entra no
+hash. Filtrar por descrição diferente deixaria justamente esse caso passar como
+novidade. A janela implementada é um superconjunto do que o requisito pede e erra
+para o lado de **perguntar**, que é o lado que o próprio requisito escolhe ao
+proibir o descarte automático.
+
+Entre várias linhas na janela, o motor aponta a **mais próxima em data**: é a que
+o usuário reconhece como sendo a mesma compra quando as duas aparecem lado a lado.
+
+O motor é puro e recebe listas — `Candidata` e `JaGravada`, com só o que ele
+compara. `JaGravada` existe porque `dedupeKey` não sobe para o modelo de domínio
+(Art. 8), e um motor que recebesse `TxnEntity` só se testaria com banco.
 
 ### T-040 — Auto-categorização
 **Fase** F2 · **Depende de** T-036 · **REQ** REQ-ACT-001, REQ-ACT-002

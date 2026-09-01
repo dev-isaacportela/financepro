@@ -65,7 +65,18 @@ fun dedupeKey(accountId: Long, data: LocalDate, cents: Long, descricao: String):
     return PREFIXO_HASH + digest.joinToString("") { "%02x".format(it) }
 }
 
+/**
+ * A chave quando o banco fornece um id. REQ-IMP-007
+ *
+ * `FITID` é o dedupe perfeito: match exato é a mesma transação, ponto final
+ * (ingestao.md §3). Fica ao lado de [dedupeKey] para os dois prefixos morarem no
+ * mesmo lugar — separados, o dia em que um deles mudasse deixaria o outro para
+ * trás, e chave de dedupe que muda de forma é importação duplicada.
+ */
+fun chaveOfx(fitid: String): String = PREFIXO_OFX + fitid
+
 private const val PREFIXO_HASH = "h:"
+private const val PREFIXO_OFX = "ofx:"
 
 /** As marcas de acento que a decomposição NFD separa das letras. */
 private val MARCAS = Regex("""\p{M}""")
