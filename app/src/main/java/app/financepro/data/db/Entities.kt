@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.model.CategoryKind
 import app.financepro.domain.model.TxnType
+import kotlinx.serialization.Serializable
 
 /**
  * Entidades do Room. Espelham [arquitetura.md](../../../../../../../../docs/arquitetura.md) §4.
@@ -20,9 +21,15 @@ import app.financepro.domain.model.TxnType
  * Os enums são gravados como TEXT pelo suporte nativo do Room — o valor no banco
  * é o `name` da constante, legível em qualquer inspetor de SQLite. Ordinal seria
  * menor e quebraria no dia em que alguém reordenasse o enum.
+ *
+ * As cinco tabelas que o backup carrega levam `@Serializable` (REQ-BAK-001): o
+ * formato do arquivo **é** o formato das tabelas, de propósito, e é o que torna
+ * a volta da T-035 uma escrita direta em vez de uma tradução que pode perder
+ * coluna. `import_batch` e `payee_rule` ficam de fora enquanto nada as escreve.
  */
 
 /** REQ-ACC-001 · REQ-ACC-002 · REQ-CARD-001 */
+@Serializable
 @Entity(
     tableName = "account",
     foreignKeys = [
@@ -53,6 +60,7 @@ data class AccountEntity(
 )
 
 /** REQ-CAT-001 · REQ-CAT-002 */
+@Serializable
 @Entity(
     tableName = "category",
     foreignKeys = [
@@ -90,6 +98,7 @@ data class CategoryEntity(
  * índice único — o efeito é idêntico e cabe no `@Index` do Room, sem SQL solto
  * fora do schema exportado.
  */
+@Serializable
 @Entity(
     tableName = "txn",
     foreignKeys = [
@@ -160,6 +169,7 @@ data class TxnEntity(
 )
 
 /** REQ-BUD-001 */
+@Serializable
 @Entity(
     tableName = "budget",
     foreignKeys = [
@@ -181,6 +191,7 @@ data class BudgetEntity(
 )
 
 /** REQ-REC-001 */
+@Serializable
 @Entity(
     tableName = "recurring_rule",
     foreignKeys = [

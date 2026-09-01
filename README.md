@@ -83,7 +83,7 @@ não depende ([Art. 4](docs/constitution.md#art-4--rastreabilidade-é-verificada
 | Persistência | Room + SQLCipher | [ADR-010](docs/decisoes.md#adr-010--sqlcipher-e-sem-permissão-de-rede-até-a-f4) |
 | Preferências | DataStore | |
 | Background | WorkManager | |
-| Gráficos | Vico | |
+| Gráficos | `Canvas` do Compose, à mão | |
 | Datas | `java.time` (`minSdk 26`) | |
 | Testes | JUnit5 + Turbine + Room in-memory | |
 

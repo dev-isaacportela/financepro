@@ -1,5 +1,6 @@
 package app.financepro.feature.txn
 
+import androidx.lifecycle.SavedStateHandle
 import app.financepro.core.testing.Req
 import app.financepro.data.db.CATEGORIA
 import app.financepro.data.db.CONTA
@@ -63,6 +64,9 @@ class TransactionsViewModelTest : DbTest() {
             AccountRepository(db.accountDao()),
             CategoryRepository(db.categoryDao(), db.txnDao()),
             TxnRepository(db.txnDao()),
+            // Os argumentos neutros de `Transacoes`, que é como a aba
+            // navega. A tela filtrada da T-033 passa outros.
+            SavedStateHandle(mapOf("categoriaId" to 0L, "mesIso" to "")),
         )
         esperar("as transações chegarem") { vm.state.value.todas.size == 2 }
         vm.irPara(YearMonth.of(2026, 3))

@@ -34,6 +34,10 @@ interface AccountDao {
     @Query("SELECT * FROM account ORDER BY archived, sortOrder, name")
     fun observeAll(): Flow<List<AccountEntity>>
 
+    /** Tudo, para o backup. REQ-BAK-001 */
+    @Query("SELECT * FROM account")
+    suspend fun todas(): List<AccountEntity>
+
     @Query("SELECT * FROM account WHERE id = :id")
     suspend fun byId(id: Long): AccountEntity?
 
@@ -66,6 +70,10 @@ abstract class CategoryDao {
         """,
     )
     abstract fun observeByUse(kind: String): Flow<List<CategoryEntity>>
+
+    /** Tudo, inclusive arquivada: backup sem a categoria perde a transação dela. */
+    @Query("SELECT * FROM category")
+    abstract suspend fun todas(): List<CategoryEntity>
 
     @Query("SELECT * FROM category WHERE id = :id")
     abstract suspend fun byId(id: Long): CategoryEntity?
@@ -138,6 +146,10 @@ interface BudgetDao {
      * chave primária, que numa linha nova (`id = 0`) não casa com nada — a mesma
      * armadilha documentada em `TxnDao.insert`. Quem grava lê antes e reusa o id.
      */
+    /** Tudo, para o backup. REQ-BAK-001 */
+    @Query("SELECT * FROM budget")
+    suspend fun todas(): List<BudgetEntity>
+
     @Query("SELECT * FROM budget WHERE categoryId = :categoryId AND yearMonth = :yearMonth")
     suspend fun byCategoryAndMonth(categoryId: Long, yearMonth: Int): BudgetEntity?
 
@@ -175,6 +187,10 @@ interface TxnDao {
         """,
     )
     fun observeByAccount(accountId: Long, from: Long, to: Long): Flow<List<TxnEntity>>
+
+    /** Tudo, para o backup. REQ-BAK-001 */
+    @Query("SELECT * FROM txn")
+    suspend fun todas(): List<TxnEntity>
 
     @Query("SELECT * FROM txn WHERE id = :id")
     suspend fun byId(id: Long): TxnEntity?
@@ -250,6 +266,10 @@ abstract class RecurringDao {
     abstract fun observeAll(): Flow<List<RecurringRuleEntity>>
 
     /** As candidatas à geração. Regra inativa não materializa nada (REQ-REC-001). */
+    /** Tudo, para o backup. REQ-BAK-001 */
+    @Query("SELECT * FROM recurring_rule")
+    abstract suspend fun todas(): List<RecurringRuleEntity>
+
     @Query("SELECT * FROM recurring_rule WHERE active = 1")
     abstract suspend fun ativas(): List<RecurringRuleEntity>
 

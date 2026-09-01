@@ -1,7 +1,9 @@
 package app.financepro.feature.txn
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import app.financepro.core.time.MonthRange
 import app.financepro.core.time.monthRange
 import app.financepro.data.repo.AccountRepository
@@ -17,6 +19,7 @@ import app.financepro.domain.usecase.agruparPorDia
 import app.financepro.domain.usecase.extrato
 import app.financepro.domain.usecase.filtrar
 import app.financepro.domain.usecase.parcelasNoEscopo
+import app.financepro.feature.Transacoes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -91,9 +94,26 @@ class TransactionsViewModel @Inject constructor(
     contas: AccountRepository,
     categorias: CategoryRepository,
     private val txns: TxnRepository,
+    estado: SavedStateHandle,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(TransactionsState(mes = YearMonth.now()))
+    /**
+     * REQ-RPT-004 — a lista abre já filtrada quando vem de uma fatia do gráfico.
+     *
+     * O filtro entra no estado **inicial**, não num efeito depois da primeira
+     * emissão: aplicá-lo em seguida mostraria a lista inteira por um quadro, e
+     * é justamente o mês inteiro de despesas que o usuário não pediu para ver.
+     * Vindo da aba, os dois argumentos são neutros e isto é `YearMonth.now()`
+     * com filtro vazio, como antes.
+     */
+    private val rota = estado.toRoute<Transacoes>()
+
+    private val _state = MutableStateFlow(
+        TransactionsState(
+            mes = rota.mesIso.takeIf { it.isNotBlank() }?.let(YearMonth::parse) ?: YearMonth.now(),
+            filtro = Filtro(categoriaId = rota.categoriaId.takeIf { it != 0L }),
+        ),
+    )
     val state: StateFlow<TransactionsState> = _state.asStateFlow()
 
     init {

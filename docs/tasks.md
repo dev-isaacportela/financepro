@@ -1178,8 +1178,58 @@ frase em REQ-REC-008 — mas é mudança de requisito, e começa na spec.
 **Fase** F1 · **Depende de** T-017 · **REQ** REQ-RPT-001, REQ-RPT-002, REQ-RPT-003, REQ-RPT-004
 
 **Pronto quando**
-- [ ] Transferências excluídas de todos os três relatórios
-- [ ] Toque na fatia navega para a lista já filtrada
+- [x] Transferências excluídas de todos os três relatórios — e não por um
+      `filter` repetido em cada um: o corte é `efeitoGlobal(txn) < 0`, e
+      transferência vale **zero** ali por construção (ADR-003). Filtrar por
+      `type != TRANSFER` daria o mesmo hoje e erraria no dia em que aparecesse
+      outro tipo com contrapartida
+- [x] Toque na fatia navega para a lista já filtrada por categoria **e** mês
+- [x] `ReportTest` prova, além disso, que a evolução concorda com o comparativo
+      do dashboard: dois números para "quanto entrou em março" divergiriam, e o
+      errado seria o que ninguém confere
+
+**Nenhuma dependência de gráficos.** A pizza é um `drawArc` por fatia e a
+evolução são dois `Path` — juntos, menos de sessenta linhas de `Canvas`. A Vico,
+que o catálogo já nomeava para esta task, saiu de `libs.versions.toml`: ela traz
+tema próprio para brigar com o de Slush (REQ-DS-004 proíbe superfície tonal, e o
+contorno é a gramática da casa) e **não desenha pizza** — seria dependência nova
+para metade do trabalho. Pino de versão sem uso apodrece; por isso foi removido
+no mesmo commit, e não deixado "para o caso de".
+
+As fatias usam as cores **das categorias**, que já existem desde o grid do
+lançamento rápido. Inventar uma paleta de gráfico daria à mesma categoria duas
+cores no mesmo app. Nada depende só delas: a legenda traz nome, valor e
+percentual escritos (REQ-A11Y-003).
+
+A fatia é tocável **e** a linha da legenda também. A fatia porque é o que
+REQ-RPT-004 diz; a legenda porque uma cunha fina não tem 48dp em canto nenhum
+(REQ-A11Y-002) e o leitor de tela não alcança um pedaço de `Canvas` — sem ela o
+detalhamento seria inacessível justamente para quem mais precisa dele.
+
+**Um defeito que só o aparelho mostrou.** A primeira versão navegava para a
+lista com um `navigate` seco, e `Transacoes` **é uma aba**: o destino ficava
+empilhado dentro do "Mais", e tocar em "Mais" depois disso restaurava a lista de
+transações — a barra apontando um lugar e a tela mostrando outro. A navegação da
+fatia passou a usar as mesmas regras da barra inferior (`popUpTo(Inicio)` com
+`saveState`), e **sem** `restoreState`: o que se quer é a lista com este filtro,
+não a que ficou salva de antes.
+
+Outro que só a tela mostrou: os percentuais da legenda somavam 99%. Truncar
+93,8% dá 93, e o erro é sistemático — toda fatia sai para baixo. Passou a
+arredondar, em inteiro, sem `Double` no caminho (Art. 6).
+
+Conferido no emulador: pizza, legenda com nome, valor e percentual, doze meses e
+as maiores despesas. O toque funciona nos dois alvos — na cunha da pizza e na
+linha da legenda —, e os dois abrem a lista já em "Setembro de 2026" com
+"Filtros •" ligado e só a categoria escolhida.
+
+A rota `Transacoes` deixou de ser `data object` e passou a levar dois
+argumentos **neutros**, não nulos: a rota type-safe do Navigation resolve `Long?`
+para um `NavType` que não existe, e o erro só apareceria ao navegar. Zero é "sem
+filtro" e vazio é "mês corrente"; a aba passa `Transacoes()` e não sabe que eles
+existem. O filtro entra no estado **inicial** do ViewModel, não num efeito depois
+da primeira emissão — aplicá-lo depois mostraria o mês inteiro de despesas por um
+quadro, que é exatamente o que o usuário não pediu para ver.
 
 ### T-034 — Exportação ⇉
 **Fase** F1 · **Depende de** T-009 · **REQ** REQ-BAK-001
@@ -1187,8 +1237,49 @@ frase em REQ-REC-008 — mas é mudança de requisito, e começa na spec.
 CSV de transações e JSON da base, via `ACTION_CREATE_DOCUMENT`.
 
 **Pronto quando**
-- [ ] Round-trip: exportar JSON e reimportar produz base idêntica
-- [ ] CSV abre no Excel em pt-BR sem quebrar acento nem decimal
+- [x] Round-trip: `paraJson` seguido de `deJson` devolve a base **igual campo a
+      campo**, inclusive `notes`, `dedupeKey`, `importBatchId` e `createdAt`.
+      A volta que **escreve no banco** é da T-035; o que esta task garante, e
+      que é o pré-requisito dela, é que o arquivo não perde coluna no caminho
+- [x] CSV abre no Excel em pt-BR sem quebrar acento nem decimal: BOM, `;` como
+      separador, vírgula decimal sem ponto de milhar, CRLF
+- [x] `ExportTest` cobre também a descrição com `;` e com aspas, que sem escape
+      viram colunas a mais
+
+**Serializa entidade, não modelo de domínio.** `notes`, `dedupeKey`,
+`importBatchId`, `createdAt` e `lastGeneratedDate` não sobem para o domínio
+(Art. 8), e um backup que os perde não é backup — a restauração recriaria
+transações que a importação já conhecia, e o dedupe da F2 as trataria como
+novas. Por isso o código mora em `data/export/` e não em `domain/`: o formato do
+arquivo **é** o formato das tabelas, de propósito.
+
+Cinco tabelas, não sete: `import_batch` e `payee_rule` existem no schema mas nada
+as escreve antes da F2, e nem DAO elas têm. O `schema` gravado no JSON é o que
+permitirá à restauração recusar um arquivo que ela não sabe ler, em vez de
+escrever lixo por cima do histórico.
+
+Três detalhes do CSV, e cada um sozinho estraga o arquivo: sem **BOM** o Excel lê
+como ANSI e "Alimentação" vira "AlimentaÃ§Ã£o"; com `,` como separador ele joga a
+linha inteira numa célula; e `formatBRL` produz `−R$ 1.234,56`, com o menos
+tipográfico (U+2212) e ponto de milhar — bonito na tela, não numérico em planilha
+nenhuma. O valor do CSV sai de aritmética inteira, e `/data/export/` entrou em
+`MONEY_PATHS` do `trace.py` no mesmo commit: um `Double` entre o centavo e o
+arquivo corromperia o backup em silêncio, e o backup é a cópia que sobra quando o
+aparelho se perde.
+
+Conferido no emulador, com o seletor do sistema de verdade: o CSV saiu com
+`EF BB BF` nos três primeiros bytes, `Data;Descrição;Categoria;…` no cabeçalho,
+`-33,00` no valor e `01/10/2026;…;Não` na prevista de outubro; o JSON saiu com
+`"schema": 1`, os enums por nome e os nulos preservados. A tela disse "Pronto: 5
+transações no arquivo" e "Pronto: 21 registros no arquivo".
+
+`ACTION_CREATE_DOCUMENT` e não uma pasta do app: quem escolhe o destino é o
+seletor do sistema, então o app não pede permissão de armazenamento, não inventa
+caminho e não deixa cópia do histórico financeiro onde o usuário não sabe. A
+falha vira **frase na tela**, não exceção: escrita em `Uri` de outro app falha
+por motivos que não são bug nosso — cartão removido, nuvem sem espaço, permissão
+revogada entre a escolha e a gravação — e quem exporta precisa saber que **não**
+foi salvo.
 
 ### T-035 — Backup e restauração
 **Fase** F1 · **Depende de** T-034 · **REQ** REQ-BAK-002, REQ-BAK-003, REQ-BAK-004

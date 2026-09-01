@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -49,10 +50,12 @@ import app.financepro.feature.accounts.AccountsScreen
 import app.financepro.feature.budget.BudgetScreen
 import app.financepro.feature.card.CardScreen
 import app.financepro.feature.categories.CategoriesScreen
+import app.financepro.feature.export.ExportScreen
 import app.financepro.feature.home.HomeScreen
 import app.financepro.feature.lock.LockScreen
 import app.financepro.feature.onboarding.OnboardingScreen
 import app.financepro.feature.recurring.RecurringScreen
+import app.financepro.feature.reports.ReportsScreen
 import app.financepro.feature.txn.QuickEntrySheet
 import app.financepro.feature.txn.TransactionsScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -64,6 +67,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import java.time.YearMonth
 import javax.inject.Inject
 
 /**
@@ -82,8 +86,16 @@ import javax.inject.Inject
 @Serializable
 data object Inicio
 
+/**
+ * A lista, opcionalmente já filtrada. REQ-RPT-004
+ *
+ * Os dois argumentos têm valor **neutro** em vez de serem nulos: a rota
+ * type-safe do Navigation resolve `Long?` para um `NavType` que não existe, e o
+ * erro só apareceria ao navegar. Zero é "sem filtro de categoria" e vazio é
+ * "mês corrente" — a aba passa `Transacoes()` e não sabe da existência deles.
+ */
 @Serializable
-data object Transacoes
+data class Transacoes(val categoriaId: Long = 0, val mesIso: String = "")
 
 @Serializable
 data object Orcamento
@@ -102,6 +114,12 @@ data object Categorias
 @Serializable
 data object Recorrencias
 
+@Serializable
+data object Relatorios
+
+@Serializable
+data object Exportar
+
 /**
  * A fatura de um cartão. O único destino com argumento — e mesmo aqui o id vai
  * no objeto, não numa string interpolada: o `CardViewModel` o lê de volta com
@@ -112,7 +130,7 @@ data class Cartao(val id: Long)
 
 private val ABAS = listOf(
     Inicio to "Início",
-    Transacoes to "Transações",
+    Transacoes() to "Transações",
     Orcamento to "Orçamento",
     Mais to "Mais",
 )
@@ -197,36 +215,13 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
             startDestination = Inicio,
             modifier = Modifier.fillMaxSize().padding(insets),
         ) {
-            composable<Inicio> {
-                HomeScreen(
-                    onNovoLancamento = { lancando = true },
-                    onVerContas = { nav.navigate(Contas) },
-                    // `launchSingleTop`: "Ver todas" empilha a aba de propósito,
-                    // para o voltar devolver o dashboard — mas dois toques
-                    // seguidos não podem empilhar duas cópias dela.
-                    onVerTransacoes = { nav.navigate(Transacoes) { launchSingleTop = true } },
-                    onEditar = { editandoId = it },
-                    onVerCartao = { nav.navigate(Cartao(it)) },
-                )
-            }
-            composable<Mais> {
-                MaisScreen(
-                    onIr = { nav.navigate(it) },
-                    bloqueio = bloqueio,
-                    onAlternarBloqueio = onAlternarBloqueio,
-                )
-            }
-            composable<Contas> { AccountsScreen() }
-            composable<Categorias> { CategoriesScreen() }
-            composable<Recorrencias> { RecurringScreen() }
-            composable<Cartao> { CardScreen() }
-            composable<Transacoes> {
-                TransactionsScreen(
-                    onNovoLancamento = { lancando = true },
-                    onEditar = { editandoId = it },
-                )
-            }
-            composable<Orcamento> { BudgetScreen() }
+            rotas(
+                nav = nav,
+                bloqueio = bloqueio,
+                onAlternarBloqueio = onAlternarBloqueio,
+                onLancar = { lancando = true },
+                onEditar = { editandoId = it },
+            )
         }
     }
 
@@ -247,12 +242,77 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
 }
 
 /**
+ * Os destinos, separados do `Scaffold` porque são coisas diferentes: ali está a
+ * moldura — barra, cores, insets — e aqui, o mapa. A lista cresce a cada tela
+ * nova, e a moldura não muda desde a T-011.
+ *
+ * `onLancar` e `onEditar` sobem como parâmetro em vez de o estado descer:
+ * a folha de lançamento é sobreposição, não destino, e quem a segura é [Abas].
+ */
+private fun NavGraphBuilder.rotas(
+    nav: NavHostController,
+    bloqueio: Boolean,
+    onAlternarBloqueio: () -> Unit,
+    onLancar: () -> Unit,
+    onEditar: (Long) -> Unit,
+) {
+    composable<Inicio> {
+        HomeScreen(
+            onNovoLancamento = onLancar,
+            onVerContas = { nav.navigate(Contas) },
+            // `launchSingleTop`: "Ver todas" empilha a aba de propósito, para o
+            // voltar devolver o dashboard — mas dois toques seguidos não podem
+            // empilhar duas cópias dela.
+            onVerTransacoes = { nav.navigate(Transacoes()) { launchSingleTop = true } },
+            onEditar = onEditar,
+            onVerCartao = { nav.navigate(Cartao(it)) },
+        )
+    }
+    composable<Mais> {
+        MaisScreen(
+            onIr = { nav.navigate(it) },
+            bloqueio = bloqueio,
+            onAlternarBloqueio = onAlternarBloqueio,
+        )
+    }
+    composable<Contas> { AccountsScreen() }
+    composable<Categorias> { CategoriesScreen() }
+    composable<Recorrencias> { RecurringScreen() }
+    composable<Exportar> { ExportScreen() }
+    composable<Relatorios> {
+        ReportsScreen(
+            // REQ-RPT-004 — a fatia leva à lista já filtrada por categoria **e**
+            // período. Sem o mês, o toque numa fatia de março abriria a lista em
+            // setembro, filtrada por uma categoria que talvez nem apareça lá.
+            onVerCategoria = { categoria, mes ->
+                // As mesmas regras da barra inferior, e não um `navigate` seco:
+                // `Transacoes` **é** uma aba, e empilhá-la aqui deixaria o
+                // destino "Mais" restaurando a lista de transações — a barra
+                // apontando um lugar e a tela mostrando outro. Sem
+                // `restoreState`: o que se quer é a lista com **este** filtro,
+                // não a que ficou salva de antes.
+                nav.navigate(Transacoes(categoria, mes.toString())) {
+                    popUpTo(Inicio) { saveState = true }
+                    launchSingleTop = true
+                }
+            },
+            onEditar = onEditar,
+        )
+    }
+    composable<Cartao> { CardScreen() }
+    composable<Transacoes> {
+        TransactionsScreen(onNovoLancamento = onLancar, onEditar = onEditar)
+    }
+    composable<Orcamento> { BudgetScreen() }
+}
+
+/**
  * O "Mais" da barra: um índice, não uma tela.
  *
- * Contas, Categorias e Recorrências são destinos próprios em vez de abas porque
- * a barra tem quatro lugares (REQ-UI-001) e nenhum deles deve ser gasto com algo
- * que se mexe uma vez por mês. O que a recorrência produz aparece onde importa:
- * o bloco "Próximas contas" do dashboard.
+ * Contas, Categorias, Recorrências e Relatórios são destinos próprios em vez de
+ * abas porque a barra tem quatro lugares (REQ-UI-001) e nenhum deles deve ser
+ * gasto com algo que se mexe uma vez por mês. O que a recorrência produz
+ * aparece onde importa: o bloco "Próximas contas" do dashboard.
  */
 @Composable
 private fun MaisScreen(onIr: (Any) -> Unit, bloqueio: Boolean, onAlternarBloqueio: () -> Unit) {
@@ -270,6 +330,16 @@ private fun MaisScreen(onIr: (Any) -> Unit, bloqueio: Boolean, onAlternarBloquei
         GhostButton(
             text = "Recorrências",
             onClick = { onIr(Recorrencias) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        GhostButton(
+            text = "Relatórios",
+            onClick = { onIr(Relatorios) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        GhostButton(
+            text = "Exportar",
+            onClick = { onIr(Exportar) },
             modifier = Modifier.fillMaxWidth(),
         )
         // Uma preferência não é uma tela de ajustes. O estado vai **escrito** no

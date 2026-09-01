@@ -1,5 +1,6 @@
 package app.financepro.feature.txn
 
+import androidx.lifecycle.SavedStateHandle
 import app.financepro.core.testing.Req
 import app.financepro.data.db.CATEGORIAS_PADRAO
 import app.financepro.data.db.CONTA
@@ -161,6 +162,9 @@ class InstallmentScopeTest : DbTest() {
             AccountRepository(db.accountDao()),
             CategoryRepository(db.categoryDao(), db.txnDao()),
             txns,
+            // Os argumentos neutros de `Transacoes`, que é como a aba
+            // navega. A tela filtrada da T-033 passa outros.
+            SavedStateHandle(mapOf("categoriaId" to 0L, "mesIso" to "")),
         )
         esperar("a lista carregar as três parcelas") { lista.state.value.todas.size == 3 }
         val segunda = grupo().first { it.installmentIndex == 2 }
