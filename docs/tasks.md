@@ -1285,9 +1285,78 @@ foi salvo.
 **Fase** F1 · **Depende de** T-034 · **REQ** REQ-BAK-002, REQ-BAK-003, REQ-BAK-004
 
 **Pronto quando**
-- [ ] AES-256 com chave PBKDF2; aviso de que senha perdida é backup perdido
-- [ ] Restaurar informa quantos registros serão substituídos antes de confirmar
-- [ ] Apagar tudo exige confirmação por digitação e sugere exportar antes
+- [x] AES-256-GCM com chave de PBKDF2-HMAC-SHA256, 600 mil iterações, sal e IV
+      sorteados por arquivo; o aviso de que senha perdida é backup perdido fica
+      **junto do campo**, não escondido num diálogo depois
+- [x] Restaurar informa quantos registros vêm **e** quantos vão embora, antes de
+      qualquer escrita
+- [x] Apagar tudo exige digitar `APAGAR` e aponta as duas ações que salvam antes
+      — exportar e fazer backup — que estão na mesma tela, acima
+- [x] `BackupTest` cobre senha errada, byte trocado no corpo, byte trocado no
+      **cabeçalho**, arquivo que não é backup, dois backups da mesma base saindo
+      diferentes, e a descrição não aparecendo em claro no arquivo
+
+**GCM, não CBC.** É o modo autenticado que transforma "senha errada" em erro
+detectado, em vez de bytes aleatórios que o parser de JSON tentaria ler e
+reportaria como erro de sintaxe. O cabeçalho vai em claro porque precisa — sem
+sal e IV não há como derivar nem decifrar — e entra como AAD, então adulterá-lo
+falha a autenticação em vez de virar "senha incorreta", que seria a frase errada
+para um arquivo corrompido.
+
+**600 mil iterações não é exagero, é o ponto.** O arquivo vai para o Drive, para
+o cartão, para o e-mail que a pessoa manda para si mesma: lugares onde o ataque
+de dicionário roda offline, sem limite de tentativas. O custo é de dois a cinco
+segundos, uma vez, e é a única coisa entre uma senha fraca e dez anos de
+histórico. A tela avisa que a espera é de propósito.
+
+A senha é pedida **duas vezes** porque o próprio requisito diz que perdê-la torna
+o backup irrecuperável: um erro de digitação num campo só produziria um arquivo
+que nem o dono abre, e o defeito só apareceria no dia em que ele fosse
+necessário. E há um piso de 8 caracteres — com dicionário offline, quatro
+caracteres caem em minutos mesmo com PBKDF2.
+
+**Restaurar são três passos, e isso é o requisito.** Escolher o arquivo, digitar
+a senha e ler; só então aparecem os números e o botão que substitui. Um
+"restaurar" de um toque teria de escolher entre perguntar sem saber o que vem, ou
+apagar para depois descobrir que a senha estava errada. `ler` não toca no banco.
+
+**Apagar tudo repõe as categorias.** A semente roda em `onCreate`, e o arquivo do
+banco continua existindo depois de um `DELETE`: sem repô-las, o usuário voltaria
+ao onboarding com o grid de lançamento vazio e sem como fazer a primeira despesa
+em três toques (Art. 18). Fica na mesma transação do apagar. Ele **não** repõe
+`payee_rule` — as regras caem por `CASCADE` junto das categorias e não voltam,
+o que difere de uma instalação limpa. Invisível hoje, porque nada as lê antes da
+F2; o `ponytail:` no `BackupDao` diz que é uma linha quando a T-040 lhes der um
+leitor.
+
+O `.zip` que a arquitetura pedia virou `.fpbk` com gzip por dentro (Art. 3, doc
+corrigido no mesmo commit): um zip de um arquivo só é um nome de entrada e um
+diretório central em volta do mesmo gzip, e `GZIPOutputStream` é da biblioteca
+padrão.
+
+**O ciclo inteiro conferido no emulador**, com o seletor do sistema de verdade:
+backup de 21 registros em 1.118 bytes, começando por `FPBK` e sem uma palavra do
+conteúdo em claro; senha errada devolvendo "Senha incorreta, ou o arquivo está
+corrompido"; `apagar` em minúsculas não liberando o botão e `APAGAR` liberando;
+apagar tudo caindo direto no onboarding; e a restauração dizendo "O arquivo traz
+21 registros. Os 12 que estão no app agora serão substituídos" antes de devolver
+o saldo de R$ 666,92 exatamente como estava.
+
+Um susto que valeu a checagem: depois do ciclo, uma conta que a exportação de
+antes chamava de "Nubankgv" apareceu como "Nubank". O arquivo `.fpbk` foi
+decifrado fora do app, e continha "Nubank" — a diferença já estava no banco
+**antes** do backup, de digitação perdida na própria verificação manual. O
+caminho backup → restauração devolveu byte a byte o que recebeu. De brinde, o
+arquivo gerado no Android abriu numa JVM comum: `PBKDF2WithHmacSHA256` dá a mesma
+chave nos dois lados, então o backup não fica preso ao aparelho que o criou.
+
+**Uma pergunta para o dono do produto, não resolvida por suposição** (Art. 5):
+restaurar só é alcançável **depois** do onboarding, porque a tela vive dentro das
+abas e "sem conta nenhuma" é o que dispara o onboarding (REQ-UI-005). No aparelho
+novo — que é o caso principal de um backup — o caminho é criar duas contas para
+depois substituí-las. Funciona, e é esquisito. A saída seria um "Restaurar um
+backup" na tela de onboarding, o que mexe em REQ-UI-005 ("uma única tela
+perguntando o saldo atual"): é mudança de requisito, e começa na spec.
 
 ---
 

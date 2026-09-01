@@ -44,10 +44,12 @@ const val SCHEMA_EXPORTACAO = 1
  * A base inteira num objeto.
  *
  * ponytail: cinco tabelas, não sete. `import_batch` e `payee_rule` existem no
- * schema mas nada as escreve antes da F2, e nem DAO elas têm — exportá-las hoje
- * seria uma lista vazia com uma query inventada para produzi-la. Entram na
- * T-041, junto com o primeiro código que grava nelas, e o [SCHEMA_EXPORTACAO]
- * é o que avisa quem tentar restaurar o arquivo antigo depois disso.
+ * schema mas nada as escreve antes da F2 — exportá-las hoje seria uma lista
+ * vazia. Entram na T-041, junto com o primeiro código que grava nelas, e o
+ * [SCHEMA_EXPORTACAO] é o que avisa quem tentar restaurar o arquivo antigo
+ * depois disso. **A consequência é da restauração**: como `payee_rule` cai por
+ * `CASCADE` junto das categorias, restaurar um backup deixa as regras de
+ * auto-categorização vazias. Invisível hoje, porque nada as lê antes da F2.
  */
 @Serializable
 data class BaseExportada(
@@ -57,7 +59,11 @@ data class BaseExportada(
     val txns: List<TxnEntity> = emptyList(),
     val budgets: List<BudgetEntity> = emptyList(),
     val recurringRules: List<RecurringRuleEntity> = emptyList(),
-)
+) {
+    /** Quantas linhas o arquivo carrega — é o número que REQ-BAK-003 exibe. */
+    val registros: Int
+        get() = accounts.size + categories.size + txns.size + budgets.size + recurringRules.size
+}
 
 /**
  * `prettyPrint` porque o arquivo é do usuário: um JSON de uma linha só é

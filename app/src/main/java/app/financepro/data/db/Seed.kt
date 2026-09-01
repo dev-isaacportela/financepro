@@ -37,6 +37,24 @@ val SeedCallback = object : RoomDatabase.Callback() {
 }
 
 /**
+ * A semente como entidades, para quem já tem DAO. REQ-CAT-004 · REQ-BAK-004
+ *
+ * Derivadas das **mesmas** listas que [SeedCallback] usa, e não uma segunda
+ * cópia: apagar tudo precisa devolver o app ao estado de instalação, e duas
+ * listas de categorias padrão divergiriam na primeira categoria nova — uma
+ * instalação limpa teria onze e um "apagar tudo" teria dez.
+ */
+internal fun categoriasSemeadas(): List<CategoryEntity> = CATEGORIAS_PADRAO.map {
+    CategoryEntity(
+        id = it.id,
+        name = it.nome,
+        kind = it.kind,
+        iconKey = it.iconKey,
+        colorArgb = it.corArgb,
+    )
+}
+
+/**
  * As cores são os stickers de [design.md](../../../../../../../../docs/design.md)
  * §1, como Int ARGB com sinal. Ficam aqui, e não em `core/ui/theme/`, porque
  * `data/` não importa nada de Compose — o tema declara os mesmos hex do lado

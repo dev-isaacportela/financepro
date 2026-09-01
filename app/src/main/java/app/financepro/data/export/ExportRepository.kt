@@ -55,8 +55,7 @@ class ExportRepository @Inject constructor(
     suspend fun exportarJson(destino: Uri): Int {
         val base = base()
         escrever(destino, paraJson(base))
-        return base.accounts.size + base.categories.size + base.txns.size +
-            base.budgets.size + base.recurringRules.size
+        return base.registros
     }
 
     /**

@@ -343,3 +343,111 @@ abstract class RecurringDao {
         return rule.id
     }
 }
+
+/**
+ * A troca de base inteira. REQ-BAK-003 · REQ-BAK-004
+ *
+ * Classe abstrata, e não interface, por causa de [substituir]: apagar e repor
+ * precisam acontecer na **mesma** transação. Separados, um processo morto no
+ * meio deixaria o usuário sem base nenhuma — que é o oposto do que restaurar um
+ * backup deveria fazer.
+ *
+ * A ordem não é estética. Apagar vai do filho para o pai e inserir vai do pai
+ * para o filho, porque as FKs estão ligadas (REQ-DATA-002) e `RESTRICT` em
+ * `txn.categoryId` recusaria apagar categoria antes das transações dela.
+ * `clearAllTables()` do Room faria o apagar sozinho, e desligando as FKs para
+ * isso — o que também apagaria as duas tabelas da F2 que o backup ainda não
+ * carrega, e restaurar levaria embora o que ele não sabe repor.
+ */
+@Dao
+abstract class BackupDao {
+
+    @Query("DELETE FROM txn")
+    abstract suspend fun apagarTxns()
+
+    @Query("DELETE FROM budget")
+    abstract suspend fun apagarTetos()
+
+    @Query("DELETE FROM recurring_rule")
+    abstract suspend fun apagarRegras()
+
+    @Query("DELETE FROM category")
+    abstract suspend fun apagarCategorias()
+
+    @Query("DELETE FROM account")
+    abstract suspend fun apagarContas()
+
+    @Insert
+    abstract suspend fun inserirContas(linhas: List<AccountEntity>)
+
+    @Insert
+    abstract suspend fun inserirCategorias(linhas: List<CategoryEntity>)
+
+    @Insert
+    abstract suspend fun inserirRegras(linhas: List<RecurringRuleEntity>)
+
+    @Insert
+    abstract suspend fun inserirTetos(linhas: List<BudgetEntity>)
+
+    @Insert
+    abstract suspend fun inserirTxns(linhas: List<TxnEntity>)
+
+    /**
+     * Do filho para o pai, senão a FK recusa.
+     *
+     * `payee_rule` não aparece: `ON DELETE CASCADE` em `categoryId` já a leva
+     * junto das categorias. Uma linha a mais aqui seria SQL que não faz nada.
+     */
+    @Transaction
+    open suspend fun limpar() {
+        apagarTxns()
+        apagarTetos()
+        apagarRegras()
+        apagarCategorias()
+        apagarContas()
+    }
+
+    /**
+     * REQ-BAK-004 — apagar tudo devolve o app ao estado de instalação, não a um
+     * banco vazio.
+     *
+     * A semente roda em `onCreate` e o arquivo continua existindo depois de um
+     * `DELETE`, então sem repor as categorias o usuário voltaria ao onboarding
+     * com o grid de lançamento vazio — e sem jeito de criar a primeira despesa
+     * em três toques (Art. 18). Na mesma transação do apagar: metade apagada e
+     * metade semeada é pior que qualquer um dos dois.
+     *
+     * ponytail: repõe categoria, não `payee_rule`. As regras de pagador caem por
+     * `CASCADE` junto das categorias e não voltam, o que deixa este estado
+     * diferente de uma instalação limpa — invisível hoje, porque nada as lê
+     * antes da F2. `regrasSemeadas()` já existe em `Seed.kt`: quando a T-040 der
+     * um leitor a elas, é uma linha aqui.
+     */
+    @Transaction
+    open suspend fun apagarTudo() {
+        limpar()
+        inserirCategorias(categoriasSemeadas())
+    }
+
+    /**
+     * REQ-BAK-003 — a base do arquivo entra no lugar da atual, de uma vez.
+     *
+     * Categoria antes de regra e de teto, e conta antes de todas: inserir na
+     * ordem errada é FK violada no primeiro `INSERT`, com a base já apagada.
+     */
+    @Transaction
+    open suspend fun substituir(
+        contas: List<AccountEntity>,
+        categorias: List<CategoryEntity>,
+        regras: List<RecurringRuleEntity>,
+        tetos: List<BudgetEntity>,
+        txns: List<TxnEntity>,
+    ) {
+        limpar()
+        inserirContas(contas)
+        inserirCategorias(categorias)
+        inserirRegras(regras)
+        inserirTetos(tetos)
+        inserirTxns(txns)
+    }
+}

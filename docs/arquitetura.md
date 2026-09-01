@@ -317,9 +317,15 @@ na política de privacidade.
 
 - **Export** — CSV (transações) e JSON (banco completo). Via `ACTION_CREATE_DOCUMENT`,
   o usuário escolhe onde salvar. Sem upload.
-- **Backup** — arquivo `.zip` criptografado com senha do usuário (AES-256,
-  chave derivada por PBKDF2). Restaurar substitui o banco inteiro, com confirmação
-  explícita porque é destrutivo.
+- **Backup** — arquivo `.fpbk` criptografado com senha do usuário (AES-256-GCM,
+  chave derivada por PBKDF2-HMAC-SHA256 com 600 mil iterações). Restaurar
+  substitui o banco inteiro, com confirmação explícita porque é destrutivo.
+
+  Envelope: `FPBK | versão | sal (16) | IV (12) | cifrado`, com o cabeçalho como
+  AAD do GCM. **Não é `.zip`**, como esta linha dizia até a T-035: um zip de um
+  arquivo só é um nome de entrada e um diretório central em volta do mesmo gzip,
+  e `GZIPOutputStream` é da biblioteca padrão. O conteúdo é o mesmo JSON do
+  export (`data/export/Export.kt`), comprimido antes de cifrar.
 
 ## 9. Testes e rastreabilidade
 

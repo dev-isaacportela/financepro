@@ -338,7 +338,7 @@ private fun MaisScreen(onIr: (Any) -> Unit, bloqueio: Boolean, onAlternarBloquei
             modifier = Modifier.fillMaxWidth(),
         )
         GhostButton(
-            text = "Exportar",
+            text = "Backup e dados",
             onClick = { onIr(Exportar) },
             modifier = Modifier.fillMaxWidth(),
         )

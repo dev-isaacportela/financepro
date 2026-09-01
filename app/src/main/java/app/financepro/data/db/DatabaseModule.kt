@@ -41,4 +41,7 @@ object DatabaseModule {
 
     @Provides
     fun recurringDao(db: AppDatabase): RecurringDao = db.recurringDao()
+
+    @Provides
+    fun backupDao(db: AppDatabase): BackupDao = db.backupDao()
 }
