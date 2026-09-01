@@ -858,12 +858,33 @@ vez de a T-015 adivinhar a regra de cartão.
 ### T-024 — Fatura
 **Fase** F1 · **Depende de** T-022, T-023 · **REQ** REQ-CARD-005, REQ-CARD-007, REQ-CARD-008
 
-Composição, status derivado e limite disponível.
+Composição, status derivado e limite disponível. Tudo em `CardInvoice.kt`, ao
+lado da competência e do vencimento que a T-023 deixou: é um conceito só, e
+separá-lo em arquivos obrigaria a abrir dois para entender uma fatura.
 
 **Pronto quando**
-- [ ] Fatura exclui `TRANSFER` — teste prova que pagamento não entra na fatura
-- [ ] `InvoiceStatusTest` cobre as 3 condições de status
-- [ ] Nada de status persistido em coluna
+- [x] Fatura exclui `TRANSFER` — teste prova que pagamento não entra na fatura.
+      É o item que mais custa quando falta: pagamento é uma transferência **para**
+      o cartão, e contá-lo como item faria o pagamento aumentar a conta que quita
+- [x] `InvoiceStatusTest` cobre as 3 condições de status, com a borda de
+      `hoje == fechamento` do lado de `Aberta` — no dia 10 ainda se compra para
+      aquela fatura
+- [x] Nada de status persistido em coluna. `Invoice` nasce de `invoiceFor` a cada
+      leitura e morre com a tela; nem o total, nem o status, nem a lista de itens
+      existem em `TxnEntity` ou `AccountEntity`
+
+Uma decisão que a DoD não previa. REQ-CARD-007 diz "pagamentos **desde** o
+fechamento", e "desde" sem limite superior faria toda fatura antiga virar `Paga`
+com o tempo: o pagamento de março abateria janeiro, fevereiro e março ao mesmo
+tempo. Um pagamento agora pertence à última fatura que fechou antes dele —
+`paymentInvoiceMonthFor`, o espelho de `invoiceMonthFor`, com teste dos dois
+lados da janela.
+
+Limite disponível é `limite + saldo`, e não `limite − total do mês`: a dívida é
+tudo que está lançado, inclusive as parcelas de dezembro compradas hoje. Como o
+saldo do cartão sai de `balanceOf` sem exceção (REQ-CARD-009), o pagamento
+devolve limite pelo mesmo termo do ADR-003 que já move o saldo — sem uma linha
+de código de cartão.
 
 ### T-025 — Tela de cartão
 **Fase** F1 · **Depende de** T-024 · **REQ** REQ-CARD-006

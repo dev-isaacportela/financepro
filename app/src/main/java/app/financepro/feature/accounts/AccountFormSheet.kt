@@ -40,7 +40,7 @@ import app.financepro.core.ui.theme.StickerNames
 import app.financepro.core.ui.theme.Stickers
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
-import app.financepro.domain.usecase.DIAS_DE_FATURA
+import app.financepro.domain.usecase.CARD_DAY_RANGE
 import androidx.compose.ui.graphics.toArgb
 
 /**
@@ -184,4 +184,4 @@ private fun tipoCurto(tipo: AccountType) = when (tipo) {
  * A mesma faixa que `validateAccount` recusa fora (REQ-CARD-002), e não uma
  * cópia dela: a tela não pode oferecer um dia que a regra rejeita depois.
  */
-private val DIAS = DIAS_DE_FATURA.toList()
+private val DIAS = CARD_DAY_RANGE.toList()

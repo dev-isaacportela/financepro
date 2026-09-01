@@ -15,19 +15,6 @@ import app.financepro.domain.model.Account
  * o que ela não tem onde pôr.
  */
 
-/**
- * Dias em que uma fatura pode fechar ou vencer. REQ-CARD-002
- *
- * 29, 30 e 31 não existem em todo mês, e recusar a faixa elimina a classe
- * inteira de bugs de "dia 31 em fevereiro" sem uma linha de tratamento
- * (ADR-004). Não perde caso real: banco não fecha fatura nesses dias.
- *
- * O formulário monta os chips a partir daqui. Uma faixa só, para a tela não
- * poder oferecer o que a regra recusa — e para o dia que chegar por outro
- * caminho (importação, restauração) encontrar a mesma régua.
- */
-val DIAS_DE_FATURA = 1..28
-
 /** A mensagem do primeiro problema, ou `null` quando a conta está de pé. */
 fun validateAccount(conta: Account): String? {
     val fechamento = conta.closingDay
@@ -43,7 +30,7 @@ fun validateAccount(conta: Account): String? {
         vencimento == null -> "Informe o dia de vencimento"
         // REQ-CARD-002 fixa uma mensagem só para os dois campos. Dizer qual dos
         // dois está fora seria outra mensagem, e a spec soletra esta.
-        fechamento !in DIAS_DE_FATURA || vencimento !in DIAS_DE_FATURA ->
+        fechamento !in CARD_DAY_RANGE || vencimento !in CARD_DAY_RANGE ->
             "Use um dia entre 1 e 28"
         else -> null
     }
