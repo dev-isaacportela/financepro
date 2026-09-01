@@ -27,7 +27,7 @@ import java.io.File
  * A partir da F4 a T-049 adiciona `INTERNET` de propósito, e é **aqui** que a
  * regra muda junto, de preferência no mesmo commit.
  */
-@Req("REQ-SEC-007", "REQ-DS-010")
+@Req("REQ-SEC-007", "REQ-DS-010", "REQ-IMP-001")
 @RunWith(RobolectricTestRunner::class)
 class ManifestTest {
 
@@ -48,6 +48,31 @@ class ManifestTest {
     }
 
     @Test
+    fun `manifesto mesclado nao declara leitura de armazenamento`() {
+        // REQ-IMP-001 — a importação escolhe arquivo por `ACTION_OPEN_DOCUMENT`,
+        // e o seletor do sistema entrega um `Uri` já autorizado. Pedir
+        // `READ_EXTERNAL_STORAGE` seria pedir a pasta inteira do usuário para
+        // ler um arquivo que ele acabou de apontar — e a permissão entra tão
+        // fácil por dependência transitiva quanto a INTERNET acima.
+        val permissoes = app.packageManager
+            .getPackageInfo(app.packageName, PackageManager.GET_PERMISSIONS)
+            .requestedPermissions
+            ?.toList()
+            .orEmpty()
+
+        val armazenamento = listOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.MANAGE_EXTERNAL_STORAGE,
+        )
+
+        assertFalse(
+            "alguém pediu leitura de armazenamento: $permissoes",
+            permissoes.any { it in armazenamento },
+        )
+    }
+
+    @Test
     fun `as fontes estao empacotadas, sem Downloadable Fonts`() {
         // REQ-DS-010. Downloadable Fonts exige rede e Google Play Services, e
         // furaria REQ-SEC-007 pela porta dos fundos — sem `<uses-permission>`
@@ -63,6 +88,7 @@ class ManifestTest {
     }
 
     private fun File.readTextIfXml() = if (extension == "xml") readText() else ""
+
 
     @Test
     fun `o manifesto que o teste le e mesmo o mesclado`() {

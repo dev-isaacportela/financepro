@@ -1496,7 +1496,7 @@ compara. `JaGravada` existe porque `dedupeKey` não sobe para o modelo de domín
       descrição que normaliza para vazio também não: a chave `""` casaria com
       toda linha sem descrição de todo extrato futuro
 - [x] Doze parcelas ensinam **uma** vez: são uma compra só
-- [ ] Categoria sugerida é sempre editável na revisão — a tela é da T-041
+- [x] Categoria sugerida é sempre editável na revisão (fechado na T-041)
 
 **O defeito que o teste pegou antes de existir tela.** A primeira versão
 procurava a regra por igualdade da chave normalizada, que é o que REQ-ACT-001
@@ -1529,10 +1529,50 @@ que não passa por tela nova.
 Picker SAF, mapeamento de colunas, tela de revisão.
 
 **Pronto quando**
-- [ ] Nenhuma gravação sem confirmação explícita (Art. 14)
-- [ ] Possíveis duplicatas exibidas lado a lado
-- [ ] Mapeamento de CSV salvo e reaproveitado
-- [ ] `READ_EXTERNAL_STORAGE` não existe no manifesto
+- [x] Nenhuma gravação sem confirmação explícita (Art. 14). O `confirmar` do
+      ViewModel é o **único** ponto de escrita do fluxo, e o botão que o chama
+      fica desabilitado enquanto houver linha incluída sem categoria
+- [x] Possíveis duplicatas exibidas lado a lado — a linha que chegou e a que já
+      existe, com data e valor, na mesma carta
+- [x] Mapeamento de CSV salvo e reaproveitado, chaveado pela **assinatura da
+      primeira linha** e não pelo nome do arquivo: o extrato de setembro se
+      chama diferente do de agosto, e o cabeçalho do banco é o mesmo sempre
+- [x] `READ_EXTERNAL_STORAGE` não existe no manifesto, e agora com teste: o
+      `ManifestTest` passou a vigiar as três permissões de armazenamento pela
+      mesma razão que já vigiava a `INTERNET` — elas entram por dependência
+      transitiva, não por alguém digitá-las
+- [x] Categoria sugerida é editável na revisão, fechando a linha que a T-040
+      tinha deixado aberta (REQ-ACT-002)
+
+**Conferido no emulador, o ciclo inteiro.** OFX em CP1252 escolhido pelo seletor
+do sistema chegou à revisão com "PADARIA ALIMENTAÇÃO" acentuado — REQ-IMP-003
+verificado ponta a ponta, do byte ao pixel. Três linhas categorizadas, três
+gravadas. **Reimportar o mesmo arquivo** trouxe "3 já estavam na conta e foram
+descartadas" com o botão desabilitado, que é REQ-IMP-007 no aparelho. Um arquivo
+com o mesmo valor num dia vizinho e descrição diferente apareceu como "⚠ Parecida
+com SUPERMERCADO XYZ LTDA de 15/08, −R$ 187,50", incluída por padrão e
+desmarcável — REQ-IMP-009. E o CSV passou pelo mapeamento com a prévia das três
+primeiras linhas e o palpite já escolhido.
+
+**Dois defeitos que só o aparelho mostrou.** O nome do arquivo no lote saía como
+`msf:39`: `lastPathSegment` de um `Uri` do SAF é o **id do documento**, e o nome
+de verdade só vem de `DISPLAY_NAME`, perguntando ao provedor — o que a tela de
+lotes da T-042 exibiria para o usuário reconhecer a importação. E os textos de
+resumo diziam "1 parecidas" e "Faltam 1 categorias": descuido de plural que faz
+desconfiar do resto da tela, justamente naquela em que é preciso confiar para
+confirmar trezentas linhas.
+
+**A duplicata exata some da lista e vira um número.** A spec manda descartá-la
+sozinha (REQ-IMP-007, REQ-IMP-008); trezentas linhas riscadas que ninguém pode
+mexer só atrapalhariam quem precisa conferir as vinte que sobraram.
+
+**A possível duplicata entra marcada, não desmarcada.** REQ-IMP-009 proíbe
+descartar por heurística porque isso perde transação legítima — e um padrão
+desligado seria o app decidindo por omissão o que ele não pode decidir por ação.
+
+O confirmar exige categoria em toda linha incluída, porque REQ-TXN-005 exige, e o
+rótulo do botão diz quantas faltam: desabilitado e mudo, ele mandaria o usuário
+procurar o problema em trezentas linhas.
 
 ### T-042 — Lotes e desfazer
 **Fase** F2 · **Depende de** T-041 · **REQ** REQ-IMP-011

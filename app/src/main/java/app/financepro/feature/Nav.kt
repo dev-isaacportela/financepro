@@ -52,6 +52,7 @@ import app.financepro.feature.card.CardScreen
 import app.financepro.feature.categories.CategoriesScreen
 import app.financepro.feature.export.ExportScreen
 import app.financepro.feature.home.HomeScreen
+import app.financepro.feature.importer.ImportScreen
 import app.financepro.feature.lock.LockScreen
 import app.financepro.feature.onboarding.OnboardingScreen
 import app.financepro.feature.recurring.RecurringScreen
@@ -119,6 +120,9 @@ data object Relatorios
 
 @Serializable
 data object Exportar
+
+@Serializable
+data object Importar
 
 /**
  * A fatura de um cartão. O único destino com argumento — e mesmo aqui o id vai
@@ -279,6 +283,7 @@ private fun NavGraphBuilder.rotas(
     composable<Categorias> { CategoriesScreen() }
     composable<Recorrencias> { RecurringScreen() }
     composable<Exportar> { ExportScreen() }
+    composable<Importar> { ImportScreen() }
     composable<Relatorios> {
         ReportsScreen(
             // REQ-RPT-004 — a fatia leva à lista já filtrada por categoria **e**
@@ -335,6 +340,11 @@ private fun MaisScreen(onIr: (Any) -> Unit, bloqueio: Boolean, onAlternarBloquei
         GhostButton(
             text = "Relatórios",
             onClick = { onIr(Relatorios) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        GhostButton(
+            text = "Importar extrato",
+            onClick = { onIr(Importar) },
             modifier = Modifier.fillMaxWidth(),
         )
         GhostButton(

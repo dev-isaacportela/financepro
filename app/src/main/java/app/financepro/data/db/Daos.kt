@@ -192,6 +192,15 @@ interface TxnDao {
     @Query("SELECT * FROM txn")
     suspend fun todas(): List<TxnEntity>
 
+    /**
+     * O histórico de uma conta, com `dedupeKey`. REQ-IMP-007 · REQ-IMP-009
+     *
+     * Entidade e não modelo: `dedupeKey` não sobe para o domínio (Art. 8), e é
+     * exatamente a coluna que o motor de dedupe compara.
+     */
+    @Query("SELECT * FROM txn WHERE accountId = :accountId")
+    suspend fun daConta(accountId: Long): List<TxnEntity>
+
     @Query("SELECT * FROM txn WHERE id = :id")
     suspend fun byId(id: Long): TxnEntity?
 
@@ -523,5 +532,38 @@ abstract class PayeeRuleDao {
         if (reforcar(chave, categoryId) == 0) {
             inserir(PayeeRuleEntity(normalizedKey = chave, categoryId = categoryId))
         }
+    }
+}
+
+/**
+ * O lote de importação. REQ-IMP-011 ·
+ * [ingestao.md](../../../../../../../../docs/ingestao.md) §3.1
+ *
+ * Classe abstrata por causa de [gravar]: o lote e as transações dele entram na
+ * mesma transação. Separados, um processo morto no meio deixaria transações
+ * apontando para um lote que não existe — ou, pior, um lote vazio que a tela de
+ * importações listaria como se tivesse trazido algo.
+ */
+@Dao
+abstract class ImportBatchDao {
+
+    @Insert
+    abstract suspend fun inserir(lote: ImportBatchEntity): Long
+
+    @Insert
+    abstract suspend fun inserirTxns(txns: List<TxnEntity>)
+
+    /**
+     * Grava o lote e as linhas dele, devolvendo o id do lote.
+     *
+     * O `importBatchId` é preenchido **aqui**, e não por quem chama: ele só
+     * existe depois do `INSERT` do lote, e deixar isso na mão do chamador seria
+     * pedir que ele acertasse uma ordem que só este método conhece.
+     */
+    @Transaction
+    open suspend fun gravar(lote: ImportBatchEntity, linhas: List<TxnEntity>): Long {
+        val id = inserir(lote)
+        inserirTxns(linhas.map { it.copy(importBatchId = id) })
+        return id
     }
 }

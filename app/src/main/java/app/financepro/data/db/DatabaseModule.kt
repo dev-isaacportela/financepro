@@ -47,4 +47,7 @@ object DatabaseModule {
 
     @Provides
     fun payeeRuleDao(db: AppDatabase): PayeeRuleDao = db.payeeRuleDao()
+
+    @Provides
+    fun importBatchDao(db: AppDatabase): ImportBatchDao = db.importBatchDao()
 }
