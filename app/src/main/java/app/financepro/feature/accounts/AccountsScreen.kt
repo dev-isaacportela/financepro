@@ -93,6 +93,7 @@ fun AccountsScreen(vm: AccountsViewModel = hiltViewModel()) {
     state.editando?.let { conta ->
         AccountFormSheet(
             conta = conta,
+            contas = state.contas,
             erro = state.erro,
             onChange = vm::alterar,
             onSalvar = vm::salvar,

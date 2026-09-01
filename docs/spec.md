@@ -442,8 +442,15 @@ compõem a conta do mês.
 `F1` · `MUST` · Teste: `InvoicePaymentTest`
 
 QUANDO o usuário paga uma fatura, O SISTEMA DEVE criar uma `TRANSFER` de
-`paymentAccountId` para o cartão, pré-preenchida com o total da fatura e data no
-vencimento, com o valor **editável** para permitir pagamento parcial.
+`paymentAccountId` para o cartão, pré-preenchida com **o que falta** da fatura
+(total menos o já pago, nunca negativo) e data no vencimento, com o valor
+**editável** para permitir pagamento parcial.
+
+A linha dizia "o total da fatura" até a T-025 exercer o caminho no aparelho: com
+o total, quem pagou R$ 100 de R$ 300 e voltasse para pagar o resto encontraria
+R$ 300 no campo, e dois toques pagariam R$ 400 numa fatura de R$ 300. Numa fatura
+sem pagamento algum as duas leituras dão o mesmo número — a diferença só aparece
+onde a primeira erra.
 
 Aceite: após pagamento integral, o saldo do cartão referente àquela fatura fica
 zerado, sem nenhum tratamento especial de cartão no cálculo de saldo.

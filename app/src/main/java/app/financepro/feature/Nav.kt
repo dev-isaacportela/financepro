@@ -49,6 +49,7 @@ import app.financepro.core.ui.theme.Subheading
 import app.financepro.data.prefs.SecurityPrefs
 import app.financepro.data.repo.AccountRepository
 import app.financepro.feature.accounts.AccountsScreen
+import app.financepro.feature.card.CardScreen
 import app.financepro.feature.categories.CategoriesScreen
 import app.financepro.feature.home.HomeScreen
 import app.financepro.feature.lock.LockScreen
@@ -98,6 +99,14 @@ data object Contas
 
 @Serializable
 data object Categorias
+
+/**
+ * A fatura de um cartão. O único destino com argumento — e mesmo aqui o id vai
+ * no objeto, não numa string interpolada: o `CardViewModel` o lê de volta com
+ * `toRoute`, e um erro de nome vira erro de compilação em vez de tela em branco.
+ */
+@Serializable
+data class Cartao(val id: Long)
 
 private val ABAS = listOf(
     Inicio to "Início",
@@ -195,6 +204,7 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
                     // seguidos não podem empilhar duas cópias dela.
                     onVerTransacoes = { nav.navigate(Transacoes) { launchSingleTop = true } },
                     onEditar = { editandoId = it },
+                    onVerCartao = { nav.navigate(Cartao(it)) },
                 )
             }
             composable<Mais> {
@@ -206,6 +216,7 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
             }
             composable<Contas> { AccountsScreen() }
             composable<Categorias> { CategoriesScreen() }
+            composable<Cartao> { CardScreen() }
             composable<Transacoes> {
                 TransactionsScreen(
                     onNovoLancamento = { lancando = true },

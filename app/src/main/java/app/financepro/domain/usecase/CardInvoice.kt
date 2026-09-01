@@ -117,6 +117,15 @@ data class Invoice(
      * uma receita, positiva, e abate o total pela mesma soma, sem caso especial.
      */
     val totalCents: Long get() = -items.sumOf { it.amountCents }
+
+    /**
+     * O que falta pagar. REQ-CARD-006
+     *
+     * Nunca negativo: pagar a mais deixa crédito no cartão (o saldo cuida
+     * disso), e um "falta −R$ 100" seria a tela pedindo para o usuário
+     * interpretar um sinal em vez de ler um número.
+     */
+    val restanteCents: Long get() = (totalCents - paidCents).coerceAtLeast(0)
 }
 
 /**
@@ -195,4 +204,36 @@ private fun paymentInvoiceMonthFor(paymentDate: LocalDate, closingDay: Int): Yea
 fun availableLimitFor(card: Account, txns: List<Txn>): Long {
     val limite = requireNotNull(card.creditLimitCents) { "cartão sem creditLimitCents (REQ-CARD-001)" }
     return limite + balanceOf(card, txns)
+}
+
+/**
+ * A transferência que quita [invoice]. REQ-CARD-006 · ADR-003
+ *
+ * Uma linha só, da conta de pagamento **para** o cartão: é a mesma
+ * transferência de qualquer outra, e é por isso que o pagamento zera a dívida
+ * sem uma linha de código de cartão em `balanceOf`. Um tipo `PAYMENT` próprio
+ * exigiria tratamento especial em saldo, relatório, filtro e importação — para
+ * dizer o que `TRANSFER` já diz.
+ *
+ * Nasce na data de **vencimento**, não hoje: é a data que o extrato do banco
+ * vai mostrar, e quem paga adiantado corrige na folha.
+ *
+ * [amountCents] é positivo e separado porque REQ-CARD-006 exige valor editável —
+ * pagamento parcial é caso comum, não exceção. O padrão é o que **falta**, e não
+ * o total: com o total, pagar R$ 100 de R$ 300 e voltar para quitar ofereceria
+ * R$ 300 de novo, e dois toques pagariam R$ 400.
+ */
+fun cardPaymentFor(card: Account, invoice: Invoice, amountCents: Long = invoice.restanteCents): Txn {
+    val origem = requireNotNull(card.paymentAccountId) {
+        "cartão sem paymentAccountId (REQ-CARD-001)"
+    }
+    return Txn(
+        accountId = origem,
+        type = TxnType.TRANSFER,
+        // Sai da conta de pagamento, então é negativa nela; o segundo termo da
+        // fórmula do ADR-003 é quem a faz chegar positiva no cartão.
+        amountCents = -amountCents,
+        date = invoice.dueDate,
+        counterAccountId = card.id,
+    )
 }

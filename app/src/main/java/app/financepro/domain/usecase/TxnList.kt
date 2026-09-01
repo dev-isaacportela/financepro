@@ -45,6 +45,15 @@ data class Filtro(
 /** Um dia da lista, com o total que o cabeçalho exibe (REQ-TXN-011). */
 data class DiaDeTransacoes(val data: LocalDate, val totalCents: Long, val itens: List<Txn>)
 
+/**
+ * Um bloco da fatura ou do relatório: a categoria e o que ela pesa.
+ *
+ * [categoriaId] nulo é "sem categoria" — REQ-TXN-005 exige categoria em despesa
+ * e receita, mas transferência não tem, e o grupo precisa existir para o total
+ * fechar com a soma das partes (Art. 7).
+ */
+data class GrupoDeCategoria(val categoriaId: Long?, val totalCents: Long, val itens: List<Txn>)
+
 /** Uma linha do extrato, com o saldo da conta **depois** dela. */
 data class LinhaDeExtrato(val txn: Txn, val saldoCents: Long)
 
@@ -106,6 +115,27 @@ fun agruparPorDia(txns: List<Txn>, contaId: Long? = null): List<DiaDeTransacoes>
                 itens = itens.sortedByDescending { it.id },
             )
         }
+
+/**
+ * Agrupa por categoria, do que mais pesa para o que menos pesa. REQ-CARD-006
+ *
+ * O total é **positivo** e a ordem é decrescente por ele: numa fatura, quem abre
+ * a tela quer ver primeiro onde o dinheiro foi. Um estorno de categoria deixa o
+ * grupo negativo e o empurra para o fim, que é onde ele deve estar.
+ *
+ * A soma dos grupos é, por construção, o total da fatura — o mesmo invariante
+ * do Art. 7 que `splitInstallments` tem, e pela mesma razão.
+ */
+fun agruparPorCategoria(txns: List<Txn>): List<GrupoDeCategoria> =
+    txns.groupBy { it.categoryId }
+        .map { (categoriaId, itens) ->
+            GrupoDeCategoria(
+                categoriaId = categoriaId,
+                totalCents = -itens.sumOf { it.amountCents },
+                itens = itens.sortedByDescending { it.date },
+            )
+        }
+        .sortedByDescending { it.totalCents }
 
 /**
  * Extrato de [conta] com saldo corrente linha a linha. REQ-ACC-005

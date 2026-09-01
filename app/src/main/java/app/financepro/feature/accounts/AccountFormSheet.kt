@@ -59,6 +59,7 @@ import androidx.compose.ui.graphics.toArgb
 @Composable
 fun AccountFormSheet(
     conta: Account,
+    contas: List<Account>,
     erro: String?,
     onChange: (Account) -> Unit,
     onSalvar: () -> Unit,
@@ -105,7 +106,7 @@ fun AccountFormSheet(
                 onCentsChange = { onChange(conta.copy(initialBalanceCents = it)) },
             )
 
-            if (conta.isCard) CamposDeCartao(conta, onChange)
+            if (conta.isCard) CamposDeCartao(conta, contas, onChange)
 
             if (erro != null) {
                 Text("⚠ $erro", style = Caption, color = Slush.ink)
@@ -116,9 +117,9 @@ fun AccountFormSheet(
     }
 }
 
-/** REQ-ACC-002 — os três só existem para `CREDIT_CARD`. */
+/** REQ-ACC-002 · REQ-CARD-001 — os quatro só existem para `CREDIT_CARD`. */
 @Composable
-private fun CamposDeCartao(conta: Account, onChange: (Account) -> Unit) {
+private fun CamposDeCartao(conta: Account, contas: List<Account>, onChange: (Account) -> Unit) {
     Rotulo("Limite do cartão")
     MoneyField(
         cents = conta.creditLimitCents ?: 0,
@@ -137,6 +138,20 @@ private fun CamposDeCartao(conta: Account, onChange: (Account) -> Unit) {
         itens = DIAS.map { it to it.toString() },
         selecionado = conta.dueDay,
         onClick = { onChange(conta.copy(dueDay = it)) },
+    )
+
+    // REQ-CARD-001 — a conta que quita a fatura por padrão. A T-022 deixou a
+    // coluna sem tela de propósito, porque escolher quem paga só tem sentido
+    // onde a fatura é paga; a T-025 é essa tela, e este é o campo que ela usa.
+    //
+    // Outro cartão não paga fatura, e a própria conta em edição também não.
+    Rotulo("Conta de pagamento")
+    Chips(
+        itens = contas
+            .filter { !it.isCard && !it.archived && it.id != conta.id }
+            .map { it.id to it.name },
+        selecionado = conta.paymentAccountId,
+        onClick = { onChange(conta.copy(paymentAccountId = it)) },
     )
 }
 

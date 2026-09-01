@@ -889,12 +889,40 @@ de código de cartão.
 ### T-025 — Tela de cartão
 **Fase** F1 · **Depende de** T-024 · **REQ** REQ-CARD-006
 
-Seletor de mês, itens por categoria, botão pagar fatura.
+Seletor de mês, itens por categoria, botão pagar fatura. Chega-se a ela pelo
+bloco "Cartões" do dashboard, um botão por cartão — é o único destino com
+argumento, e mesmo ele leva o id num `data class` serializável em vez de string
+interpolada.
 
 **Pronto quando**
-- [ ] Pagar fatura gera uma `TRANSFER` de `paymentAccountId` para o cartão
-- [ ] Valor editável (pagamento parcial)
-- [ ] `InvoicePaymentTest`: após pagamento integral, a dívida da fatura zera sem código especial de cartão no cálculo de saldo
+- [x] Pagar fatura gera uma `TRANSFER` de `paymentAccountId` para o cartão, na
+      data de vencimento. A transferência sai de `cardPaymentFor`, no domínio:
+      quem paga o quê, em que direção e em que data é regra (Art. 9)
+- [x] Valor editável (pagamento parcial), conferido no aparelho pagando R$ 100
+      de R$ 300 e depois o resto
+- [x] `InvoicePaymentTest`: após pagamento integral a dívida zera, medida por
+      `balanceOf` e por `availableLimitFor` — as duas funções que um caso
+      especial de cartão teria de contaminar para o teste ainda passar
+- [x] `paymentAccountId` ganhou tela, como a T-022 prometeu: chips no formulário
+      de conta, só para cartão, sem outros cartões nem a própria conta em edição
+
+Duas correções que só o aparelho mostrou.
+
+- **A folha pré-preenchia com o total.** REQ-CARD-006 dizia "o total da fatura",
+  e ao pé da letra: quem pagasse R$ 100 de R$ 300 e voltasse para quitar
+  encontraria R$ 300 no campo, e dois toques pagariam R$ 400 numa fatura de
+  R$ 300. Passou a oferecer o que **falta**, e a spec foi corrigida no mesmo
+  commit (Art. 3). Sem pagamento nenhum as duas leituras dão o mesmo número — a
+  diferença só aparece onde a primeira erra.
+- **A linha da fatura mentia.** Reusar `LinhaDeTransacao` imprimia "Sem
+  categoria" **dentro** do grupo "Compras"; passar a categoria consertava a
+  mentira e imprimia a mesma palavra três vezes na mesma linha. O componente não
+  serve aqui: a linha de fatura quer data e parcela, que é o que o extrato do
+  banco mostra. Ficou uma linha própria, de doze linhas.
+
+Uma decisão de leitura: a fatura ainda **Aberta** pode já estar quitada, e o
+botão "Pagar fatura" some pelo que falta, não pelo status — pelo status, ele
+abriria a folha em R$ 0,00.
 
 ### T-026 — Divisão de parcelas
 **Fase** F1 · **Depende de** T-002 · **REQ** REQ-TXN-007, REQ-TXN-008

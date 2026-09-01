@@ -55,6 +55,7 @@ fun HomeScreen(
     onVerContas: () -> Unit,
     onVerTransacoes: () -> Unit,
     onEditar: (Long) -> Unit,
+    onVerCartao: (Long) -> Unit,
     vm: HomeViewModel = hiltViewModel(),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -69,7 +70,7 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Saldo(state.saldoCents)
-            Cartoes(state, onVerContas)
+            Cartoes(state, onVerContas, onVerCartao)
 
             if (state.vazio) {
                 Comeco(onNovoLancamento)
@@ -106,7 +107,7 @@ private fun Saldo(cents: Long) {
  * tinha um único chamador.
  */
 @Composable
-private fun Cartoes(state: HomeState, onVerContas: () -> Unit) {
+private fun Cartoes(state: HomeState, onVerContas: () -> Unit, onVerCartao: (Long) -> Unit) {
     Bloco(titulo = "Cartões") {
         if (state.cartoes.isEmpty()) {
             // REQ-UI-006 — o vazio traz a ação que o preenche.
@@ -114,11 +115,15 @@ private fun Cartoes(state: HomeState, onVerContas: () -> Unit) {
             GhostButton(text = "Adicionar cartão", onClick = onVerContas)
         } else {
             Valor(rotulo = "A pagar", cents = state.dividaCents)
-            Text(
-                text = state.cartoes.joinToString(" · ") { it.name },
-                style = Caption,
-                color = Slush.ink.copy(alpha = SECUNDARIO_ALPHA),
-            )
+            // Um botão por cartão, e não os nomes numa linha só: é daqui que se
+            // chega à fatura (T-025), e texto corrido não diz que é tocável.
+            state.cartoes.forEach { cartao ->
+                GhostButton(
+                    text = cartao.name,
+                    onClick = { onVerCartao(cartao.id) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }
