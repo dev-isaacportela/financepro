@@ -71,7 +71,11 @@ import java.util.Locale
  * inteiro — trocar por Paging 3 acima de ~5.000 linhas.
  */
 @Composable
-fun TransactionsScreen(onNovoLancamento: () -> Unit, vm: TransactionsViewModel = hiltViewModel()) {
+fun TransactionsScreen(
+    onNovoLancamento: () -> Unit,
+    onEditar: (Long) -> Unit,
+    vm: TransactionsViewModel = hiltViewModel(),
+) {
     val state by vm.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     var filtrando by remember { mutableStateOf(false) }
@@ -117,7 +121,7 @@ fun TransactionsScreen(onNovoLancamento: () -> Unit, vm: TransactionsViewModel =
                     onLimpar = vm::limparFiltros,
                 )
             } else {
-                Lista(state = state, dias = dias, onExcluir = vm::excluir)
+                Lista(state = state, dias = dias, onExcluir = vm::excluir, onEditar = onEditar)
             }
         }
     }
@@ -183,7 +187,12 @@ private fun Vazio(comFiltro: Boolean, onLancar: () -> Unit, onLimpar: () -> Unit
 }
 
 @Composable
-private fun Lista(state: TransactionsState, dias: List<DiaDeTransacoes>, onExcluir: (Txn) -> Unit) {
+private fun Lista(
+    state: TransactionsState,
+    dias: List<DiaDeTransacoes>,
+    onExcluir: (Txn) -> Unit,
+    onEditar: (Long) -> Unit,
+) {
     val saldos = state.saldos
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -200,6 +209,9 @@ private fun Lista(state: TransactionsState, dias: List<DiaDeTransacoes>, onExclu
                         conta = state.contaDe(txn.accountId),
                         destino = state.contaDe(txn.counterAccountId),
                         saldoCents = saldos[txn.id],
+                        // Editar é a ação primária da linha; excluir continua no
+                        // deslize e na ação personalizada do leitor de tela.
+                        onClick = { onEditar(txn.id) },
                     )
                 }
             }

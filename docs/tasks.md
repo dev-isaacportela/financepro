@@ -768,17 +768,49 @@ o aviso de que a edição de parcela chega na F1 — melhor que editar uma parce
 deixar as outras onze inconsistentes.
 
 **Pronto quando**
-- [ ] Toque na linha da lista abre a folha preenchida, e salvar **atualiza** a
+- [x] Toque na linha da lista abre a folha preenchida, e salvar **atualiza** a
       transação em vez de criar outra — com teste, porque um `insert` no lugar
-      de um `update` duplica dinheiro na tela e é invisível na revisão
-- [ ] Editar não perde o que o domínio não carrega: `notes`, `dedupeKey`,
+      de um `update` duplica dinheiro na tela e é invisível na revisão. Vale
+      também no dashboard: a mesma `LinhaDeTransacao`, o mesmo toque
+- [x] Editar não perde o que o domínio não carrega: `notes`, `dedupeKey`,
       `importBatchId`, `recurringRuleId` e `createdAt` sobrevivem ao ciclo. É o
       mesmo cuidado que o desfazer da T-014 já tomou guardando a entidade, e
       pela mesma razão — uma `dedupeKey` perdida faz a importação da F2 recriar
-      a transação como nova
-- [ ] `updatedAt` muda, `createdAt` não
-- [ ] Transação com `installmentGroupId` abre somente leitura, com o motivo na
+      a transação como nova.
+
+      A guarda ficou em `TxnRepository.salvar`, e não em quem edita: com `id`
+      diferente de zero ele lê a linha antes de sobrescrevê-la. É por ali que
+      passa todo chamador, inclusive os que ainda não existem (T-025, T-041)
+- [x] `updatedAt` muda, `createdAt` não
+- [x] Transação com `installmentGroupId` abre somente leitura, com o motivo na
       tela (T-027 destrava)
+
+Dois achados que a DoD não previa e a implementação obrigou a resolver:
+
+- **A data.** A folha não tem campo de data e sempre gravou em `LocalDate.now()`.
+  Reusá-la sem mudança faria "corrigir a descrição" mudar o dia — e o mês em que
+  o lançamento entra no relatório. `salvar` preserva a data do original. Campo de
+  data continua fora de escopo: entra quando houver requisito que o peça
+- **A folha reaberta.** O `ViewModel` é o da Activity e sobrevive à folha (o
+  mesmo motivo do `concluido` da T-013). Uma edição dispensada sem salvar
+  deixaria `original` ligado, e o próximo "+" abriria preenchido — gravando por
+  cima da transação editada em vez de criar outra. A limpeza ficou na
+  **abertura** com `txnId` nulo, e não ao dispensar, porque a carga é assíncrona
+  e dispensar antes dela terminar sujaria o estado depois da limpeza
+
+Conferido no emulador (Medium_Phone_API_36.1, API 36), e não só nos testes:
+editar da lista e do dashboard deixa **uma** linha com o valor novo; com o
+relógio do aparelho em 5 de setembro, editar um lançamento de 1º de setembro o
+manteve em 1º; a parcela abre com "Parcela 1 de 3", o motivo por extenso e um
+"Fechar" no lugar do "Salvar"; a folha de edição e o bloco da parcela sobrevivem
+à fonte a 200% sem cortar texto (REQ-A11Y-004); e dispensar uma edição sem salvar
+devolve o "+" limpo.
+
+Não conferido: a **frase** que o TalkBack fala ao focar a linha. O
+`onClickLabel` e a ação personalizada "Excluir" não aparecem no
+`uiautomator dump` nem no `dumpsys accessibility`, e ler a fala exigiria
+instrumentação que a F0 não tem. O que dá para afirmar é que com o TalkBack
+ligado a linha continua ativável e abre a folha.
 
 ---
 

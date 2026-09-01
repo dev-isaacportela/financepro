@@ -27,9 +27,13 @@ import app.financepro.core.ui.component.CategorySticker
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyField
+import app.financepro.core.ui.component.MoneyText
+import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Subheading
+import app.financepro.domain.model.Txn
 import app.financepro.domain.model.TxnType
 import app.financepro.domain.usecase.ValidationError
 
@@ -43,15 +47,32 @@ import app.financepro.domain.usecase.ValidationError
  * Folha, nunca tela cheia. Tela cheia empilha um destino, tira o contexto de
  * baixo dos olhos e devolve o usuário a um lugar diferente de onde ele estava;
  * a folha some e o dashboard continua ali.
+ *
+ * [txnId] não nulo abre a **mesma** folha com a transação carregada (T-050,
+ * REQ-TXN-001). Uma segunda folha só para editar teria os mesmos campos e
+ * divergiria do original no primeiro campo novo.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuickEntrySheet(
     onDismiss: () -> Unit,
+    txnId: Long? = null,
     vm: QuickEntryViewModel = hiltViewModel(),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // O ramo nulo é o que impede o pior defeito desta task: o ViewModel é o da
+    // Activity e sobrevive à folha, então uma edição dispensada sem salvar
+    // deixaria `original` ligado — e o próximo "+" abriria preenchido, gravando
+    // por cima da transação editada em vez de criar outra.
+    //
+    // Limpar na **abertura**, e não ao dispensar, também vence a corrida: a carga
+    // é assíncrona, e dispensar antes de ela terminar sujaria o estado depois da
+    // limpeza.
+    LaunchedEffect(txnId) {
+        if (txnId == null) vm.concluido() else vm.editar(txnId)
+    }
 
     LaunchedEffect(state.salvo) {
         if (state.salvo) {
@@ -70,8 +91,43 @@ fun QuickEntrySheet(
         contentColor = Slush.ink,
         tonalElevation = 0.dp,
     ) {
-        Formulario(state, vm)
+        if (state.somenteLeitura) Parcela(state, onDismiss) else Formulario(state, vm)
     }
+}
+
+/**
+ * Parcela abre para ler. REQ-TXN-007
+ *
+ * O motivo vai **na tela**, e não num campo desabilitado: um chip apagado diz
+ * que não dá, e não diz por quê nem quando vai dar. Bloco próprio, e não os
+ * mesmos campos com `enabled = false`, porque desabilitar um por um custaria
+ * mais código para comunicar menos.
+ */
+@Composable
+private fun Parcela(state: QuickEntryState, onFechar: () -> Unit) {
+    val txn = state.original ?: return
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(txn.description.ifBlank { rotulo(txn.type) }, style = Subheading, color = Slush.ink)
+        MoneyText(cents = txn.amountCents)
+        Text(motivoDaParcela(txn), style = Body, color = Slush.ink)
+        GhostButton(text = "Fechar", onClick = onFechar, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+/** `installmentIndex` é 1-based, como o usuário lê ("3 de 12"). */
+private fun motivoDaParcela(txn: Txn): String {
+    val indice = txn.installmentIndex
+    val total = txn.installmentTotal
+    val posicao = if (indice != null && total != null) "Parcela $indice de $total." else "Compra parcelada."
+    return "$posicao Editar uma parcela sozinha deixaria as outras inconsistentes — " +
+        "escolher entre esta e todas chega na próxima fase."
 }
 
 /**
@@ -93,6 +149,12 @@ private fun Formulario(state: QuickEntryState, vm: QuickEntryViewModel) {
             .padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        // Título só na edição: criar é o caminho de três toques do Art. 18, e uma
+        // linha a mais entre o topo e o valor é uma linha no caminho dele. Editar
+        // não tem essa pressa, e sem o título nada distingue os dois modos para
+        // quem ouve a tela (REQ-A11Y-001).
+        if (state.editando) Text("Editar lançamento", style = Subheading, color = Slush.ink)
+
         // O único lugar com foco automático: Art. 18 protege este caminho.
         MoneyField(cents = state.cents, onCentsChange = vm::valor, autoFocus = true)
         Erro(state.erroDe(ValidationError.Campo.VALOR))

@@ -192,13 +192,28 @@ class TxnRepository @Inject constructor(private val dao: TxnDao) {
     suspend fun byId(id: Long): Txn? = dao.byId(id)?.toDomain()
 
     /**
-     * Grava a transação e devolve o id.
+     * Grava a transação e devolve o id. REQ-TXN-001
      *
      * `createdAt`/`updatedAt` saem do relógio **aqui**, não no domínio: é a borda
      * impura, e um `System.currentTimeMillis()` dentro de função pura tornaria o
      * teste dela dependente do instante em que roda.
+     *
+     * Com `id != 0` isto é uma **edição**, e a linha antiga é lida antes de ser
+     * sobrescrita. Montar a entidade do zero, como no caminho de criação, zeraria
+     * `notes`, `recurringRuleId`, `importBatchId` e `dedupeKey` — as quatro
+     * colunas que o domínio não carrega (Art. 8) — e reescreveria o `createdAt`.
+     * O `@Upsert` faria isso em silêncio: um `UPDATE` bem-sucedido, com quatro
+     * colunas a menos. É o mesmo cuidado de [excluir], pela mesma razão: uma
+     * `dedupeKey` perdida faz a importação da F2 recriar a transação como nova.
+     *
+     * A guarda mora aqui, e não em quem edita, porque é por aqui que passa todo
+     * chamador — inclusive os que ainda não existem.
      */
-    suspend fun salvar(txn: Txn): Long = dao.upsert(txn.toEntity(System.currentTimeMillis()))
+    suspend fun salvar(txn: Txn): Long {
+        val agora = System.currentTimeMillis()
+        val existente = txn.id.takeIf { it != 0L }?.let { dao.byId(it) }
+        return dao.upsert(existente?.aplicar(txn, agora) ?: txn.toEntity(agora))
+    }
 
     /**
      * Grava as N parcelas como um grupo. REQ-TXN-007
@@ -252,6 +267,29 @@ class TxnRepository @Inject constructor(private val dao: TxnDao) {
         return true
     }
 }
+
+/**
+ * Aplica sobre a linha existente **só** o que o domínio carrega.
+ * Ver [TxnRepository.salvar].
+ *
+ * `copy`, e não construtor, é o ponto: o que não está listado aqui sobrevive.
+ * Uma coluna nova que a edição não conhece continua intocada em vez de virar
+ * `null` na primeira gravação.
+ */
+private fun TxnEntity.aplicar(txn: Txn, agora: Long) = copy(
+    accountId = txn.accountId,
+    counterAccountId = txn.counterAccountId,
+    categoryId = txn.categoryId,
+    type = txn.type,
+    amountCents = txn.amountCents,
+    date = txn.date.toEpochDay(),
+    description = txn.description,
+    cleared = txn.cleared,
+    installmentGroupId = txn.installmentGroupId,
+    installmentIndex = txn.installmentIndex,
+    installmentTotal = txn.installmentTotal,
+    updatedAt = agora,
+)
 
 private fun Txn.toEntity(agora: Long) = TxnEntity(
     id = id,

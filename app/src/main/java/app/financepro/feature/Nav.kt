@@ -175,6 +175,7 @@ fun FinanceNav(nav: NavHostController = rememberNavController(), vm: RaizViewMod
 @Composable
 private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: () -> Unit) {
     var lancando by remember { mutableStateOf(false) }
+    var editandoId by remember { mutableStateOf<Long?>(null) }
 
     Scaffold(
         containerColor = Slush.paper,
@@ -193,6 +194,7 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
                     // para o voltar devolver o dashboard — mas dois toques
                     // seguidos não podem empilhar duas cópias dela.
                     onVerTransacoes = { nav.navigate(Transacoes) { launchSingleTop = true } },
+                    onEditar = { editandoId = it },
                 )
             }
             composable<Mais> {
@@ -204,7 +206,12 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
             }
             composable<Contas> { AccountsScreen() }
             composable<Categorias> { CategoriesScreen() }
-            composable<Transacoes> { TransactionsScreen(onNovoLancamento = { lancando = true }) }
+            composable<Transacoes> {
+                TransactionsScreen(
+                    onNovoLancamento = { lancando = true },
+                    onEditar = { editandoId = it },
+                )
+            }
             // A restante entra na sua task: T-029.
             emDesenvolvimento<Orcamento>("Orçamento")
         }
@@ -213,8 +220,16 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
     // A folha vive **fora** do NavHost de propósito: ela não é um destino, é uma
     // sobreposição. Como destino, o botão voltar a trataria como tela e o
     // dashboard sairia de baixo dela (REQ-UI-002).
-    if (lancando) {
-        QuickEntrySheet(onDismiss = { lancando = false })
+    // A mesma folha para criar e para editar (T-050): os campos são os mesmos, e
+    // duas folhas divergiriam no primeiro campo novo.
+    if (lancando || editandoId != null) {
+        QuickEntrySheet(
+            txnId = editandoId,
+            onDismiss = {
+                lancando = false
+                editandoId = null
+            },
+        )
     }
 }
 

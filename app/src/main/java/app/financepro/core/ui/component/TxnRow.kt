@@ -2,6 +2,7 @@ package app.financepro.core.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,10 @@ import app.financepro.domain.model.TxnType
  *
  * [saldoCents] só existe no extrato de uma conta: sem conta escolhida, "saldo
  * corrente" não teria de qual conta ser. O dashboard passa `null`.
+ *
+ * [onClick] abre a edição (T-050). Opcional porque nem todo chamador tem para
+ * onde levar — e uma linha que responde ao toque sem ir a lugar nenhum é pior
+ * que uma que não responde.
  */
 @Composable
 fun LinhaDeTransacao(
@@ -50,9 +55,19 @@ fun LinhaDeTransacao(
     conta: Account?,
     destino: Account?,
     saldoCents: Long? = null,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    SlushCard(modifier.fillMaxWidth()) {
+    // `onClickLabel` não é enfeite: sem ele o TalkBack anuncia "toque duas vezes
+    // para ativar" sem dizer para quê (REQ-A11Y-001). O alvo já passa de 48dp
+    // com os 12dp de padding e duas linhas de texto (REQ-A11Y-002).
+    val toque = if (onClick == null) {
+        Modifier
+    } else {
+        Modifier.clickable(onClickLabel = "Editar", onClick = onClick)
+    }
+
+    SlushCard(modifier.fillMaxWidth().then(toque)) {
         Row(
             Modifier.padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),

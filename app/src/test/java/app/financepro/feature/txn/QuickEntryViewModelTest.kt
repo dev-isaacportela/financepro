@@ -4,6 +4,7 @@ import app.financepro.core.testing.Req
 import app.financepro.data.db.CATEGORIAS_PADRAO
 import app.financepro.data.db.CONTA
 import app.financepro.data.db.DbTest
+import app.financepro.data.db.LANCAMENTO
 import app.financepro.data.db.SeedCallback
 import app.financepro.data.db.dia
 import app.financepro.data.db.toDomain
@@ -40,7 +41,7 @@ import java.time.LocalDate
  * o `Flow` do Room emite de um executor próprio, então rodar o looper uma vez só
  * ganha uma corrida na maioria das execuções e perde nas outras.
  */
-@Req("REQ-UI-002", "REQ-CAT-006")
+@Req("REQ-UI-002", "REQ-CAT-006", "REQ-TXN-001", "REQ-TXN-003")
 class QuickEntryViewModelTest : DbTest() {
 
     private lateinit var vm: QuickEntryViewModel
@@ -144,6 +145,86 @@ class QuickEntryViewModelTest : DbTest() {
         assertNull(gravada.categoryId)
         assertEquals(destino, gravada.counterAccountId)
         assertEquals(-100_00L, gravada.amountCents)
+    }
+
+    /**
+     * REQ-TXN-001 — o toque na linha abre a folha preenchida, e salvar atualiza.
+     *
+     * A asserção que importa é `single()`: um `insert` no lugar do `update`
+     * deixaria as duas linhas na tela, cada uma com um valor, e ninguém saberia
+     * qual é a verdadeira.
+     */
+    @Test
+    fun `editar carrega a folha e salvar atualiza em vez de criar outra`() {
+        vm.valor(18_50)
+        vm.categoria(alimentacao)
+        vm.salvar(hoje)
+        esperar("a gravação terminar") { vm.state.value.salvo }
+        vm.concluido()
+        val id = gravadas().single().id
+
+        vm.editar(id)
+        esperar("a transação carregar na folha") { vm.state.value.editando }
+
+        // O campo mostra o valor **absoluto**: o sinal é convenção do banco
+        // (REQ-TXN-002), e a folha nunca o mostrou.
+        assertEquals(18_50L, vm.state.value.cents)
+        assertEquals(alimentacao, vm.state.value.categoriaId)
+        assertEquals(carteira, vm.state.value.contaId)
+
+        vm.valor(22_00)
+        vm.salvar(hoje)
+        esperar("a atualização terminar") { vm.state.value.salvo }
+
+        val depois = gravadas().single()
+        assertEquals(id, depois.id)
+        assertEquals(-22_00L, depois.amountCents)
+    }
+
+    @Test
+    fun `editar nao move o lancamento para hoje`() {
+        val id = runBlocking {
+            db.txnDao().insert(
+                LANCAMENTO.copy(
+                    accountId = carteira,
+                    categoryId = alimentacao,
+                    date = dia(2026, 3, 3),
+                ),
+            )
+        }
+
+        vm.editar(id)
+        esperar("a transação carregar na folha") { vm.state.value.editando }
+        vm.descricao("Padaria")
+        vm.salvar(hoje)
+        esperar("a atualização terminar") { vm.state.value.salvo }
+
+        // `hoje` é 10 de março. Corrigir a descrição não pode mudar o dia em que
+        // o lançamento conta — nem o mês em que ele entra no relatório.
+        assertEquals(dia(2026, 3, 3), gravadas().single().date)
+    }
+
+    @Test
+    fun `parcela abre somente leitura`() {
+        val id = runBlocking {
+            db.txnDao().insert(
+                LANCAMENTO.copy(
+                    accountId = carteira,
+                    categoryId = alimentacao,
+                    installmentGroupId = "grupo-1",
+                    installmentIndex = 3,
+                    installmentTotal = 12,
+                ),
+            )
+        }
+
+        vm.editar(id)
+        esperar("a transação carregar na folha") { vm.state.value.editando }
+
+        // T-027 destrava. Salvar uma parcela sozinha deixaria as outras onze
+        // inconsistentes, e o campo de parcelas some junto: parcelar é da criação.
+        assertTrue(vm.state.value.somenteLeitura)
+        assertFalse(vm.state.value.mostraParcelas)
     }
 
     private fun gravadas() =

@@ -6,6 +6,7 @@ import app.financepro.data.db.CONTA
 import app.financepro.data.db.DbTest
 import app.financepro.data.db.LANCAMENTO
 import app.financepro.data.db.dia
+import app.financepro.data.db.toDomain
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.usecase.balanceOf
 import kotlinx.coroutines.flow.first
@@ -101,6 +102,54 @@ class RepositoryTest : DbTest() {
 
         assertEquals(original, db.txnDao().byId(id))
     }
+
+    /**
+     * REQ-TXN-001 — editar **atualiza**, e não perde o que o domínio não carrega.
+     *
+     * Os dois erros que este teste existe para pegar são invisíveis na revisão:
+     * um `insert` no lugar do `update` duplica dinheiro na tela, e uma entidade
+     * montada do zero apaga `notes`, `dedupeKey`, `importBatchId` e
+     * `recurringRuleId` num `UPDATE` que retorna sucesso.
+     *
+     * `importBatchId` e `recurringRuleId` ficam nulos porque as tabelas-pai só
+     * ganham DAO na F1/F2 — mas o `assertEquals` do objeto **inteiro** cobre as
+     * duas do mesmo jeito: código que as sobrescrevesse falharia a igualdade.
+     */
+    @Req("REQ-TXN-001")
+    @Test
+    fun `salvar sobre id existente atualiza a linha e preserva o que o dominio nao carrega`() =
+        runBlocking {
+            val txns = TxnRepository(db.txnDao())
+            val conta = db.accountDao().upsert(CONTA)
+            val id = db.txnDao().insert(
+                LANCAMENTO.copy(
+                    accountId = conta,
+                    description = "Padria",
+                    notes = "com o troco",
+                    dedupeKey = "OFX-42",
+                    createdAt = 1_700_000_000_000,
+                    updatedAt = 1_700_000_000_000,
+                ),
+            )
+            val original = db.txnDao().byId(id)!!
+
+            txns.salvar(original.toDomain().copy(description = "Padaria", amountCents = -12_00))
+
+            val depois = db.txnDao().byId(id)!!
+            assertEquals(
+                original.copy(
+                    description = "Padaria",
+                    amountCents = -12_00,
+                    updatedAt = depois.updatedAt,
+                ),
+                depois,
+            )
+            // `createdAt` é do nascimento da linha; `updatedAt` é do toque de agora.
+            assertEquals(1_700_000_000_000, depois.createdAt)
+            assertTrue(depois.updatedAt > original.updatedAt)
+            // Uma linha, não duas.
+            assertEquals(1, txns.observeTudo().first().size)
+        }
 
     @Test
     fun `desfazer duas vezes repoe uma vez, e sem exclusao pendente nao faz nada`() = runBlocking {

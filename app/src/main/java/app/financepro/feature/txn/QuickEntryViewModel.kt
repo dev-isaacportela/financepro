@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlin.math.abs
 
 /**
  * O que a folha de lançamento rápido precisa saber. REQ-UI-002 · REQ-UI-003
@@ -45,6 +46,8 @@ data class QuickEntryState(
     val categoriaId: Long? = null,
     val descricao: String = "",
     val parcelas: Int = 1,
+    /** A linha carregada do banco, quando isto é uma edição. Nula ao criar. */
+    val original: Txn? = null,
     val erros: List<ValidationError> = emptyList(),
     val salvo: Boolean = false,
 ) {
@@ -54,8 +57,25 @@ data class QuickEntryState(
     val categorias: List<Category>
         get() = porTipo[if (tipo == TxnType.INCOME) CategoryKind.INCOME else CategoryKind.EXPENSE].orEmpty()
 
-    /** REQ-UI-003 — os três campos condicionais, decididos num lugar só. */
-    val mostraParcelas: Boolean get() = conta?.isCard == true && tipo == TxnType.EXPENSE
+    val editando: Boolean get() = original != null
+
+    /**
+     * Parcela abre para ler, não para editar. REQ-TXN-007
+     *
+     * Escolher entre "esta parcela" e "todas as doze" é da T-027, que é dona do
+     * escopo de parcela. Sem essa escolha, salvar uma parcela sozinha deixaria as
+     * outras onze inconsistentes — pior que não deixar editar.
+     */
+    val somenteLeitura: Boolean get() = original?.installmentGroupId != null
+
+    /**
+     * REQ-UI-003 — os três campos condicionais, decididos num lugar só.
+     *
+     * Parcelar é da criação: `mostraParcelas` falso ao editar é o que mantém
+     * `salvar` fora do ramo de [TxnRepository.salvarParcelado] sem uma segunda
+     * guarda lá dentro.
+     */
+    val mostraParcelas: Boolean get() = conta?.isCard == true && tipo == TxnType.EXPENSE && !editando
     val mostraDestino: Boolean get() = tipo == TxnType.TRANSFER
     val mostraCategoria: Boolean get() = tipo != TxnType.TRANSFER
 
@@ -113,6 +133,30 @@ class QuickEntryViewModel @Inject constructor(
         QuickEntryState(contas = it.contas, contaId = it.contaId, porTipo = it.porTipo)
     }
 
+    /**
+     * Carrega a transação na folha. REQ-TXN-001
+     *
+     * [QuickEntryState.cents] recebe o valor **absoluto**: o sinal é convenção do
+     * banco (REQ-TXN-002), e reabrir uma despesa com "−18,50" no campo pediria ao
+     * usuário para entender uma convenção que a folha nunca mostrou.
+     */
+    fun editar(id: Long) = viewModelScope.launch {
+        val txn = txns.byId(id) ?: return@launch
+        _state.update {
+            it.copy(
+                original = txn,
+                cents = abs(txn.amountCents),
+                tipo = txn.type,
+                contaId = txn.accountId,
+                destinoId = txn.counterAccountId,
+                categoriaId = txn.categoryId,
+                descricao = txn.description,
+                parcelas = 1,
+                erros = emptyList(),
+            )
+        }
+    }
+
     fun valor(cents: Long) = _state.update { it.copy(cents = cents, erros = emptyList()) }
 
     fun descricao(texto: String) = _state.update { it.copy(descricao = texto) }
@@ -147,13 +191,27 @@ class QuickEntryViewModel @Inject constructor(
         val conta = atual.contaId ?: return
         val txn = sanitize(
             Txn(
+                // `id` diferente de zero é o que faz o repositório atualizar em vez
+                // de inserir — um `insert` no lugar do `update` duplicaria dinheiro
+                // na tela sem erro nenhum.
+                id = atual.original?.id ?: 0,
                 accountId = conta,
                 type = atual.tipo,
                 amountCents = if (atual.tipo == TxnType.INCOME) atual.cents else -atual.cents,
-                date = hoje,
+                // Editar não move o lançamento para hoje: corrigir a descrição de
+                // uma despesa de terça não pode fazê-la aparecer na quinta, nem
+                // trocar o mês em que ela conta.
+                date = atual.original?.date ?: hoje,
                 counterAccountId = atual.destinoId,
                 categoryId = atual.categoriaId,
                 description = atual.descricao,
+                // O que a folha não edita, o original decide. `cleared` é o caso
+                // com consequência visível: um previsto virando pago sozinho
+                // (REQ-TXN-006) mudaria o saldo sem ninguém pedir.
+                cleared = atual.original?.cleared ?: true,
+                installmentGroupId = atual.original?.installmentGroupId,
+                installmentIndex = atual.original?.installmentIndex,
+                installmentTotal = atual.original?.installmentTotal,
             ),
         )
         val erros = validateTxn(

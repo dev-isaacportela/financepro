@@ -54,6 +54,7 @@ fun HomeScreen(
     onNovoLancamento: () -> Unit,
     onVerContas: () -> Unit,
     onVerTransacoes: () -> Unit,
+    onEditar: (Long) -> Unit,
     vm: HomeViewModel = hiltViewModel(),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -74,7 +75,7 @@ fun HomeScreen(
                 Comeco(onNovoLancamento)
             } else {
                 ComparativoDoPeriodo(state.comparativo)
-                Ultimas(state, onVerTransacoes)
+                Ultimas(state, onVerTransacoes, onEditar)
             }
         }
 
@@ -145,7 +146,7 @@ private fun ComparativoDoPeriodo(c: Comparativo) {
 }
 
 @Composable
-private fun Ultimas(state: HomeState, onVerTransacoes: () -> Unit) {
+private fun Ultimas(state: HomeState, onVerTransacoes: () -> Unit, onEditar: (Long) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Últimas transações", style = Subheading, color = Slush.ink)
         state.ultimas.forEach { txn ->
@@ -154,6 +155,9 @@ private fun Ultimas(state: HomeState, onVerTransacoes: () -> Unit) {
                 categoria = state.categoriaDe(txn.categoryId),
                 conta = state.contaDe(txn.accountId),
                 destino = state.contaDe(txn.counterAccountId),
+                // A mesma linha da lista, o mesmo toque: comportamento que muda
+                // de tela para tela é o que faz o usuário parar de tentar.
+                onClick = { onEditar(txn.id) },
             )
         }
         GhostButton(text = "Ver todas", onClick = onVerTransacoes)
