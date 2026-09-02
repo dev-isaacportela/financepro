@@ -3,6 +3,9 @@
 App Android nativo de finanças pessoais. Kotlin + Jetpack Compose, offline-first,
 com importação de extratos.
 
+Código aberto sob a [Apache License 2.0](LICENSE). Sem backend, sem login, sem
+analytics, e um único host de rede.
+
 Desenvolvido em **SDD** (*Spec-Driven Development*): a especificação é a fonte de
 verdade, não a documentação do que já foi feito. Código sem requisito não entra.
 
@@ -124,3 +127,21 @@ REQ-CARD-003, REQ-CARD-004
 
 Todo commit que muda comportamento cita ao menos um `REQ-*`
 ([Art. 2](docs/constitution.md#art-2--todo-código-responde-a-um-requisito)).
+
+## Contribuindo
+
+[CONTRIBUTING.md](CONTRIBUTING.md) tem o caminho completo. O resumo é que mudança
+de comportamento começa na spec, e o `trace.py` reprova o PR que esquecer disso.
+
+Falha de segurança não vai em issue pública. O caminho está em
+[SECURITY.md](SECURITY.md).
+
+## Licença
+
+O projeto é [Apache License 2.0](LICENSE), copyright 2026 Isaac Portela.
+
+A fonte empacotada em `app/src/main/res/font/inter.ttf` **não** segue essa
+licença. Inter é da [SIL Open Font License 1.1](licenses/Inter-OFL.txt), que
+exige o aviso de copyright junto de toda cópia do arquivo, inclusive dentro do
+APK. O [NOTICE](NOTICE) carrega esse aviso, e `LicencaTest` reprova o build se
+alguém empacotar uma fonte sem ele.

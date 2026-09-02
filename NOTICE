@@ -1,0 +1,31 @@
+mobile-finance
+Copyright 2026 Isaac Portela
+
+Licenciado sob a Apache License, Version 2.0. O texto completo está em
+LICENSE, e a cópia canônica em http://www.apache.org/licenses/LICENSE-2.0
+
+
+================================================================================
+Componentes de terceiros redistribuídos
+================================================================================
+
+Inter
+  Arquivo    app/src/main/res/font/inter.ttf
+  Copyright  (c) 2016 The Inter Project Authors
+             https://github.com/rsms/inter
+  Licença    SIL Open Font License, Version 1.1
+  Texto      licenses/Inter-OFL.txt
+
+  O arquivo da fonte é distribuído sob a OFL, e não sob a Apache 2.0 deste
+  repositório. Duas obrigações vêm junto e valem para toda cópia, inclusive
+  para o APK.
+
+  A primeira, o aviso de copyright acima e o texto da licença acompanham
+  qualquer distribuição do arquivo.
+
+  A segunda, a fonte não pode ser vendida isoladamente, e um trabalho
+  derivado dela não pode usar o nome reservado "Inter".
+
+  A fonte é empacotada em res/font em vez de baixada, porque REQ-SEC-007
+  restringe a rede a um host só e fonte remota entraria por um host novo.
+  Ver docs/design.md, seção 3.
