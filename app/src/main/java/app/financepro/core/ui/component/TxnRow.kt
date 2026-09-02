@@ -23,7 +23,7 @@ import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.MoneyCaption
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
-import app.financepro.core.ui.theme.Slush
+import app.financepro.core.ui.theme.Tema
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.Category
 import app.financepro.domain.model.Txn
@@ -37,7 +37,7 @@ import app.financepro.domain.model.TxnType
  * `Rotulo`. Duas cópias divergiriam, e a que ficaria errada é a que ninguém
  * abre.
  *
- * A linha mora num `SlushCard`, que é `surface` — um degrau acima do canvas e
+ * A linha mora num `Cartao`, que é `surface` — um degrau acima do canvas e
  * sem moldura. Descrição e subtítulo são blocos **empilhados**, nunca lado a lado — é o erro
  * que o protótipo em HTML cometeu deixando-os como `span` inline. Sem altura
  * fixa: com fonte a 200% (REQ-A11Y-004) a linha precisa poder crescer.
@@ -68,7 +68,7 @@ fun LinhaDeTransacao(
         Modifier.clickable(onClickLabel = "Editar", onClick = onClick)
     }
 
-    SlushCard(modifier.fillMaxWidth().then(toque)) {
+    Cartao(modifier.fillMaxWidth().then(toque)) {
         Row(
             Modifier.padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -79,14 +79,14 @@ fun LinhaDeTransacao(
                 Text(
                     text = descricaoDe(txn, categoria),
                     style = BodyStrong,
-                    color = Slush.ink,
+                    color = Tema.ink,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = subtituloDe(txn, categoria, conta, destino),
                     style = Caption,
-                    color = Slush.ink.copy(alpha = SUBTITULO_ALPHA),
+                    color = Tema.ink.copy(alpha = SUBTITULO_ALPHA),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -119,8 +119,8 @@ private fun PontoDeCategoria(colorArgb: Int?) = Box(
         .padding(top = 5.dp)
         .size(10.dp)
         .clip(Pill)
-        .background(colorArgb?.let { Color(it) } ?: Slush.inkMute)
-        .border(OutlineWidth, Slush.ink, Pill),
+        .background(colorArgb?.let { Color(it) } ?: Tema.inkMute)
+        .border(OutlineWidth, Tema.ink, Pill),
 )
 
 /** Descrição vazia é comum no lançamento de 3 toques: a categoria dá o nome. */

@@ -47,11 +47,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.financepro.core.ui.component.GhostButton
-import app.financepro.core.ui.component.SlushSurface
+import app.financepro.core.ui.component.Superficie
 import app.financepro.core.ui.theme.Label
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
-import app.financepro.core.ui.theme.Slush
+import app.financepro.core.ui.theme.Tema
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.data.prefs.SecurityPrefs
 import app.financepro.data.repo.AccountRepository
@@ -91,7 +91,7 @@ import javax.inject.Inject
  *
  * A barra é uma pílula flutuante contornada, não a `NavigationBar` do Material —
  * aquela traz superfície tonal e nenhum contorno, que é o oposto da gramática de
- * Slush. Seleção é sinalizada por **preenchimento**, não só por cor (REQ-A11Y-003).
+ * Tema. Seleção é sinalizada por **preenchimento**, não só por cor (REQ-A11Y-003).
  */
 
 @Serializable
@@ -227,7 +227,7 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
     var editandoId by remember { mutableStateOf<Long?>(null) }
 
     Scaffold(
-        containerColor = Slush.paper,
+        containerColor = Tema.paper,
         bottomBar = { BarraInferior(nav) },
     ) { insets ->
         NavHost(
@@ -350,7 +350,7 @@ private fun MaisScreen(onIr: (Any) -> Unit, bloqueio: Boolean, onAlternarBloquei
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text("Mais", style = Subheading, color = Slush.ink)
+        Text("Mais", style = Subheading, color = Tema.ink)
         GhostButton(text = "Contas", onClick = { onIr(Contas) }, modifier = Modifier.fillMaxWidth())
         GhostButton(
             text = "Categorias",
@@ -393,7 +393,7 @@ private fun MaisScreen(onIr: (Any) -> Unit, bloqueio: Boolean, onAlternarBloquei
 private fun BarraInferior(nav: NavHostController) {
     val atual by nav.currentBackStackEntryAsState()
 
-    SlushSurface(
+    Superficie(
         // `windowInsetsPadding` antes do padding visual: com `enableEdgeToEdge` o
         // Scaffold entrega o slot colado na borda física, e quem tem três botões
         // de navegação em vez de gestos veria a barra atrás deles. No aparelho de
@@ -423,7 +423,7 @@ private fun BarraInferior(nav: NavHostController) {
         var emAba by remember { mutableStateOf(true) }
         if (destino != null) emAba = indice >= 0
         val presenca by animateFloatAsState(if (emAba) 1f else 0f, tween(DURACAO_ABA))
-        val tinta = Slush.ink
+        val tinta = Tema.ink
 
         Row(
             modifier = Modifier
@@ -483,7 +483,7 @@ private fun Aba(
 ) {
     // Sem fundo próprio: quem preenche é a pílula que desliza atrás. REQ-A11Y-003
     // continua valendo — o sinal é preenchimento, e `selected` na semântica.
-    val tinta = lerp(Slush.ink, Slush.paper, cobertura)
+    val tinta = lerp(Tema.ink, Tema.paper, cobertura)
 
     Surface(
         onClick = onClick,
@@ -498,7 +498,7 @@ private fun Aba(
         contentColor = tinta,
         // Sempre presente: com a pilula preenchida o contorno e `ink` sobre
         // `ink` e some sozinho, sem o pulo de um `null` no meio da animacao.
-        border = BorderStroke(OutlineWidth, Slush.ink),
+        border = BorderStroke(OutlineWidth, Tema.ink),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
     ) {

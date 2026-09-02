@@ -46,7 +46,7 @@ import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyField
 import app.financepro.core.ui.component.MoneyText
 import app.financepro.core.ui.component.Rotulo
-import app.financepro.core.ui.component.SlushCard
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.Danger
@@ -54,8 +54,8 @@ import app.financepro.core.ui.theme.Teal
 import app.financepro.core.ui.theme.MoneyCaption
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
-import app.financepro.core.ui.theme.Slush
-import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.core.ui.theme.Warning
 import app.financepro.domain.usecase.ALERTA_PERCENT
@@ -137,7 +137,7 @@ private fun Cabecalho(mes: YearMonth, onAnterior: () -> Unit, onSeguinte: () -> 
         Text(
             text = MES.format(mes).replaceFirstChar { it.uppercase() },
             style = Subheading,
-            color = Slush.ink,
+            color = Tema.ink,
         )
         Row(
             Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -154,7 +154,7 @@ private fun Cabecalho(mes: YearMonth, onAnterior: () -> Unit, onSeguinte: () -> 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Linha(progresso: BudgetProgress, onClick: () -> Unit) {
-    SlushCard(Modifier.fillMaxWidth()) {
+    Cartao(Modifier.fillMaxWidth()) {
         Column(
             Modifier
                 .padding(12.dp)
@@ -169,14 +169,14 @@ private fun Linha(progresso: BudgetProgress, onClick: () -> Unit) {
                 Text(
                     text = progresso.categoria.name,
                     style = BodyStrong,
-                    color = Slush.ink,
+                    color = Tema.ink,
                     modifier = Modifier.weight(1f),
                 )
                 MoneyText(cents = progresso.spentCents, style = MoneyCaption)
                 // REQ-BUD-003 pede gasto, **limite** e percentual na tela. Sem
                 // o limite escrito, "82%" obriga a fazer a conta de cabeça para
                 // saber de quanto — e a barra sozinha não dá o número.
-                Text("de " + reais(progresso.limitCents), style = Caption, color = Slush.ink)
+                Text("de " + reais(progresso.limitCents), style = Caption, color = Tema.ink)
             }
 
             Barra(progresso.percent)
@@ -189,7 +189,7 @@ private fun Linha(progresso: BudgetProgress, onClick: () -> Unit) {
                 Text(
                     text = aviso(progresso),
                     style = Caption,
-                    color = Slush.ink,
+                    color = Tema.ink,
                     modifier = Modifier.weight(1f),
                 )
                 GhostButton(text = "Teto", onClick = onClick)
@@ -218,14 +218,14 @@ private fun Barra(percent: Int) {
     val preenchimento = when {
         percent >= ESTOURO_PERCENT -> Danger
         percent >= ALERTA_PERCENT -> Warning
-        else -> Slush.ink
+        else -> Tema.ink
     }
     Box(
         Modifier
             .fillMaxWidth()
             .height(ALTURA_BARRA)
             .clip(Pill)
-            .border(OutlineWidth, Slush.ink, Pill),
+            .border(OutlineWidth, Tema.ink, Pill),
     ) {
         Box(
             Modifier
@@ -278,9 +278,9 @@ private fun FolhaDeTeto(
     val folha = state.folha ?: return
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        shape = SlushShapes.extraLarge,
-        containerColor = Slush.paper,
-        contentColor = Slush.ink,
+        shape = Formas.extraLarge,
+        containerColor = Tema.paper,
+        contentColor = Tema.ink,
         tonalElevation = 0.dp,
     ) {
         Column(
@@ -295,7 +295,7 @@ private fun FolhaDeTeto(
             Text(
                 text = state.categoriaDaFolha?.name ?: "Teto de qual categoria?",
                 style = Subheading,
-                color = Slush.ink,
+                color = Tema.ink,
             )
 
             if (folha.categoriaId == null) {

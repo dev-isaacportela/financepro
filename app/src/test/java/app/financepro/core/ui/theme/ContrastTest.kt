@@ -34,7 +34,7 @@ class ContrastTest {
         // subconjunto seguro nos dois — por isso a regra é "nenhum", e não uma
         // tabela por tema que alguém teria de consultar antes de cada `Text`.
         val seguroNosDois = Acentos.filter {
-            contrast(it, DarkSlush.surface) >= TEXTO && contrast(it, LightSlush.surface) >= TEXTO
+            contrast(it, PaletaEscura.surface) >= TEXTO && contrast(it, PaletaClara.surface) >= TEXTO
         }
 
         assertEquals(emptyList<Color>(), seguroNosDois)
@@ -44,7 +44,7 @@ class ContrastTest {
     fun `tinta sobre canvas e sobre card passa nos dois temas`() {
         // Duas superfícies por tema, e o texto tem de funcionar nas duas: o
         // título fica no canvas, o conteúdo dentro do card.
-        listOf(DarkSlush, LightSlush).forEach { tema ->
+        listOf(PaletaEscura, PaletaClara).forEach { tema ->
             assertTrue("ink sobre paper", contrast(tema.ink, tema.paper) >= TEXTO)
             assertTrue("ink sobre surface", contrast(tema.ink, tema.surface) >= TEXTO)
         }
@@ -55,7 +55,7 @@ class ContrastTest {
         // `inkMute` é o subtítulo da linha de transação e o metadado do card. É
         // o token onde a economia de contraste é tentadora, e o pior caso — 6.40
         // no claro sobre o card — ainda tem folga sobre 4.5.
-        listOf(DarkSlush, LightSlush).forEach { tema ->
+        listOf(PaletaEscura, PaletaClara).forEach { tema ->
             assertTrue("inkMute sobre paper", contrast(tema.inkMute, tema.paper) >= TEXTO)
             assertTrue("inkMute sobre surface", contrast(tema.inkMute, tema.surface) >= TEXTO)
         }
@@ -79,7 +79,7 @@ class ContrastTest {
         //
         // Se um dia a paleta escurecer a ponto de as oito passarem, é aqui que
         // se descobre — e aí o anel vira decoração, que é hora de removê-lo.
-        val fracos = Acentos.filter { contrast(it, LightSlush.surface) < NAO_TEXTO }
+        val fracos = Acentos.filter { contrast(it, PaletaClara.surface) < NAO_TEXTO }
 
         assertTrue("nenhum acento é fraco: o anel virou decoração", fracos.isNotEmpty())
     }
@@ -88,12 +88,12 @@ class ContrastTest {
     fun `os dois modos sao canvas opostos, e os acentos nao mudam entre eles`() {
         // REQ-DS-008: o que inverte é o canvas e a tinta. A cor de uma categoria
         // é identidade, e identidade não muda quando anoitece.
-        assertEquals(CanvasDark, DarkSlush.paper)
-        assertEquals(CanvasLight, DarkSlush.ink)
-        assertEquals(CanvasLight, LightSlush.paper)
-        assertEquals(InkLight, LightSlush.ink)
-        assertEquals(SurfaceElevated, DarkSlush.surface)
-        assertEquals(SurfaceSoft, LightSlush.surface)
+        assertEquals(CanvasDark, PaletaEscura.paper)
+        assertEquals(CanvasLight, PaletaEscura.ink)
+        assertEquals(CanvasLight, PaletaClara.paper)
+        assertEquals(InkLight, PaletaClara.ink)
+        assertEquals(SurfaceElevated, PaletaEscura.surface)
+        assertEquals(SurfaceSoft, PaletaClara.surface)
     }
 
     @Test

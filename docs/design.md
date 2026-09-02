@@ -64,7 +64,7 @@ falta:
 | Escuro | `#000000` | `#16181A` | `#FFFFFF` |
 | Claro | `#FFFFFF` | `#F4F4F4` | `#191C1F` |
 
-O modo escuro é o principal, e a ordem de declaração em `SlushColors.kt` registra
+O modo escuro é o principal, e a ordem de declaração em `Paleta.kt` registra
 isso. As oito cores de acento **não mudam entre os temas**: a cor de uma
 categoria é identidade, e identidade não muda quando anoitece.
 
@@ -190,9 +190,9 @@ val Brown      = Color(0xFF936D62)
 ```
 
 ```kotlin
-// SlushColors.kt — o degrau e um token, nao um literal espalhado.
+// Paleta.kt — o degrau e um token, nao um literal espalhado.
 @Immutable
-data class SlushColors(
+data class Paleta(
     val paper: Color,     // canvas do modo
     val surface: Color,   // o degrau unico acima do canvas
     val ink: Color,       // texto primario
@@ -201,19 +201,19 @@ data class SlushColors(
     val onFill: Color,    // texto sobre preenchimento saturado — so sobre Cobalto
 )
 
-val DarkSlush = SlushColors(
+val PaletaEscura = Paleta(
     paper = CanvasDark, surface = SurfaceElevated,
     ink = CanvasLight, inkMute = MuteDark,
     hairline = HairlineDark, onFill = CanvasLight,
 )
 
-val LightSlush = SlushColors(
+val PaletaClara = Paleta(
     paper = CanvasLight, surface = SurfaceSoft,
     ink = InkLight, inkMute = MuteLight,
     hairline = HairlineLight, onFill = CanvasLight,
 )
 
-val LocalSlush = staticCompositionLocalOf { DarkSlush }
+val LocalPaleta = staticCompositionLocalOf { PaletaEscura }
 ```
 
 `paper` e `surface` juntos são a linguagem de profundidade inteira. Um card não
@@ -231,7 +231,7 @@ Quatro degraus e uma pílula, cada um com dono
 ([REQ-DS-003](spec.md#req-ds-003--raios-e-contornos)).
 
 ```kotlin
-val SlushShapes = Shapes(
+val Formas = Shapes(
     extraSmall = RoundedCornerShape(8.dp),    // tag inline, chip pequeno
     small      = RoundedCornerShape(12.dp),   // campo, tile
     medium     = RoundedCornerShape(20.dp),   // card
@@ -365,8 +365,8 @@ fun FilledCta(text: String, onClick: () -> Unit) {
         onClick = onClick,
         shape = Pill,
         colors = ButtonDefaults.buttonColors(
-            containerColor = LocalSlush.current.ink,
-            contentColor = LocalSlush.current.paper,
+            containerColor = LocalPaleta.current.ink,
+            contentColor = LocalPaleta.current.paper,
         ),
         elevation = null,                                   // sem sombra, nunca
         contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
@@ -381,10 +381,10 @@ fun GhostButton(text: String, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
         shape = Pill,
-        border = BorderStroke(1.dp, LocalSlush.current.ink),
+        border = BorderStroke(1.dp, LocalPaleta.current.ink),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = LocalSlush.current.paper,
-            contentColor = LocalSlush.current.ink,
+            containerColor = LocalPaleta.current.paper,
+            contentColor = LocalPaleta.current.ink,
         ),
         contentPadding = PaddingValues(horizontal = 27.dp, vertical = 13.dp),
     ) { Text(text, style = Label) }
@@ -400,12 +400,12 @@ inventa um terceiro tom que ninguém pediu
 
 ```kotlin
 Card(
-    shape = SlushShapes.medium,                             // 20dp, sem border
-    colors = CardDefaults.cardColors(containerColor = LocalSlush.current.surface),
+    shape = Formas.medium,                             // 20dp, sem border
+    colors = CardDefaults.cardColors(containerColor = LocalPaleta.current.surface),
     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
 )
 
-Surface(color = LocalSlush.current.surface, tonalElevation = 0.dp, shadowElevation = 0.dp)
+Surface(color = LocalPaleta.current.surface, tonalElevation = 0.dp, shadowElevation = 0.dp)
 ```
 
 ### 6.1 Barra de navegação
@@ -431,10 +431,10 @@ próprios, então o grid do lançamento rápido é uma cartela:
 Box(
     Modifier
         .size(64.dp)
-        .clip(SlushShapes.medium)
+        .clip(Formas.medium)
         .background(Color(category.colorArgb))          // preenchimento apenas
-        .border(if (selecionado) 3.dp else 0.dp, LocalSlush.current.ink,
-                SlushShapes.medium),
+        .border(if (selecionado) 3.dp else 0.dp, LocalPaleta.current.ink,
+                Formas.medium),
 )
 ```
 
@@ -523,7 +523,7 @@ Registrar isto evita que alguém "complete" o design mais tarde achando que falt
 | Cor semeada divergindo da paleta | `TokenLintTest` compara `CATEGORIAS_PADRAO` com `Acentos` |
 | Sombra e elevação | `TokenLintTest`: `shadowElevation`/`defaultElevation` diferente de zero |
 | Gradiente | `TokenLintTest`: `Brush.linearGradient` e afins proibidos |
-| Raio fora da escala | revisão; os raios só existem em `SlushShapes` |
+| Raio fora da escala | revisão; os raios só existem em `Formas` |
 | Entrelinha travada | `TypographyTest` verifica `lineHeight == 1.0.em` e `includeFontPadding == false` nos três display |
 | Entreletra trocando de sinal | `TypographyTest`: negativa no display, positiva no corpo, zero no dinheiro |
 | Fonte 200% | verificação manual em T-020, junto com o resto da acessibilidade |

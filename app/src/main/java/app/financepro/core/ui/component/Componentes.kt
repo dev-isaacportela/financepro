@@ -42,8 +42,8 @@ import app.financepro.core.ui.theme.Display
 import app.financepro.core.ui.theme.MoneyBody
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
-import app.financepro.core.ui.theme.Slush
-import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Formas
 
 /**
  * Componentes base. REQ-DS-002 · REQ-DS-004 · REQ-A11Y-002 ·
@@ -86,8 +86,8 @@ fun FilledCta(
         enabled = enabled,
         shape = Pill,
         colors = ButtonDefaults.buttonColors(
-            containerColor = Slush.ink,
-            contentColor = Slush.paper,
+            containerColor = Tema.ink,
+            contentColor = Tema.paper,
         ),
         elevation = null, // sem sombra, nunca
         contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
@@ -113,10 +113,10 @@ fun GhostButton(
         modifier = modifier.minimumInteractiveComponentSize(),
         enabled = enabled,
         shape = Pill,
-        border = BorderStroke(OutlineWidth, Slush.ink),
+        border = BorderStroke(OutlineWidth, Tema.ink),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Slush.paper,
-            contentColor = Slush.ink,
+            containerColor = Tema.paper,
+            contentColor = Tema.ink,
         ),
         contentPadding = PaddingValues(horizontal = 27.dp, vertical = 13.dp),
     ) {
@@ -132,15 +132,15 @@ fun GhostButton(
  * fio ao redor de um card de 20dp sobre preto lê como caixa de diálogo.
  */
 @Composable
-fun SlushCard(
+fun Cartao(
     modifier: Modifier = Modifier,
-    shape: Shape = SlushShapes.medium,
+    shape: Shape = Formas.medium,
     content: @Composable () -> Unit,
 ) {
     Card(
         modifier = modifier,
         shape = shape,
-        colors = CardDefaults.cardColors(containerColor = Slush.surface, contentColor = Slush.ink),
+        colors = CardDefaults.cardColors(containerColor = Tema.surface, contentColor = Tema.ink),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         content()
@@ -149,16 +149,16 @@ fun SlushCard(
 
 /** `tonalElevation = 0` é o que importa: sem ele o Material tinge o papel. */
 @Composable
-fun SlushSurface(
+fun Superficie(
     modifier: Modifier = Modifier,
-    shape: Shape = SlushShapes.large,
+    shape: Shape = Formas.large,
     content: @Composable () -> Unit,
 ) {
     Surface(
         modifier = modifier,
         shape = shape,
-        color = Slush.surface,
-        contentColor = Slush.ink,
+        color = Tema.surface,
+        contentColor = Tema.ink,
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
     ) {
@@ -173,7 +173,7 @@ fun SlushSurface(
  * esquecê-lo no próximo chamador.
  */
 @Composable
-fun SlushFab(
+fun Fab(
     onClick: () -> Unit,
     rotulo: String,
     modifier: Modifier = Modifier,
@@ -185,8 +185,8 @@ fun SlushFab(
             .minimumInteractiveComponentSize()
             .semantics { contentDescription = rotulo },
         shape = Pill,
-        containerColor = Slush.ink,
-        contentColor = Slush.paper,
+        containerColor = Tema.ink,
+        contentColor = Tema.paper,
         elevation = FloatingActionButtonDefaults.elevation(
             defaultElevation = 0.dp,
             pressedElevation = 0.dp,
@@ -228,7 +228,7 @@ fun MoneyText(
     cents: Long,
     modifier: Modifier = Modifier,
     style: TextStyle = MoneyBody,
-    cor: Color = Slush.ink,
+    cor: Color = Tema.ink,
 ) {
     val falado = spokenBRL(cents)
     Text(
@@ -284,7 +284,7 @@ fun <T> Chips(itens: List<Pair<T, String>>, selecionado: T?, onClick: (T) -> Uni
  * filtros"). Um parâmetro de ação genérico só daria a todas o mesmo rótulo morno.
  *
  * [titulo] vem em caixa alta do chamador, como no onboarding: o display type de
- * Slush é caixa alta, e forçar `uppercase()` aqui esconderia a decisão de quem lê
+ * Tema é caixa alta, e forçar `uppercase()` aqui esconderia a decisão de quem lê
  * a tela. Sem `maxLines` de propósito — display que não cabe quebra, nunca vira
  * reticências (REQ-DS-005), e a 200% de fonte ele cresce.
  */
@@ -310,11 +310,11 @@ fun EstadoVazio(
             Modifier
                 .size(STICKER_VAZIO)
                 .scale(escala.value)
-                .clip(SlushShapes.medium)
+                .clip(Formas.medium)
                 .background(sticker),
         )
-        Text(text = titulo, style = Display, color = Slush.ink)
-        if (descricao != null) Text(text = descricao, style = BodyLg, color = Slush.ink)
+        Text(text = titulo, style = Display, color = Tema.ink)
+        if (descricao != null) Text(text = descricao, style = BodyLg, color = Tema.ink)
     }
 }
 
@@ -325,4 +325,4 @@ private const val VAZIO_AMORTECIMENTO = 0.5f
 
 /** Rótulo de campo. Existe para nenhuma tela escolher o estilo por conta própria. */
 @Composable
-fun Rotulo(texto: String) = Text(texto, style = Caption, color = Slush.ink)
+fun Rotulo(texto: String) = Text(texto, style = Caption, color = Tema.ink)

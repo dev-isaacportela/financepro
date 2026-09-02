@@ -40,13 +40,13 @@ import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyField
 import app.financepro.core.ui.component.MoneyText
 import app.financepro.core.ui.component.Rotulo
-import app.financepro.core.ui.component.SlushCard
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.LightGreen
 import app.financepro.core.ui.theme.MoneyCaption
-import app.financepro.core.ui.theme.Slush
-import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.domain.model.TxnType
 import app.financepro.domain.usecase.Frequency
@@ -82,7 +82,7 @@ fun RecurringScreen(vm: RecurringViewModel = hiltViewModel()) {
             .padding(top = 16.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Recorrências", style = Subheading, color = Slush.ink)
+        Text("Recorrências", style = Subheading, color = Tema.ink)
 
         if (state.regras.isEmpty() && state.carregado) {
             // REQ-UI-006 — o vazio traz a ação que o preenche, e diz para quê.
@@ -114,7 +114,7 @@ private fun Linha(regra: RecurringRule, state: RecurringState, onEditar: () -> U
     val categoria = state.categoriaDe(regra.categoryId)
     val titulo = regra.description.ifBlank { categoria?.name ?: rotuloDoTipo(regra.type) }
 
-    SlushCard(Modifier.fillMaxWidth()) {
+    Cartao(Modifier.fillMaxWidth()) {
         Column(
             Modifier
                 .padding(12.dp)
@@ -134,12 +134,12 @@ private fun Linha(regra: RecurringRule, state: RecurringState, onEditar: () -> U
                 Text(
                     text = titulo,
                     style = BodyStrong,
-                    color = Slush.ink,
+                    color = Tema.ink,
                     modifier = Modifier.weight(1f),
                 )
                 MoneyText(cents = regra.amountCents, style = MoneyCaption)
             }
-            Text(quando(regra, state.hoje), style = Caption, color = Slush.ink)
+            Text(quando(regra, state.hoje), style = Caption, color = Tema.ink)
             GhostButton(text = "Editar", onClick = onEditar)
         }
     }
@@ -165,9 +165,9 @@ private fun FolhaDeRegra(state: RecurringState, vm: RecurringViewModel) {
 
     ModalBottomSheet(
         onDismissRequest = vm::fechar,
-        shape = SlushShapes.extraLarge,
-        containerColor = Slush.paper,
-        contentColor = Slush.ink,
+        shape = Formas.extraLarge,
+        containerColor = Tema.paper,
+        contentColor = Tema.ink,
         tonalElevation = 0.dp,
     ) {
         Column(
@@ -183,7 +183,7 @@ private fun FolhaDeRegra(state: RecurringState, vm: RecurringViewModel) {
             Text(
                 text = if (folha.editando) "Editar recorrência" else "Nova recorrência",
                 style = Subheading,
-                color = Slush.ink,
+                color = Tema.ink,
             )
             OQueSeLanca(state, folha, vm)
             QuandoSeRepete(state, folha, vm, onEscolherData = { seletor = it })
@@ -397,7 +397,7 @@ private fun SeletorDeData(
 
 @Composable
 private fun Erro(mensagem: String?) {
-    if (mensagem != null) Text("⚠ $mensagem", style = Caption, color = Slush.ink)
+    if (mensagem != null) Text("⚠ $mensagem", style = Caption, color = Tema.ink)
 }
 
 /**

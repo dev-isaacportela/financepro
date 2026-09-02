@@ -30,12 +30,12 @@ import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyText
 import app.financepro.core.ui.component.Rotulo
-import app.financepro.core.ui.component.SlushCard
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.MoneyCaption
-import app.financepro.core.ui.theme.Slush
+import app.financepro.core.ui.theme.Tema
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.data.ingest.MapeamentoCsv
 import app.financepro.data.ingest.Veredito
@@ -77,7 +77,7 @@ fun ImportScreen(vm: ImportViewModel = hiltViewModel()) {
                 .padding(top = 16.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Importar extrato", style = Subheading, color = Slush.ink)
+            Text("Importar extrato", style = Subheading, color = Tema.ink)
             state.recado?.let { Recado(it) }
 
             when (state.passo) {
@@ -118,7 +118,7 @@ private fun PassoArquivo(state: ImportState, onEscolher: () -> Unit) {
         text = "OFX ou CSV, do jeito que o banco exporta. O arquivo não sai do " +
             "aparelho: o app não tem acesso à internet.",
         style = Body,
-        color = Slush.ink,
+        color = Tema.ink,
     )
     FilledCta(
         text = if (state.trabalhando) "Lendo…" else "Escolher arquivo",
@@ -156,11 +156,11 @@ private fun PassoMapeamento(state: ImportState, vm: ImportViewModel) {
 
     Rotulo("Confira as colunas")
     state.previa.forEach { linha ->
-        SlushCard(Modifier.fillMaxWidth()) {
+        Cartao(Modifier.fillMaxWidth()) {
             Text(
                 text = linha.mapIndexed { i, c -> "$i: $c" }.joinToString("  ·  "),
                 style = Caption,
-                color = Slush.ink,
+                color = Tema.ink,
                 modifier = Modifier.padding(8.dp),
             )
         }
@@ -223,16 +223,16 @@ private fun Revisao(state: ImportState, vm: ImportViewModel) {
 @Composable
 private fun Resumo(state: ImportState) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Conferir antes de gravar", style = Subheading, color = Slush.ink)
-        Text(state.nomeDoArquivo, style = Caption, color = Slush.ink)
+        Text("Conferir antes de gravar", style = Subheading, color = Tema.ink)
+        Text(state.nomeDoArquivo, style = Caption, color = Tema.ink)
         // As duplicatas exatas viram um número: a spec manda descartá-las
         // sozinha, e centenas de linhas riscadas atrapalhariam quem precisa
         // conferir as que sobraram.
         if (state.descartadas > 0) {
-            Text(descartadasEmPalavras(state.descartadas), style = Caption, color = Slush.ink)
+            Text(descartadasEmPalavras(state.descartadas), style = Caption, color = Tema.ink)
         }
         if (state.possiveis > 0) {
-            Text(possiveisEmPalavras(state.possiveis), style = Caption, color = Slush.ink)
+            Text(possiveisEmPalavras(state.possiveis), style = Caption, color = Tema.ink)
         }
     }
 }
@@ -249,18 +249,18 @@ private fun LinhaDaRevisao(
     val esperado =
         if (candidata.amountCents >= 0) CategoryKind.INCOME else CategoryKind.EXPENSE
 
-    SlushCard(Modifier.fillMaxWidth()) {
+    Cartao(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             FlowRow(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 itemVerticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(DIA.format(candidata.date), style = Caption, color = Slush.ink)
+                Text(DIA.format(candidata.date), style = Caption, color = Tema.ink)
                 Text(
                     text = candidata.description.ifBlank { "Sem descrição" },
                     style = BodyStrong,
-                    color = Slush.ink,
+                    color = Tema.ink,
                     modifier = Modifier.weight(1f),
                 )
                 MoneyText(cents = candidata.amountCents, style = MoneyCaption)
@@ -274,7 +274,7 @@ private fun LinhaDaRevisao(
                         text = "⚠ Parecida com " + parecida.description.ifBlank { "sem descrição" } +
                             " de " + DIA.format(parecida.date) + ", " + formatBRL(parecida.amountCents),
                         style = Caption,
-                        color = Slush.ink,
+                        color = Tema.ink,
                     )
                 }
             }
@@ -302,7 +302,7 @@ private fun LinhaDaRevisao(
 
 @Composable
 private fun PassoPronto(state: ImportState, onRecomecar: () -> Unit) {
-    Text("${state.gravadas} transações gravadas.", style = Body, color = Slush.ink)
+    Text("${state.gravadas} transações gravadas.", style = Body, color = Tema.ink)
     GhostButton(
         text = "Importar outro arquivo",
         onClick = onRecomecar,
@@ -324,18 +324,18 @@ private fun Lotes(state: ImportState, onDesfazer: (Long) -> Unit) {
 
     Rotulo("Importações anteriores")
     state.lotes.forEach { lote ->
-        SlushCard(Modifier.fillMaxWidth()) {
+        Cartao(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = lote.sourceName.ifBlank { lote.sourceType },
                     style = BodyStrong,
-                    color = Slush.ink,
+                    color = Tema.ink,
                 )
                 Text(
                     text = QUANDO.format(java.time.Instant.ofEpochMilli(lote.importedAt)) +
                         " · " + lote.txnCount + " linhas",
                     style = Caption,
-                    color = Slush.ink,
+                    color = Tema.ink,
                 )
                 GhostButton(
                     text = "Desfazer este lote",
@@ -350,8 +350,8 @@ private fun Lotes(state: ImportState, onDesfazer: (Long) -> Unit) {
 
 @Composable
 private fun Recado(texto: String) {
-    SlushCard(Modifier.fillMaxWidth()) {
-        Text(texto, style = Body, color = Slush.ink, modifier = Modifier.padding(12.dp))
+    Cartao(Modifier.fillMaxWidth()) {
+        Text(texto, style = Body, color = Tema.ink, modifier = Modifier.padding(12.dp))
     }
 }
 

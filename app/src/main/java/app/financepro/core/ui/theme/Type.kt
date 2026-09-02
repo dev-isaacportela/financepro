@@ -163,7 +163,7 @@ val MoneyCaption = Caption.copy(fontFeatureSettings = TNUM)
  * O mapa para o Material 3, para que um `Text` sem `style` explícito já caia num
  * estilo do tema em vez do Roboto padrão.
  */
-val SlushTypography = Typography(
+val Tipografia = Typography(
     displayLarge = DisplayXl,
     displayMedium = Display,
     displaySmall = DisplaySm,

@@ -25,10 +25,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.Rotulo
-import app.financepro.core.ui.component.SlushCard
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.Caption
-import app.financepro.core.ui.theme.Slush
+import app.financepro.core.ui.theme.Tema
 import app.financepro.core.ui.theme.Subheading
 import java.time.LocalDate
 
@@ -72,19 +72,19 @@ fun ExportScreen(vm: ExportViewModel = hiltViewModel()) {
             .padding(top = 16.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Backup e dados", style = Subheading, color = Slush.ink)
+        Text("Backup e dados", style = Subheading, color = Tema.ink)
         Text(
             text = "Nada sai do aparelho por conta própria: o app não tem acesso " +
                 "à internet. Você escolhe cada arquivo e cada destino.",
             style = Body,
-            color = Slush.ink,
+            color = Tema.ink,
         )
 
         // O resultado fica **na tela**, e não num snackbar de 4 segundos: quem
         // acabou de restaurar ou apagar precisa poder reler o que aconteceu.
         state.recado?.let { recado ->
-            SlushCard(Modifier.fillMaxWidth()) {
-                Text(recado, style = Body, color = Slush.ink, modifier = Modifier.padding(12.dp))
+            Cartao(Modifier.fillMaxWidth()) {
+                Text(recado, style = Body, color = Tema.ink, modifier = Modifier.padding(12.dp))
             }
         }
 
@@ -254,11 +254,11 @@ private fun Senha(rotulo: String, valor: String, onValor: (String) -> Unit) {
 
 @Composable
 private fun Secao(titulo: String) {
-    Text(titulo, style = Subheading, color = Slush.ink, modifier = Modifier.padding(top = 12.dp))
+    Text(titulo, style = Subheading, color = Tema.ink, modifier = Modifier.padding(top = 12.dp))
 }
 
 @Composable
-private fun Nota(texto: String) = Text(texto, style = Caption, color = Slush.ink)
+private fun Nota(texto: String) = Text(texto, style = Caption, color = Tema.ink)
 
 @Composable
 private fun Aviso(texto: String) = Rotulo("⚠ $texto")

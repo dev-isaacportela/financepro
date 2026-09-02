@@ -19,8 +19,8 @@ import app.financepro.core.ui.component.Chips
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.Rotulo
-import app.financepro.core.ui.theme.Slush
-import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Formas
 import app.financepro.domain.model.TxnType
 import app.financepro.domain.usecase.Filtro
 
@@ -48,9 +48,9 @@ fun TxnFilterSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        shape = SlushShapes.extraLarge,
-        containerColor = Slush.paper,
-        contentColor = Slush.ink,
+        shape = Formas.extraLarge,
+        containerColor = Tema.paper,
+        contentColor = Tema.ink,
         tonalElevation = 0.dp,
     ) {
         Column(

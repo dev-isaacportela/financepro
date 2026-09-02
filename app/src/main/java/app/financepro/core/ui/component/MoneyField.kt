@@ -20,7 +20,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import app.financepro.core.money.formatBRL
 import app.financepro.core.ui.theme.MoneyLg
-import app.financepro.core.ui.theme.Slush
+import app.financepro.core.ui.theme.Tema
 
 /**
  * Campo de valor do lançamento rápido. REQ-UI-002 · REQ-CORE-001 · REQ-CORE-005
@@ -62,10 +62,10 @@ fun MoneyField(
             onCentsChange(apenasDigitos.toLongOrNull() ?: 0L)
         },
         modifier = modifier.fillMaxWidth().focusRequester(focus),
-        textStyle = MoneyLg.copy(color = Slush.ink, textAlign = TextAlign.Center),
+        textStyle = MoneyLg.copy(color = Tema.ink, textAlign = TextAlign.Center),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
         singleLine = true,
-        cursorBrush = SolidColor(Slush.ink),
+        cursorBrush = SolidColor(Tema.ink),
         visualTransformation = MoedaBrl,
     )
 }

@@ -280,7 +280,7 @@ Tokens, tipografia, formas e componentes base conforme [design.md](design.md).
       As duas são **variáveis**, um arquivo por família: `FontVariation.weight`
       tira W500 e W700 de Inter do mesmo arquivo, e dois estáticos custariam o
       dobro de APK pelo mesmo resultado. `ManifestTest` guarda o flanco
-- [x] `SlushColors` com `paper`/`ink`; contorno inverte junto com o tema, sem
+- [x] `Paleta` com `paper`/`ink`; contorno inverte junto com o tema, sem
       condicional nas telas
 - [x] `ContrastTest` recalcula da paleta e falha se um sticker virar cor de
       texto. A afirmação que ele fixa é a que justifica a regra: **nenhum**
@@ -299,7 +299,7 @@ Tokens, tipografia, formas e componentes base conforme [design.md](design.md).
       semeadas são ARGB `Int` em `Seed.kt` (porque `data/` não importa Compose),
       e o teste confere que elas são as mesmas seis do tema
 - [x] `Card`, `Button`, `FAB` e `Surface` com elevação e `tonalElevation` zerados
-      explicitamente, uma vez, em `core/ui/component/Slush.kt`
+      explicitamente, uma vez, em `core/ui/component/Componentes.kt`
 - [x] Componentes base nascem com alvo ≥ 48dp via `minimumInteractiveComponentSize()`
 - [x] `MoneyText` centraliza formatação, sinal e `tnum` — nenhuma tela formata
       dinheiro à mão
@@ -404,7 +404,7 @@ O fluxo mais importante do app (Art. 18).
   tela não pintava fundo próprio. O pior é que o layout estava correto: o
   `uiautomator dump` mostrava tudo no lugar enquanto a tela parecia vazia.
   Corrigido nos dois lados — `values-night/themes.xml` e a tela pintando
-  `Slush.paper`, porque nenhuma tela deve depender do fundo da janela.
+  `Tema.paper`, porque nenhuma tela deve depender do fundo da janela.
 
 ### T-014 — Lista de transações
 **Fase** F0 · **Depende de** T-013 · **REQ** REQ-TXN-010, REQ-TXN-011, REQ-TXN-012

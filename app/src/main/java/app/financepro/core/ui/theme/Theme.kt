@@ -15,36 +15,31 @@ import androidx.compose.runtime.staticCompositionLocalOf
  * parede sobrescreveria os tokens e destruiria as garantias de contraste, que
  * dependem de hexadecimais conhecidos.
  */
-val LocalSlush = staticCompositionLocalOf { DarkSlush }
+val LocalPaleta = staticCompositionLocalOf { PaletaEscura }
 
 /**
- * Atalho de leitura: `Slush.ink` em vez de `LocalSlush.current.ink`.
+ * Atalho de leitura: `Tema.ink` em vez de `LocalPaleta.current.ink`.
  *
  * Não é açúcar gratuito — o token aparece em toda superfície, e a versão longa
  * repetida três vezes numa assinatura de componente empurra a linha para além dos
  * 120 caracteres e convida alguém a passar a cor por parâmetro.
- *
- * ponytail: o nome `Slush` sobreviveu à troca de sistema visual e hoje mente —
- * ele veio do style reference anterior. Renomear é `sed` mecânico em 21 arquivos
- * e zero mudança de comportamento; fazer quando não estiver empilhado sobre
- * outra mudança grande, para o diff da renomeação ser lido como renomeação.
  */
-val Slush: SlushColors
-    @Composable get() = LocalSlush.current
+val Tema: Paleta
+    @Composable get() = LocalPaleta.current
 
 @Composable
-fun SlushTheme(
+fun FinanceProTheme(
     dark: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val slush = if (dark) DarkSlush else LightSlush
-    CompositionLocalProvider(LocalSlush provides slush) {
+    val paleta = if (dark) PaletaEscura else PaletaClara
+    CompositionLocalProvider(LocalPaleta provides paleta) {
         MaterialTheme(
             // O esquema do Material existe para que um componente que ninguém
             // customizou já nasça no canvas certo, em vez do roxo padrão.
-            colorScheme = if (dark) slush.toDarkScheme() else slush.toLightScheme(),
-            typography = SlushTypography,
-            shapes = SlushShapes,
+            colorScheme = if (dark) paleta.toDarkScheme() else paleta.toLightScheme(),
+            typography = Tipografia,
+            shapes = Formas,
             content = content,
         )
     }
@@ -64,7 +59,7 @@ fun SlushTheme(
  * cor de mensagem**: texto Danger sobre o card dá 4.20:1 e reprova, então o erro
  * escrito continua em `ink`, com palavras (REQ-DS-007, REQ-A11Y-003).
  */
-private fun SlushColors.toDarkScheme() = darkColorScheme(
+private fun Paleta.toDarkScheme() = darkColorScheme(
     primary = ink,
     onPrimary = paper,
     secondary = ink,
@@ -81,7 +76,7 @@ private fun SlushColors.toDarkScheme() = darkColorScheme(
     onError = ink,
 )
 
-private fun SlushColors.toLightScheme() = lightColorScheme(
+private fun Paleta.toLightScheme() = lightColorScheme(
     primary = ink,
     onPrimary = paper,
     secondary = ink,

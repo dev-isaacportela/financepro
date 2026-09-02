@@ -32,12 +32,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
-import app.financepro.core.ui.component.SlushCard
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.OutlineWidth
-import app.financepro.core.ui.theme.Slush
-import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.domain.model.Category
 import app.financepro.domain.model.CategoryKind
@@ -54,13 +54,13 @@ import app.financepro.domain.model.CategoryKind
 fun CategoriesScreen(vm: CategoriesViewModel = hiltViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
 
-    Column(Modifier.fillMaxSize().background(Slush.paper).padding(16.dp)) {
+    Column(Modifier.fillMaxSize().background(Tema.paper).padding(16.dp)) {
         Row(
             Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Categorias", style = Subheading, color = Slush.ink)
+            Text("Categorias", style = Subheading, color = Tema.ink)
             GhostButton(text = "Nova", onClick = { vm.nova(CategoryKind.EXPENSE) })
         }
 
@@ -92,7 +92,7 @@ private fun Linha(
     onExcluir: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    SlushCard(modifier.fillMaxWidth().clickable(onClick = onClick)) {
+    Cartao(modifier.fillMaxWidth().clickable(onClick = onClick)) {
         // `FlowRow` pelo mesmo motivo da lista de contas: a 200% o botão desce
         // de linha em vez de espremer o nome (REQ-A11Y-004).
         FlowRow(
@@ -105,16 +105,16 @@ private fun Linha(
             Box(
                 Modifier
                     .size(16.dp)
-                    .clip(SlushShapes.extraSmall)
+                    .clip(Formas.extraSmall)
                     .background(Color(categoria.colorArgb))
-                    .border(OutlineWidth, Slush.ink, SlushShapes.extraSmall),
+                    .border(OutlineWidth, Tema.ink, Formas.extraSmall),
             )
             Column(Modifier.weight(1f)) {
-                Text(categoria.name, style = Body, color = Slush.ink, maxLines = 1)
+                Text(categoria.name, style = Body, color = Tema.ink, maxLines = 1)
                 Text(
                     text = if (categoria.kind == CategoryKind.INCOME) "Receita" else "Despesa",
                     style = Caption,
-                    color = Slush.ink,
+                    color = Tema.ink,
                 )
             }
             GhostButton(text = "Excluir", onClick = onExcluir)
@@ -139,7 +139,7 @@ private fun FormSheet(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-        Text("Natureza", style = Caption, color = Slush.ink)
+        Text("Natureza", style = Caption, color = Tema.ink)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             CategoryKind.entries.forEach { kind ->
                 val texto = if (kind == CategoryKind.INCOME) "Receita" else "Despesa"
@@ -150,7 +150,7 @@ private fun FormSheet(
                 }
             }
         }
-        if (erro != null) Text("⚠ $erro", style = Caption, color = Slush.ink)
+        if (erro != null) Text("⚠ $erro", style = Caption, color = Tema.ink)
         FilledCta(text = "Salvar", onClick = onSalvar, modifier = Modifier.fillMaxWidth())
     }
 }
@@ -164,11 +164,11 @@ private fun ExclusaoSheet(
     vm: CategoriesViewModel,
 ) {
     Folha(vm::fechar) {
-        Text(pedido.categoria.name, style = Subheading, color = Slush.ink)
-        Text(pedido.mensagem, style = Body, color = Slush.ink)
+        Text(pedido.categoria.name, style = Subheading, color = Tema.ink)
+        Text(pedido.mensagem, style = Body, color = Tema.ink)
 
         if (pedido.precisaDestino) {
-            Text("Mover para", style = Caption, color = Slush.ink)
+            Text("Mover para", style = Caption, color = Tema.ink)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(destinos, key = { it.id }) { destino ->
                     if (destino.id == pedido.destino) {
@@ -180,7 +180,7 @@ private fun ExclusaoSheet(
             }
         }
 
-        if (erro != null) Text("⚠ $erro", style = Caption, color = Slush.ink)
+        if (erro != null) Text("⚠ $erro", style = Caption, color = Tema.ink)
         FilledCta(
             text = if (pedido.precisaDestino) "Mover e excluir" else "Excluir",
             onClick = vm::confirmarExclusao,
@@ -194,9 +194,9 @@ private fun ExclusaoSheet(
 private fun Folha(onDismiss: () -> Unit, conteudo: @Composable () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        shape = SlushShapes.extraLarge,
-        containerColor = Slush.paper,
-        contentColor = Slush.ink,
+        shape = Formas.extraLarge,
+        containerColor = Tema.paper,
+        contentColor = Tema.ink,
         tonalElevation = 0.dp,
     ) {
         Column(

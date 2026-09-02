@@ -45,14 +45,14 @@ import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.LinhaDeTransacao
 import app.financepro.core.ui.component.MoneyText
-import app.financepro.core.ui.component.SlushSurface
+import app.financepro.core.ui.component.Superficie
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.MoneyCaption
 import app.financepro.core.ui.theme.Pill
-import app.financepro.core.ui.theme.Slush
-import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.core.ui.theme.Warning
 import app.financepro.domain.model.Txn
@@ -109,7 +109,7 @@ fun TransactionsScreen(
     }
 
     Scaffold(
-        containerColor = Slush.paper,
+        containerColor = Tema.paper,
         snackbarHost = { SnackbarHost(snackbar) { BarraDesfazer(it) } },
     ) { insets ->
         Column(Modifier.fillMaxSize().padding(insets).padding(horizontal = 16.dp)) {
@@ -169,7 +169,7 @@ private fun Cabecalho(
     // o aparelho mostrou, o emulador não. Em linha própria ele tem a largura
     // toda, o que também é o que sobrevive à fonte a 200% (REQ-A11Y-004).
     Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-        Text(titulo, style = Subheading, color = Slush.ink)
+        Text(titulo, style = Subheading, color = Tema.ink)
         Row(
             Modifier.fillMaxWidth().padding(top = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -260,7 +260,7 @@ private fun CabecalhoDoDia(dia: DiaDeTransacoes) {
         // medidos primeiro e ficam com a largura que quiserem. Com a fonte a
         // 200% a data engolia a linha e o total sobrava com uma coluna de um
         // caractere — "−R / $ / 18, / 50", quatro linhas (REQ-A11Y-004).
-        Text(DIA.format(dia.data), style = Caption, color = Slush.ink, modifier = Modifier.weight(1f))
+        Text(DIA.format(dia.data), style = Caption, color = Tema.ink, modifier = Modifier.weight(1f))
         MoneyText(cents = dia.totalCents, style = MoneyCaption)
     }
 }
@@ -322,9 +322,9 @@ private fun EscopoDeExclusaoSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        shape = SlushShapes.extraLarge,
-        containerColor = Slush.paper,
-        contentColor = Slush.ink,
+        shape = Formas.extraLarge,
+        containerColor = Tema.paper,
+        contentColor = Tema.ink,
         tonalElevation = 0.dp,
     ) {
         Column(
@@ -335,11 +335,11 @@ private fun EscopoDeExclusaoSheet(
                 .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Excluir o quê?", style = Subheading, color = Slush.ink)
+            Text("Excluir o quê?", style = Subheading, color = Tema.ink)
             val indice = parcela.installmentIndex
             val total = parcela.installmentTotal
             if (indice != null && total != null) {
-                Text("Esta é a parcela $indice de $total.", style = Body, color = Slush.ink)
+                Text("Esta é a parcela $indice de $total.", style = Body, color = Tema.ink)
             }
             EscopoDeParcela.entries.forEach { escopo ->
                 GhostButton(
@@ -363,26 +363,26 @@ private fun rotuloDoEscopo(escopo: EscopoDeParcela) = when (escopo) {
 private fun FundoExcluir() = Box(
     modifier = Modifier
         .fillMaxSize()
-        .clip(SlushShapes.small)
-        .background(Slush.ink)
+        .clip(Formas.small)
+        .background(Tema.ink)
         .padding(horizontal = 16.dp),
     contentAlignment = Alignment.CenterEnd,
 ) {
-    Text("Excluir", style = BodyStrong, color = Slush.paper)
+    Text("Excluir", style = BodyStrong, color = Tema.paper)
 }
 
 @Composable
 private fun BarraDesfazer(dados: SnackbarData) {
-    // `SlushSurface` e não o `Snackbar` do Material: aquele traz sombra por
+    // `Superficie` e não o `Snackbar` do Material: aquele traz sombra por
     // padrão, e uma elevação que ninguém escreve não é pega pelo TokenLintTest
     // — violaria REQ-DS-004 em silêncio.
-    SlushSurface(modifier = Modifier.fillMaxWidth().padding(12.dp), shape = Pill) {
+    Superficie(modifier = Modifier.fillMaxWidth().padding(12.dp), shape = Pill) {
         Row(
             Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(dados.visuals.message, style = Body, color = Slush.ink)
+            Text(dados.visuals.message, style = Body, color = Tema.ink)
             dados.visuals.actionLabel?.let { rotulo ->
                 GhostButton(text = rotulo, onClick = { dados.performAction() })
             }

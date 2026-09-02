@@ -43,14 +43,14 @@ import app.financepro.core.money.formatBRL
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.LinhaDeTransacao
 import app.financepro.core.ui.component.MoneyText
-import app.financepro.core.ui.component.SlushCard
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.MoneyCaption
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
-import app.financepro.core.ui.theme.Slush
+import app.financepro.core.ui.theme.Tema
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.domain.usecase.GrupoDeCategoria
 import app.financepro.domain.usecase.PontoMensal
@@ -66,7 +66,7 @@ import kotlin.math.min
  *
  * **Desenhados à mão, sem biblioteca de gráficos.** A pizza é um `drawArc` por
  * fatia e a evolução são dois `Path` — juntos, menos de sessenta linhas. Uma
- * dependência de gráficos traria tema próprio para brigar com o de Slush
+ * dependência de gráficos traria tema próprio para brigar com o de Tema
  * (REQ-DS-004 proíbe superfície tonal, e o contorno é a gramática da casa), e
  * a que o catálogo já nomeava nem desenha pizza: seria dependência nova para
  * metade do trabalho.
@@ -96,7 +96,7 @@ fun ReportsScreen(
 
         if (state.vazio) {
             // REQ-UI-006 — e aqui o vazio é informação: não houve despesa no mês.
-            Text("Nenhuma despesa neste mês.", style = Body, color = Slush.ink)
+            Text("Nenhuma despesa neste mês.", style = Body, color = Tema.ink)
         } else {
             Pizza(state, onVerCategoria)
             Maiores(state, onEditar)
@@ -113,7 +113,7 @@ private fun Cabecalho(mes: YearMonth, onAnterior: () -> Unit, onSeguinte: () -> 
         Text(
             text = MES.format(mes).replaceFirstChar { it.uppercase() },
             style = Subheading,
-            color = Slush.ink,
+            color = Tema.ink,
         )
         Row(
             Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -140,11 +140,11 @@ private fun Pizza(state: ReportsState, onVerCategoria: (Long, YearMonth) -> Unit
     val fatias = state.fatias
     val total = state.totalCents
     val varreduras = fatias.map { GRAUS * it.totalCents / total }
-    val tinta = Slush.ink
-    val papel = Slush.paper
+    val tinta = Tema.ink
+    val papel = Tema.paper
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Despesas por categoria", style = Subheading, color = Slush.ink)
+        Text("Despesas por categoria", style = Subheading, color = Tema.ink)
 
         Canvas(
             modifier = Modifier
@@ -192,7 +192,7 @@ private fun LinhaDaLegenda(
         Modifier.clickable(onClickLabel = "Ver transações", onClick = onClick)
     }
 
-    SlushCard(Modifier.fillMaxWidth().then(toque)) {
+    Cartao(Modifier.fillMaxWidth().then(toque)) {
         FlowRow(
             Modifier
                 .padding(12.dp)
@@ -207,11 +207,11 @@ private fun LinhaDaLegenda(
                     .size(PONTO)
                     .clip(Pill)
                     .background(cor)
-                    .border(OutlineWidth, Slush.ink, Pill),
+                    .border(OutlineWidth, Tema.ink, Pill),
             )
-            Text(nome, style = BodyStrong, color = Slush.ink, modifier = Modifier.weight(1f))
+            Text(nome, style = BodyStrong, color = Tema.ink, modifier = Modifier.weight(1f))
             MoneyText(cents = fatia.totalCents, style = MoneyCaption)
-            Text("$percentual%", style = Caption, color = Slush.ink)
+            Text("$percentual%", style = Caption, color = Tema.ink)
         }
     }
 }
@@ -227,11 +227,11 @@ private fun LinhaDaLegenda(
 @Composable
 private fun Evolucao(pontos: List<PontoMensal>) {
     if (pontos.size < 2) return
-    val tinta = Slush.ink
+    val tinta = Tema.ink
     val teto = pontos.maxOf { max(it.receitasCents, -it.despesasCents) }.coerceAtLeast(1L)
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Últimos 12 meses", style = Subheading, color = Slush.ink)
+        Text("Últimos 12 meses", style = Subheading, color = Tema.ink)
         Canvas(Modifier.fillMaxWidth().height(ALTURA_LINHA)) {
             desenharLinha(pontos.map { it.receitasCents }, teto, tinta, tracejada = false)
             desenharLinha(pontos.map { -it.despesasCents }, teto, tinta, tracejada = true)
@@ -239,12 +239,12 @@ private fun Evolucao(pontos: List<PontoMensal>) {
         Text(
             text = "— Receitas · - - Despesas · topo da escala " + formatBRL(teto),
             style = Caption,
-            color = Slush.ink,
+            color = Tema.ink,
         )
         Text(
             text = MES_CURTO.format(pontos.first().mes) + " a " + MES_CURTO.format(pontos.last().mes),
             style = Caption,
-            color = Slush.ink,
+            color = Tema.ink,
         )
     }
 }
@@ -253,7 +253,7 @@ private fun Evolucao(pontos: List<PontoMensal>) {
 @Composable
 private fun Maiores(state: ReportsState, onEditar: (Long) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Maiores despesas", style = Subheading, color = Slush.ink)
+        Text("Maiores despesas", style = Subheading, color = Tema.ink)
         state.maiores.forEach { txn ->
             LinhaDeTransacao(
                 txn = txn,

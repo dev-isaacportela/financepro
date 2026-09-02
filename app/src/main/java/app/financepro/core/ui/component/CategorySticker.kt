@@ -29,8 +29,8 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.financepro.core.ui.theme.Caption
-import app.financepro.core.ui.theme.Slush
-import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Formas
 import app.financepro.domain.model.Category
 
 /**
@@ -102,18 +102,18 @@ fun CategorySticker(
                 // texto que encolhe no toque é texto que fica difícil de ler
                 // exatamente enquanto o dedo o cobre.
                 .scale(escala)
-                .clip(SlushShapes.medium)
+                .clip(Formas.medium)
                 .background(Color(category.colorArgb))
                 .border(
                     width = if (selecionado) SELECIONADO else 0.dp,
-                    color = Slush.ink,
-                    shape = SlushShapes.medium,
+                    color = Tema.ink,
+                    shape = Formas.medium,
                 ),
         )
         Text(
             text = category.name,
             style = Caption,
-            color = Slush.ink,
+            color = Tema.ink,
             textAlign = TextAlign.Center,
             maxLines = 2,
         )

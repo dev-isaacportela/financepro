@@ -28,13 +28,13 @@ import app.financepro.core.ui.component.EstadoVazio
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyText
-import app.financepro.core.ui.component.SlushCard
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.LightBlue
 import app.financepro.core.ui.theme.OutlineWidth
-import app.financepro.core.ui.theme.Slush
-import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
@@ -50,13 +50,13 @@ import app.financepro.domain.model.AccountType
 fun AccountsScreen(vm: AccountsViewModel = hiltViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
 
-    Column(Modifier.fillMaxSize().background(Slush.paper).padding(16.dp)) {
+    Column(Modifier.fillMaxSize().background(Tema.paper).padding(16.dp)) {
         Row(
             Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Contas", style = Subheading, color = Slush.ink)
+            Text("Contas", style = Subheading, color = Tema.ink)
             GhostButton(text = "Nova", onClick = vm::nova)
         }
 
@@ -115,7 +115,7 @@ private fun Linha(
     onArquivar: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    SlushCard(modifier.fillMaxWidth().clickable(onClick = onClick)) {
+    Cartao(modifier.fillMaxWidth().clickable(onClick = onClick)) {
         // `FlowRow` e não `Row`: com a fonte a 200% o valor e o botão não cabem
         // ao lado do nome, e num Row eles são medidos primeiro — a coluna do
         // nome sobrava com um caractere de largura e o nome descia letra por
@@ -128,11 +128,11 @@ private fun Linha(
         ) {
             PontoDeCor(conta.colorArgb)
             Column(Modifier.weight(1f)) {
-                Text(conta.name, style = Body, color = Slush.ink, maxLines = 1)
+                Text(conta.name, style = Body, color = Tema.ink, maxLines = 1)
                 Text(
                     text = rotulo(conta),
                     style = Caption,
-                    color = Slush.ink,
+                    color = Tema.ink,
                 )
             }
             MoneyText(cents = saldoCents)
@@ -155,9 +155,9 @@ private fun Linha(
 private fun PontoDeCor(colorArgb: Int) = Box(
     Modifier
         .size(16.dp)
-        .clip(SlushShapes.extraSmall)
+        .clip(Formas.extraSmall)
         .background(Color(colorArgb))
-        .border(OutlineWidth, Slush.ink, SlushShapes.extraSmall),
+        .border(OutlineWidth, Tema.ink, Formas.extraSmall),
 )
 
 private fun rotulo(conta: Account): String {

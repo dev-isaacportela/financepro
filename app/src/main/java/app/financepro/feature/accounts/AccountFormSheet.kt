@@ -34,8 +34,8 @@ import app.financepro.core.ui.component.MoneyField
 import app.financepro.core.ui.component.Rotulo
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.OutlineWidth
-import app.financepro.core.ui.theme.Slush
-import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.NomesDeAcento
 import app.financepro.core.ui.theme.Acentos
 import app.financepro.domain.model.Account
@@ -67,9 +67,9 @@ fun AccountFormSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        shape = SlushShapes.extraLarge,
-        containerColor = Slush.paper,
-        contentColor = Slush.ink,
+        shape = Formas.extraLarge,
+        containerColor = Tema.paper,
+        contentColor = Tema.ink,
         tonalElevation = 0.dp,
     ) {
         Column(
@@ -109,7 +109,7 @@ fun AccountFormSheet(
             if (conta.isCard) CamposDeCartao(conta, contas, onChange)
 
             if (erro != null) {
-                Text("⚠ $erro", style = Caption, color = Slush.ink)
+                Text("⚠ $erro", style = Caption, color = Tema.ink)
             }
 
             FilledCta(text = "Salvar", onClick = onSalvar, modifier = Modifier.fillMaxWidth())
@@ -163,14 +163,14 @@ private fun Cores(selecionada: Int, onClick: (Int) -> Unit) {
             Box(
                 Modifier
                     .size(48.dp)
-                    .clip(SlushShapes.extraSmall)
+                    .clip(Formas.extraSmall)
                     .background(cor)
                     // Seleção pela espessura do contorno, não por outra cor:
                     // a cor aqui já é o conteúdo (REQ-A11Y-003).
                     .border(
                         width = if (argb == selecionada) 3.dp else OutlineWidth,
-                        color = Slush.ink,
-                        shape = SlushShapes.extraSmall,
+                        color = Tema.ink,
+                        shape = Formas.extraSmall,
                     )
                     .clickable { onClick(argb) }
                     // Nome da cor, e não "Cor": seis quadrados com a mesma

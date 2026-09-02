@@ -25,15 +25,15 @@ import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.LinhaDeTransacao
 import app.financepro.core.ui.component.MoneyText
-import app.financepro.core.ui.component.SlushCard
-import app.financepro.core.ui.component.SlushFab
+import app.financepro.core.ui.component.Cartao
+import app.financepro.core.ui.component.Fab
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.Label
 import app.financepro.core.ui.theme.MoneyBody
 import app.financepro.core.ui.theme.MoneyLg
-import app.financepro.core.ui.theme.Slush
-import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.core.ui.theme.Cobalt
 import app.financepro.domain.model.Txn
@@ -91,7 +91,7 @@ fun HomeScreen(
             }
         }
 
-        SlushFab(
+        Fab(
             onClick = onNovoLancamento,
             rotulo = "Novo lançamento",
             modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp),
@@ -123,13 +123,13 @@ private fun Saldo(cents: Long) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SlushShapes.extraLarge)
+            .clip(Formas.extraLarge)
             .background(Cobalt)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text("SALDO TOTAL", style = Caption, color = Slush.onFill)
-        MoneyText(cents = cents, style = MoneyLg, cor = Slush.onFill)
+        Text("SALDO TOTAL", style = Caption, color = Tema.onFill)
+        MoneyText(cents = cents, style = MoneyLg, cor = Tema.onFill)
     }
 }
 
@@ -144,7 +144,7 @@ private fun Cartoes(state: HomeState, onVerContas: () -> Unit, onVerCartao: (Lon
     Bloco(titulo = "Cartões") {
         if (state.cartoes.isEmpty()) {
             // REQ-UI-006 — o vazio traz a ação que o preenche.
-            Text("Nenhum cartão cadastrado.", style = Body, color = Slush.ink)
+            Text("Nenhum cartão cadastrado.", style = Body, color = Tema.ink)
             GhostButton(text = "Adicionar cartão", onClick = onVerContas)
         } else {
             Valor(rotulo = "A pagar", cents = state.dividaCents)
@@ -178,7 +178,7 @@ private fun ComparativoDoPeriodo(c: Comparativo) {
         Text(
             text = variacaoEmPalavras(c.deltaCents),
             style = Caption,
-            color = Slush.ink.copy(alpha = SECUNDARIO_ALPHA),
+            color = Tema.ink.copy(alpha = SECUNDARIO_ALPHA),
         )
     }
 }
@@ -198,7 +198,7 @@ private fun ComparativoDoPeriodo(c: Comparativo) {
 @Composable
 private fun ProximasContas(state: HomeState, onEfetivar: (Txn) -> Unit, onEditar: (Long) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Próximas contas", style = Subheading, color = Slush.ink)
+        Text("Próximas contas", style = Subheading, color = Tema.ink)
         state.proximas.forEach { txn ->
             val categoria = state.categoriaDe(txn.categoryId)
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -225,7 +225,7 @@ private fun ProximasContas(state: HomeState, onEfetivar: (Txn) -> Unit, onEditar
 @Composable
 private fun Ultimas(state: HomeState, onVerTransacoes: () -> Unit, onEditar: (Long) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Últimas transações", style = Subheading, color = Slush.ink)
+        Text("Últimas transações", style = Subheading, color = Tema.ink)
         state.ultimas.forEach { txn ->
             LinhaDeTransacao(
                 txn = txn,
@@ -245,7 +245,7 @@ private fun Ultimas(state: HomeState, onVerTransacoes: () -> Unit, onEditar: (Lo
 @Composable
 private fun Comeco(onNovoLancamento: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Nenhum lançamento ainda.", style = Body, color = Slush.ink)
+        Text("Nenhum lançamento ainda.", style = Body, color = Tema.ink)
         FilledCta(text = "Lançar", onClick = onNovoLancamento)
     }
 }
@@ -260,8 +260,8 @@ private fun Comeco(onNovoLancamento: () -> Unit) {
 @Composable
 private fun Bloco(titulo: String, conteudo: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(titulo, style = Subheading, color = Slush.ink)
-        SlushCard(Modifier.fillMaxWidth()) {
+        Text(titulo, style = Subheading, color = Tema.ink)
+        Cartao(Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -282,7 +282,7 @@ private fun Valor(rotulo: String, cents: Long) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.Top,
     ) {
-        Text(rotulo, style = Body, color = Slush.ink, modifier = Modifier.weight(1f))
+        Text(rotulo, style = Body, color = Tema.ink, modifier = Modifier.weight(1f))
         MoneyText(cents = cents, style = MoneyBody)
     }
 }

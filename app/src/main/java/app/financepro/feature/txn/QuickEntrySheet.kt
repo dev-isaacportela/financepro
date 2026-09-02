@@ -28,8 +28,8 @@ import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyField
 import app.financepro.core.ui.theme.Caption
-import app.financepro.core.ui.theme.Slush
-import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.domain.model.Txn
 import app.financepro.domain.model.TxnType
@@ -86,9 +86,9 @@ fun QuickEntrySheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheet,
-        shape = SlushShapes.extraLarge,
-        containerColor = Slush.paper,
-        contentColor = Slush.ink,
+        shape = Formas.extraLarge,
+        containerColor = Tema.paper,
+        contentColor = Tema.ink,
         tonalElevation = 0.dp,
     ) {
         Formulario(state, vm)
@@ -118,7 +118,7 @@ private fun Formulario(state: QuickEntryState, vm: QuickEntryViewModel) {
         // linha a mais entre o topo e o valor é uma linha no caminho dele. Editar
         // não tem essa pressa, e sem o título nada distingue os dois modos para
         // quem ouve a tela (REQ-A11Y-001).
-        if (state.editando) Text("Editar lançamento", style = Subheading, color = Slush.ink)
+        if (state.editando) Text("Editar lançamento", style = Subheading, color = Tema.ink)
 
         // O único lugar com foco automático: Art. 18 protege este caminho.
         MoneyField(cents = state.cents, onCentsChange = vm::valor, autoFocus = true)
@@ -194,7 +194,7 @@ private fun <T> Chips(itens: List<Pair<T, String>>, selecionado: T?, onClick: (T
 }
 
 @Composable
-private fun Rotulo(texto: String) = Text(texto, style = Caption, color = Slush.ink)
+private fun Rotulo(texto: String) = Text(texto, style = Caption, color = Tema.ink)
 
 /**
  * A validação devolve **todos** os erros de uma vez (T-007), então cada campo
@@ -204,7 +204,7 @@ private fun Rotulo(texto: String) = Text(texto, style = Caption, color = Slush.i
 private fun Erro(mensagem: String?) {
     if (mensagem != null) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("⚠ $mensagem", style = Caption, color = Slush.ink)
+            Text("⚠ $mensagem", style = Caption, color = Tema.ink)
         }
     }
 }

@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
  * é o canvas, o degrau, a tinta e o fio.
  */
 @Immutable
-data class SlushColors(
+data class Paleta(
     val paper: Color, // canvas do modo — preto absoluto ou branco
     val surface: Color, // o degrau único acima do canvas
     val ink: Color, // texto primário
@@ -36,7 +36,7 @@ data class SlushColors(
  * do tempo mostrando números sobre preto, e o modo claro é a banda de catálogo
  * — ajustes, listas longas de cadastro, formulários.
  */
-val DarkSlush = SlushColors(
+val PaletaEscura = Paleta(
     paper = CanvasDark,
     surface = SurfaceElevated,
     ink = CanvasLight,
@@ -45,7 +45,7 @@ val DarkSlush = SlushColors(
     onFill = CanvasLight,
 )
 
-val LightSlush = SlushColors(
+val PaletaClara = Paleta(
     paper = CanvasLight,
     surface = SurfaceSoft,
     ink = InkLight,

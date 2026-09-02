@@ -21,7 +21,7 @@ import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.MoneyField
 import app.financepro.core.ui.theme.BodyLg
 import app.financepro.core.ui.theme.DisplayXl
-import app.financepro.core.ui.theme.Slush
+import app.financepro.core.ui.theme.Tema
 
 /**
  * Onboarding. REQ-UI-005 · REQ-DS-009
@@ -47,18 +47,18 @@ fun OnboardingScreen(vm: OnboardingViewModel = hiltViewModel()) {
             .fillMaxSize()
             // O papel é pintado aqui, não herdado da janela: tela que depende do
             // `windowBackground` fica à mercê de um XML que não conhece o tema.
-            .background(Slush.paper)
+            .background(Tema.paper)
             .imePadding()
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
     ) {
         // Sem altura fixa: a 200% de fonte o bloco cresce em vez de truncar, e
         // display type que não cabe quebra, nunca vira reticências (REQ-DS-005).
-        Text("QUANTO VOCÊ TEM HOJE?", style = DisplayXl, color = Slush.ink)
+        Text("QUANTO VOCÊ TEM HOJE?", style = DisplayXl, color = Tema.ink)
         Text(
             "O saldo da sua conta agora. Dá para ajustar depois.",
             style = BodyLg,
-            color = Slush.ink,
+            color = Tema.ink,
         )
         MoneyField(cents = saldo, onCentsChange = { saldo = it }, autoFocus = true)
         FilledCta(

@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
  * Nada de raio intermediário. Um card de 16dp no meio da tela lê como
  * componente de outro app, e o revisor não tem régua para discutir 16 contra 20.
  */
-val SlushShapes = Shapes(
+val Formas = Shapes(
     extraSmall = RoundedCornerShape(8.dp), // tag inline, chip pequeno
     small = RoundedCornerShape(12.dp), // campo, tile
     medium = RoundedCornerShape(20.dp), // card

@@ -28,13 +28,13 @@ import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyField
 import app.financepro.core.ui.component.MoneyText
 import app.financepro.core.ui.component.Rotulo
-import app.financepro.core.ui.component.SlushCard
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.MoneyCaption
-import app.financepro.core.ui.theme.Slush
-import app.financepro.core.ui.theme.SlushShapes
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.domain.model.Category
 import app.financepro.domain.model.Txn
@@ -70,12 +70,12 @@ fun CardScreen(vm: CardViewModel = hiltViewModel()) {
             .padding(top = 16.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(cartao?.name ?: "Cartão", style = Subheading, color = Slush.ink)
+        Text(cartao?.name ?: "Cartão", style = Subheading, color = Tema.ink)
 
         Cabecalho(mes = state.mes, onAnterior = vm::mesAnterior, onSeguinte = vm::mesSeguinte)
 
         if (cartao == null || fatura == null) {
-            Text("Cartão não encontrado.", style = Body, color = Slush.ink)
+            Text("Cartão não encontrado.", style = Body, color = Tema.ink)
             return@Column
         }
 
@@ -84,7 +84,7 @@ fun CardScreen(vm: CardViewModel = hiltViewModel()) {
         if (fatura.items.isEmpty()) {
             // REQ-UI-006 — o vazio diz o que é. Aqui não há ação a oferecer:
             // fatura sem compra é um bom estado, não um formulário por preencher.
-            Text("Nenhuma compra nesta fatura.", style = Body, color = Slush.ink)
+            Text("Nenhuma compra nesta fatura.", style = Body, color = Tema.ink)
         } else {
             state.grupos.forEach { grupo ->
                 Grupo(grupo = grupo, categoria = state.categoriaDe(grupo.categoriaId))
@@ -111,7 +111,7 @@ private fun Cabecalho(mes: YearMonth, onAnterior: () -> Unit, onSeguinte: () -> 
         Text(
             text = MES.format(mes).replaceFirstChar { it.uppercase() },
             style = Subheading,
-            color = Slush.ink,
+            color = Tema.ink,
         )
         Row(
             Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -127,7 +127,7 @@ private fun Cabecalho(mes: YearMonth, onAnterior: () -> Unit, onSeguinte: () -> 
 
 @Composable
 private fun Resumo(fatura: Invoice, limiteCents: Long?) {
-    SlushCard(Modifier.fillMaxWidth()) {
+    Cartao(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Valor(rotulo = "Total da fatura", cents = fatura.totalCents, forte = true)
             // REQ-A11Y-003 — a situação vai **escrita**, não sinalizada por cor.
@@ -167,7 +167,7 @@ private fun Grupo(grupo: GrupoDeCategoria, categoria: Category?) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ItemDaFatura(txn: Txn, categoria: Category?) {
-    SlushCard(Modifier.fillMaxWidth()) {
+    Cartao(Modifier.fillMaxWidth()) {
         FlowRow(
             Modifier.padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -177,9 +177,9 @@ private fun ItemDaFatura(txn: Txn, categoria: Category?) {
                 Text(
                     text = txn.description.ifBlank { categoria?.name ?: "Compra" },
                     style = BodyStrong,
-                    color = Slush.ink,
+                    color = Tema.ink,
                 )
-                Text(text = detalheDe(txn), style = Caption, color = Slush.ink)
+                Text(text = detalheDe(txn), style = Caption, color = Tema.ink)
             }
             MoneyText(cents = txn.amountCents)
         }
@@ -207,16 +207,16 @@ private fun Pagamento(state: CardState, onPagar: () -> Unit) {
         conta == null -> Text(
             "Escolha a conta de pagamento nos dados do cartão, em Contas.",
             style = Body,
-            color = Slush.ink,
+            color = Tema.ink,
         )
 
         // Pelo que falta, e não pelo status: uma fatura ainda **aberta** pode já
         // estar quitada, e oferecer "pagar" ali abriria a folha em R$ 0,00.
         state.fatura?.restanteCents == 0L ->
-            Text("Fatura paga.", style = Body, color = Slush.ink)
+            Text("Fatura paga.", style = Body, color = Tema.ink)
 
         else -> {
-            Text("Sai de " + conta.name, style = Caption, color = Slush.ink)
+            Text("Sai de " + conta.name, style = Caption, color = Tema.ink)
             FilledCta(text = "Pagar fatura", onClick = onPagar, modifier = Modifier.fillMaxWidth())
         }
     }
@@ -233,9 +233,9 @@ private fun FolhaDePagamento(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        shape = SlushShapes.extraLarge,
-        containerColor = Slush.paper,
-        contentColor = Slush.ink,
+        shape = Formas.extraLarge,
+        containerColor = Tema.paper,
+        contentColor = Tema.ink,
         tonalElevation = 0.dp,
     ) {
         Column(
@@ -247,7 +247,7 @@ private fun FolhaDePagamento(
                 .padding(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Pagar fatura", style = Subheading, color = Slush.ink)
+            Text("Pagar fatura", style = Subheading, color = Tema.ink)
             MoneyField(cents = state.pagando ?: 0, onCentsChange = onValor, autoFocus = true)
             state.contaDePagamento?.let { Rotulo("Sai de " + it.name) }
             state.fatura?.let { Rotulo("Entra no cartão em " + DIA.format(it.dueDate)) }
@@ -272,7 +272,7 @@ private fun Valor(rotulo: String, cents: Long, forte: Boolean = false) {
         Text(
             text = rotulo,
             style = if (forte) BodyStrong else Body,
-            color = Slush.ink,
+            color = Tema.ink,
             modifier = Modifier.weight(1f),
         )
         MoneyText(cents = cents, style = MoneyCaption)
@@ -287,8 +287,8 @@ private fun Linha(rotulo: String, texto: String) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         itemVerticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(rotulo, style = Body, color = Slush.ink, modifier = Modifier.weight(1f))
-        Text(texto, style = BodyStrong, color = Slush.ink)
+        Text(rotulo, style = Body, color = Tema.ink, modifier = Modifier.weight(1f))
+        Text(texto, style = BodyStrong, color = Tema.ink)
     }
 }
 

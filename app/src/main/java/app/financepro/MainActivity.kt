@@ -8,7 +8,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import app.financepro.core.ui.theme.SlushTheme
+import app.financepro.core.ui.theme.FinanceProTheme
 import app.financepro.data.prefs.SecurityPrefs
 import app.financepro.data.repo.RecurringRepository
 import app.financepro.feature.FinanceNav
@@ -41,7 +41,7 @@ class MainActivity : FragmentActivity() {
         protegerJanela()
         gerarRecorrencias()
         setContent {
-            SlushTheme {
+            FinanceProTheme {
                 FinanceNav()
             }
         }

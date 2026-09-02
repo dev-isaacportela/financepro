@@ -24,7 +24,7 @@ import androidx.fragment.app.FragmentActivity
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.HeadingSm
-import app.financepro.core.ui.theme.Slush
+import app.financepro.core.ui.theme.Tema
 
 /**
  * A porta do app quando o bloqueio está ligado. REQ-SEC-003
@@ -58,8 +58,8 @@ fun LockScreen(onDesbloqueado: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Bloqueado", style = HeadingSm, color = Slush.ink)
-        erro?.let { Text(it, style = Body, color = Slush.ink) }
+        Text("Bloqueado", style = HeadingSm, color = Tema.ink)
+        erro?.let { Text(it, style = Body, color = Tema.ink) }
         FilledCta(text = "Desbloquear", onClick = pedir)
     }
 }
