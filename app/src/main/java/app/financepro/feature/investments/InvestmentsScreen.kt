@@ -35,6 +35,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.financepro.R
 import app.financepro.core.money.formatBRL
 import app.financepro.core.money.parseCents
 import app.financepro.core.ui.component.Cartao
@@ -85,6 +86,7 @@ fun InvestmentsScreen(vm: InvestmentsViewModel = hiltViewModel()) {
             EstadoVazio(
                 titulo = "SEM INVESTIMENTOS",
                 sticker = LightGreen,
+                icone = R.drawable.ic_cat_cash,
                 descricao = "Crie uma conta do tipo Investimento em Mais · Contas.",
             )
         } else {

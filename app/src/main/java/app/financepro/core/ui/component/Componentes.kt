@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import app.financepro.core.money.formatBRL
 import app.financepro.core.money.spokenBRL
 import app.financepro.core.ui.theme.BodyLg
+import app.financepro.core.ui.theme.CanvasDark
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.Display
 import app.financepro.core.ui.theme.Formas
@@ -384,6 +385,21 @@ fun <T> Chips(itens: List<Pair<T, String>>, selecionado: T?, onClick: (T) -> Uni
  * nas opções de acessibilidade recebe ele já assentado, porque o Compose lê a
  * escala de animação do sistema sem ninguém aqui perguntar.
  *
+ * **O glifo não é enfeite: sem ele a cor era o gráfico inteiro.** Por seis telas o
+ * sticker foi um quadrado chapado, e a única diferença entre "SEM CONTAS AINDA" e
+ * "MÊS EM BRANCO" era azul contra laranja — cor como sinal único, que é justamente
+ * o que REQ-A11Y-003 proíbe no resto do app. Duas telas chegaram a repetir o mesmo
+ * acento, e ninguém notou, porque não havia o que notar.
+ *
+ * A gramática é a mesma de [AvatarDeCategoria], e de propósito: preenchimento de
+ * acento com glifo em [CanvasDark]. Branco sobre Laranja dá 2.78:1 e reprovaria nos
+ * 3:1 de elemento não textual; preto passa sobre os nove acentos, com Cobalto no
+ * pior caso a 3.47:1. Uma regra, e não uma tabela de tinta por cor.
+ *
+ * O que muda em relação ao avatar é só a forma: ele é pílula porque é avatar de
+ * lista, este é `Formas.medium` porque é conteúdo, e conteúdo é 20dp (REQ-DS-003).
+ * Sem anel — 64dp passa longe dos 24 da REQ-DS-006.
+ *
  * O botão **não** entra aqui: REQ-UI-006 pede a ação que preenche o vazio, e cada
  * tela já tem a sua, com o verbo certo ("Criar a primeira", "Lançar", "Limpar
  * filtros"). Um parâmetro de ação genérico só daria a todas o mesmo rótulo morno.
@@ -397,6 +413,7 @@ fun <T> Chips(itens: List<Pair<T, String>>, selecionado: T?, onClick: (T) -> Uni
 fun EstadoVazio(
     titulo: String,
     sticker: Color,
+    @DrawableRes icone: Int,
     modifier: Modifier = Modifier,
     descricao: String? = null,
 ) {
@@ -409,15 +426,24 @@ fun EstadoVazio(
     }
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        // Box sem semântica: é decoração, e o leitor de tela já recebe o título
-        // logo abaixo. Um `contentDescription` aqui seria "quadrado amarelo".
+        // Sem semântica: é decoração, e o leitor de tela já recebe o título logo
+        // abaixo. Um `contentDescription` aqui seria "quadrado amarelo com uma
+        // seta" — o glifo diz para o olho o que o título já diz por escrito.
         Box(
             Modifier
                 .size(STICKER_VAZIO)
                 .scale(escala.value)
                 .clip(Formas.medium)
                 .background(sticker),
-        )
+            contentAlignment = Alignment.Center,
+        ) {
+            Icone(
+                id = icone,
+                descricao = null,
+                modifier = Modifier.size(STICKER_VAZIO * GLIFO_VAZIO),
+                tint = CanvasDark,
+            )
+        }
         Text(text = titulo, style = Display, color = Tema.ink)
         if (descricao != null) Text(text = descricao, style = BodyLg, color = Tema.ink)
     }
@@ -425,6 +451,9 @@ fun EstadoVazio(
 
 /** O mesmo 64dp do sticker de categoria: é o tamanho de adesivo do app. */
 private val STICKER_VAZIO = 64.dp
+
+/** Metade do adesivo, como no avatar. Mais que isso encosta no canto de 20dp. */
+private const val GLIFO_VAZIO = 0.5f
 private const val VAZIO_ESCALA = 0.86f
 private const val VAZIO_AMORTECIMENTO = 0.5f
 

@@ -103,6 +103,7 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
             EstadoVazio(
                 titulo = "SEM TETO NESTE MÊS",
                 sticker = Teal,
+                icone = R.drawable.ic_orcamento,
                 descricao = "Escolha uma categoria e um limite; o resto a tela preenche sozinha.",
             )
         } else {

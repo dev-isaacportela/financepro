@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.financepro.R
 import app.financepro.core.ui.component.CategorySticker
 import app.financepro.core.ui.component.Chips
 import app.financepro.core.ui.component.EstadoVazio
@@ -89,6 +90,7 @@ fun RecurringScreen(vm: RecurringViewModel = hiltViewModel()) {
             EstadoVazio(
                 titulo = "NADA SE REPETE",
                 sticker = LightGreen,
+                icone = R.drawable.ic_cat_repeat,
                 descricao = "Cadastre o aluguel, o salário ou a assinatura, e eles " +
                     "aparecem sozinhos em Próximas contas.",
             )

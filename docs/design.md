@@ -543,6 +543,32 @@ A escala de animação do sistema continua valendo: quem desliga animações nas
 opções de acessibilidade recebe as telas sem transição, sem nada no código
 perguntar — o Compose lê a preferência no recompositor.
 
+### 6.5 Sticker de estado vazio
+
+Preenchimento de acento de 64dp em `Formas.medium`, com o glifo da tela dentro,
+em `CanvasDark`.
+
+Por seis telas ele foi um **quadrado chapado**, e o problema não era feiura: a
+cor era o gráfico inteiro. A única diferença entre "SEM CONTAS AINDA" e "MÊS EM
+BRANCO" era azul contra laranja — cor como sinal único, que é o que
+[REQ-A11Y-003](spec.md#req-a11y-003--cor-não-é-sinal-único) proíbe em todo o
+resto do app. Duas telas chegaram a repetir o mesmo acento sem ninguém notar,
+porque não havia o que notar.
+
+O glifo é o da própria tela: cédula em Contas e Investimentos, alvo em
+Orçamento, seta de repetição em Recorrentes, funil no vazio de filtro e a lista
+no vazio de mês. **É `@DrawableRes` obrigatório, sem padrão** — um genérico
+opcional daria a todas as telas o mesmo desenho morno, que é o estado de que
+este parágrafo acabou de sair.
+
+Tinta em `CanvasDark` pela mesma regra do adesivo de categoria: branco sobre
+Laranja dá 2.78:1 e reprova nos 3:1 de elemento não textual; preto passa sobre
+os nove acentos, com Cobalto no pior caso a 3.47:1.
+
+A forma é a única divergência em relação ao adesivo de categoria, e é
+deliberada: ele é pílula porque é avatar de lista, este é 20dp porque é
+conteúdo. Sem anel — 64dp passa longe dos 24 de REQ-DS-006.
+
 ## 7. Cobalto, e por que ele quase não aparece
 
 Cobalto é a assinatura da marca, e o sistema de origem o gasta em um lugar por

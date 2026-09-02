@@ -236,6 +236,7 @@ private fun Vazio(comFiltro: Boolean, onLancar: () -> Unit, onLimpar: () -> Unit
             EstadoVazio(
                 titulo = "NADA CASA",
                 sticker = Warning,
+                icone = R.drawable.ic_filtro,
                 descricao = "Nenhum lançamento passa por esses filtros.",
             )
             GhostButton(text = "Limpar filtros", onClick = onLimpar)
@@ -243,6 +244,7 @@ private fun Vazio(comFiltro: Boolean, onLancar: () -> Unit, onLimpar: () -> Unit
             EstadoVazio(
                 titulo = "MÊS EM BRANCO",
                 sticker = Warning,
+                icone = R.drawable.ic_transacoes,
                 descricao = "Nenhum lançamento neste período.",
             )
             FilledCta(text = "Lançar", onClick = onLancar)

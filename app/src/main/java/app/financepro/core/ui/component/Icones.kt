@@ -21,7 +21,7 @@ import app.financepro.core.ui.theme.Tema
 
 /**
  * Ícones. REQ-A11Y-001 ·
- * [design.md](../../../../../../../../../docs/design.md) §6.5
+ * [design.md](../../../../../../../../../docs/design.md) §6
  *
  * **Vetores em `res/drawable/`, não biblioteca.** `material-icons-extended`
  * traria alguns milhares de desenhos para o app usar vinte e dois, e este

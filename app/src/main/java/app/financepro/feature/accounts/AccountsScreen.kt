@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.financepro.R
 import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.component.EstadoVazio
 import app.financepro.core.ui.component.FilledCta
@@ -62,7 +63,11 @@ fun AccountsScreen(vm: AccountsViewModel = hiltViewModel()) {
         if (state.visiveis.isEmpty() && state.carregado) {
             // REQ-UI-006: estado vazio traz a ação que o preenche.
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                EstadoVazio(titulo = "SEM CONTAS AINDA", sticker = LightBlue)
+                EstadoVazio(
+                    titulo = "SEM CONTAS AINDA",
+                    sticker = LightBlue,
+                    icone = R.drawable.ic_cat_cash,
+                )
                 FilledCta(text = "Criar a primeira", onClick = vm::nova)
             }
         }
