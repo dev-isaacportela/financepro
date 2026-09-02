@@ -62,12 +62,13 @@ Só o inventário, sem falhar. Estado atual:
 ```
 spec.md   120 requisitos
 tasks.md  50 tasks, cobrindo 120
+codigo    87 requisitos com @Req
 
   F0   61 requisitos (53 MUST, 36 com teste automatizado)
   F1   33 requisitos (27 MUST, 30 com teste automatizado)
   F2   16 requisitos (14 MUST, 13 com teste automatizado)
-  F3    6 requisitos ( 5 MUST,  4 com teste automatizado)
-  F4    4 requisitos ( 4 MUST,  0 com teste automatizado)
+  F3    6 requisitos (5 MUST, 4 com teste automatizado)
+  F4    4 requisitos (4 MUST, 0 com teste automatizado)
 ```
 
 Rastreabilidade que depende de disciplina humana apodrece em duas semanas. Esta

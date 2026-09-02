@@ -81,11 +81,17 @@ fun ImportScreen(vm: ImportViewModel = hiltViewModel()) {
             state.recado?.let { Recado(it) }
 
             when (state.passo) {
-                PassoDaImportacao.CONTA -> PassoConta(state, vm::escolherConta)
+                PassoDaImportacao.CONTA -> {
+                    PassoConta(state, vm::escolherConta)
+                    Lotes(state, vm::desfazer)
+                }
                 PassoDaImportacao.ARQUIVO -> PassoArquivo(state) { arquivo.launch(TIPOS) }
                 PassoDaImportacao.MAPEAMENTO -> PassoMapeamento(state, vm)
                 PassoDaImportacao.EXTRATO -> PassoExtrato(state, vm::escolherExtrato)
-                PassoDaImportacao.PRONTO -> PassoPronto(state, vm::recomecar)
+                PassoDaImportacao.PRONTO -> {
+                    PassoPronto(state, vm::recomecar)
+                    Lotes(state, vm::desfazer)
+                }
                 PassoDaImportacao.REVISAO -> Unit
             }
         }
@@ -199,8 +205,8 @@ private fun Revisao(state: ImportState, vm: ImportViewModel) {
             LinhaDaRevisao(
                 linha = linha,
                 state = state,
-                onAlternar = { vm.alternar(i) },
-                onCategoria = { vm.categoria(i, it) },
+                onAlternar = { vm.editar(i, linha.copy(incluir = !linha.incluir)) },
+                onCategoria = { vm.editar(i, linha.copy(categoriaId = it)) },
             )
         }
         item {
@@ -304,6 +310,44 @@ private fun PassoPronto(state: ImportState, onRecomecar: () -> Unit) {
     )
 }
 
+/**
+ * Os lotes já importados, com o desfazer. REQ-IMP-011 · ingestao.md §3.1
+ *
+ * Aparece nos dois momentos em que ele é útil: antes de importar, para conferir
+ * o que já entrou, e logo depois de importar, que é quando se descobre que o
+ * arquivo era o errado. Uma tela própria escondida no menu seria um caminho a
+ * mais justamente para quem está com pressa de desfazer.
+ */
+@Composable
+private fun Lotes(state: ImportState, onDesfazer: (Long) -> Unit) {
+    if (state.lotes.isEmpty()) return
+
+    Rotulo("Importações anteriores")
+    state.lotes.forEach { lote ->
+        SlushCard(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = lote.sourceName.ifBlank { lote.sourceType },
+                    style = BodyStrong,
+                    color = Slush.ink,
+                )
+                Text(
+                    text = QUANDO.format(java.time.Instant.ofEpochMilli(lote.importedAt)) +
+                        " · " + lote.txnCount + " linhas",
+                    style = Caption,
+                    color = Slush.ink,
+                )
+                GhostButton(
+                    text = "Desfazer este lote",
+                    onClick = { onDesfazer(lote.id) },
+                    enabled = !state.trabalhando,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun Recado(texto: String) {
     SlushCard(Modifier.fillMaxWidth()) {
@@ -359,3 +403,8 @@ private val TIPOS = arrayOf(
 
 private val PT_BR: Locale = Locale.forLanguageTag("pt-BR")
 private val DIA: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM", PT_BR)
+
+/** O carimbo do lote é milissegundo de relógio; a tela mostra o dia e a hora. */
+private val QUANDO: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", PT_BR)
+        .withZone(java.time.ZoneId.systemDefault())

@@ -24,12 +24,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.financepro.core.ui.component.EstadoVazio
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyText
 import app.financepro.core.ui.component.SlushCard
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.Caption
+import app.financepro.core.ui.theme.ElectricBlue
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
@@ -58,10 +60,10 @@ fun AccountsScreen(vm: AccountsViewModel = hiltViewModel()) {
             GhostButton(text = "Nova", onClick = vm::nova)
         }
 
-        if (state.visiveis.isEmpty()) {
+        if (state.visiveis.isEmpty() && state.carregado) {
             // REQ-UI-006: estado vazio traz a ação que o preenche.
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Nenhuma conta por aqui.", style = Body, color = Slush.ink)
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                EstadoVazio(titulo = "SEM CONTAS AINDA", sticker = ElectricBlue)
                 FilledCta(text = "Criar a primeira", onClick = vm::nova)
             }
         }
@@ -69,6 +71,9 @@ fun AccountsScreen(vm: AccountsViewModel = hiltViewModel()) {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(state.visiveis, key = { it.id }) { conta ->
                 Linha(
+                    // Arquivar uma conta tira a linha da lista; sem isto as de
+                    // baixo saltam para o lugar dela no mesmo quadro.
+                    modifier = Modifier.animateItem(),
                     conta = conta,
                     saldoCents = state.saldos[conta.id] ?: 0,
                     onClick = { vm.editar(conta) },
@@ -103,8 +108,14 @@ fun AccountsScreen(vm: AccountsViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun Linha(conta: Account, saldoCents: Long, onClick: () -> Unit, onArquivar: () -> Unit) {
-    SlushCard(Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+private fun Linha(
+    conta: Account,
+    saldoCents: Long,
+    onClick: () -> Unit,
+    onArquivar: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SlushCard(modifier.fillMaxWidth().clickable(onClick = onClick)) {
         // `FlowRow` e não `Row`: com a fonte a 200% o valor e o botão não cabem
         // ao lado do nome, e num Row eles são medidos primeiro — a coluna do
         // nome sobrava com um caractere de largura e o nome descia letra por

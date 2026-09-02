@@ -1,5 +1,8 @@
 package app.financepro.feature.budget
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +26,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,16 +40,17 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.financepro.core.money.formatBRL
 import app.financepro.core.ui.component.CategorySticker
+import app.financepro.core.ui.component.EstadoVazio
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyField
 import app.financepro.core.ui.component.MoneyText
 import app.financepro.core.ui.component.Rotulo
 import app.financepro.core.ui.component.SlushCard
-import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.Ember
+import app.financepro.core.ui.theme.MintPop
 import app.financepro.core.ui.theme.MoneyCaption
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
@@ -82,13 +88,18 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
         Cabecalho(mes = state.mes, onAnterior = vm::mesAnterior, onSeguinte = vm::mesSeguinte)
 
         val progresso = state.progresso
-        if (progresso.isEmpty()) {
+        if (progresso.isEmpty() && state.carregado) {
             // REQ-UI-006 — o vazio traz a ação que o preenche, e aqui são duas:
             // começar do zero, ou repetir o que o mês passado já dizia.
-            Text("Nenhum teto neste mês.", style = Body, color = Slush.ink)
+            EstadoVazio(
+                titulo = "SEM TETO NESTE MÊS",
+                sticker = MintPop,
+                descricao = "Escolha uma categoria e um limite; o resto a tela preenche sozinha.",
+            )
         } else {
             progresso.forEach { Linha(it, onClick = { vm.abrirTeto(it.categoria.id) }) }
         }
+
 
         if (state.semTeto.isNotEmpty()) {
             FilledCta(
@@ -196,6 +207,14 @@ private fun Linha(progresso: BudgetProgress, onClick: () -> Unit) {
  */
 @Composable
 private fun Barra(percent: Int) {
+    // Cresce de zero até o valor, e refaz o caminho quando o mês muda. É a
+    // única tela onde a barra **é** o dado: ver o traço parar nos 78% diz mais
+    // que encontrá-lo parado ali. `Animatable` e não `animateFloatAsState`
+    // porque este começa no valor final — não haveria caminho nenhum.
+    val alvo = (percent / PERCENT_CHEIO).coerceIn(0f, 1f)
+    val fracao = remember { Animatable(0f) }
+    LaunchedEffect(alvo) { fracao.animateTo(alvo, tween(CRESCIMENTO_MS, easing = FastOutSlowInEasing)) }
+
     val preenchimento = when {
         percent >= ESTOURO_PERCENT -> Ember
         percent >= ALERTA_PERCENT -> Sunburst
@@ -210,7 +229,7 @@ private fun Barra(percent: Int) {
     ) {
         Box(
             Modifier
-                .fillMaxWidth(fraction = (percent / PERCENT_CHEIO).coerceIn(0f, 1f))
+                .fillMaxWidth(fraction = fracao.value)
                 .fillMaxSize()
                 .background(if (percent >= ALERTA_PERCENT) preenchimento else Color.Transparent),
         )
@@ -300,6 +319,9 @@ private fun FolhaDeTeto(
 }
 
 private const val PERCENT_CHEIO = 100f
+
+/** O tempo do traço. Curto: a barra é dado, não abertura de tela. */
+private const val CRESCIMENTO_MS = 420
 private val ALTURA_BARRA = 12.dp
 
 private val PT_BR: Locale = Locale.forLanguageTag("pt-BR")

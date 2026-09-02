@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.financepro.core.ui.component.EstadoVazio
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.LinhaDeTransacao
@@ -53,6 +54,7 @@ import app.financepro.core.ui.theme.Pill
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
 import app.financepro.core.ui.theme.Subheading
+import app.financepro.core.ui.theme.Sunburst
 import app.financepro.domain.model.Txn
 import app.financepro.domain.usecase.DiaDeTransacoes
 import app.financepro.domain.usecase.EscopoDeParcela
@@ -120,14 +122,16 @@ fun TransactionsScreen(
             )
 
             val dias = state.dias
-            if (dias.isEmpty()) {
-                Vazio(
+            when {
+                dias.isNotEmpty() ->
+                    Lista(state = state, dias = dias, onExcluir = vm::excluir, onEditar = onEditar)
+                // Só depois da primeira emissão: antes dela a lista está vazia
+                // porque ainda não chegou, e o vazio afirmaria o que não sabe.
+                state.carregado -> Vazio(
                     comFiltro = state.filtro.ativo,
                     onLancar = onNovoLancamento,
                     onLimpar = vm::limparFiltros,
                 )
-            } else {
-                Lista(state = state, dias = dias, onExcluir = vm::excluir, onEditar = onEditar)
             }
         }
     }
@@ -192,10 +196,18 @@ private fun Vazio(comFiltro: Boolean, onLancar: () -> Unit, onLimpar: () -> Unit
         // resolve lançando. Um texto só para os dois mandaria metade das
         // pessoas para o botão errado.
         if (comFiltro) {
-            Text("Nada casa com esses filtros.", style = Body, color = Slush.ink)
+            EstadoVazio(
+                titulo = "NADA CASA",
+                sticker = Sunburst,
+                descricao = "Nenhum lançamento passa por esses filtros.",
+            )
             GhostButton(text = "Limpar filtros", onClick = onLimpar)
         } else {
-            Text("Nenhum lançamento neste período.", style = Body, color = Slush.ink)
+            EstadoVazio(
+                titulo = "MÊS EM BRANCO",
+                sticker = Sunburst,
+                descricao = "Nenhum lançamento neste período.",
+            )
             FilledCta(text = "Lançar", onClick = onLancar)
         }
     }
@@ -217,7 +229,9 @@ private fun Lista(
         dias.forEach { dia ->
             item(key = "dia-" + dia.data) { CabecalhoDoDia(dia) }
             items(dia.itens, key = { it.id }) { txn ->
-                Deslizavel(onExcluir = { onExcluir(txn) }) {
+                // Excluir, desfazer e trocar de filtro mexem na lista o tempo
+                // todo; uma linha por chave, e o resto se acomoda sozinho.
+                Deslizavel(onExcluir = { onExcluir(txn) }, modifier = Modifier.animateItem()) {
                     LinhaDeTransacao(
                         txn = txn,
                         categoria = state.categoriaDe(txn.categoryId),
@@ -260,7 +274,11 @@ private fun CabecalhoDoDia(dia: DiaDeTransacoes) {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Deslizavel(onExcluir: () -> Unit, conteudo: @Composable () -> Unit) {
+private fun Deslizavel(
+    onExcluir: () -> Unit,
+    modifier: Modifier = Modifier,
+    conteudo: @Composable () -> Unit,
+) {
     val estado = rememberSwipeToDismissBoxState(
         // **Nunca** confirma a dispensa: o gesto pede a exclusão, e quem tira a
         // linha da tela é o banco emitindo a lista sem ela.
@@ -280,7 +298,7 @@ private fun Deslizavel(onExcluir: () -> Unit, conteudo: @Composable () -> Unit) 
         state = estado,
         enableDismissFromStartToEnd = false,
         backgroundContent = { FundoExcluir() },
-        modifier = Modifier.semantics {
+        modifier = modifier.semantics {
             customActions = listOf(CustomAccessibilityAction("Excluir") { onExcluir(); true })
         },
         content = { conteudo() },

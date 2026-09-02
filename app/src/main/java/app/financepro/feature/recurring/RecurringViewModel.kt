@@ -94,6 +94,8 @@ data class RecurringState(
     val todasCategorias: List<Category> = emptyList(),
     val folha: RegraEmEdicao? = null,
     val erros: List<ValidationError> = emptyList(),
+    /** Se a primeira emissão do banco já chegou — ver `TransactionsState.carregado`. */
+    val carregado: Boolean = false,
 ) {
     /** O grid do tipo corrente (REQ-CAT-003): receita não usa categoria de despesa. */
     val categorias: List<Category>
@@ -129,7 +131,9 @@ class RecurringViewModel @Inject constructor(
                 regras.observeAll(),
             ) { cs, cats, rs -> Triple(cs, cats, rs) }
                 .collect { (cs, cats, rs) ->
-                    _state.update { it.copy(contas = cs, todasCategorias = cats, regras = rs) }
+                    _state.update {
+                        it.copy(contas = cs, todasCategorias = cats, regras = rs, carregado = true)
+                    }
                 }
         }
     }

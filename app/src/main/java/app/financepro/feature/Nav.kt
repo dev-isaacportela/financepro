@@ -1,5 +1,7 @@
 package app.financepro.feature
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
@@ -16,11 +18,18 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -69,6 +78,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import java.time.YearMonth
+import kotlin.math.abs
 import javax.inject.Inject
 
 /**
@@ -131,6 +141,12 @@ data object Importar
  */
 @Serializable
 data class Cartao(val id: Long)
+
+/** Tempo da entrada e da saída da pílula quando nenhuma aba está selecionada. */
+private const val DURACAO_ABA = 180
+
+/** Vão entre abas. Entra na conta da pílula que desliza, por isso é constante. */
+private val ESPACO_ABA = 4.dp
 
 private val ABAS = listOf(
     Inicio to "Início",
@@ -218,6 +234,15 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
             navController = nav,
             startDestination = Inicio,
             modifier = Modifier.fillMaxSize().padding(insets),
+            // O movimento das telas mora em Movimento.kt. As quatro lambdas
+            // apontam para as mesmas duas funções de propósito: trocar de aba é
+            // um pop por dentro (`popUpTo(Inicio)`), então "entrou" e "voltou"
+            // não dizem nada sobre para que lado o dedo foi — quem diz é a
+            // ordem das abas, e ela vale igual nos quatro casos.
+            enterTransition = { entradaSlush() },
+            exitTransition = { saidaSlush() },
+            popEnterTransition = { entradaSlush() },
+            popExitTransition = { saidaSlush() },
         ) {
             rotas(
                 nav = nav,
@@ -360,6 +385,7 @@ private fun MaisScreen(onIr: (Any) -> Unit, bloqueio: Boolean, onAlternarBloquei
             onClick = onAlternarBloqueio,
             modifier = Modifier.fillMaxWidth(),
         )
+
     }
 }
 
@@ -378,16 +404,58 @@ private fun BarraInferior(nav: NavHostController) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         shape = Pill,
     ) {
+        // A pílula de seleção é **uma só**, e ela desliza. Quatro pílulas
+        // acendendo e apagando é o que sai quando ninguém pensou no movimento;
+        // uma que anda conta de onde para onde a tela foi — a mesma frase que o
+        // NavHost está dizendo no mesmo instante, e as duas em concordância.
+        val destino = atual?.destination
+        val indice = ABAS.indexOfFirst { (rota, _) -> destino?.hasRoute(rota::class) == true }
+        var ultima by remember { mutableIntStateOf(0) }
+        if (indice >= 0) ultima = indice
+        val posicao by animateFloatAsState(ultima.toFloat(), MolaPilula)
+        // Destino de dentro do "Mais" não é aba nenhuma: a pílula sai de cena em
+        // vez de mentir que "Mais" está selecionado (REQ-A11Y-003).
+        //
+        // Mas só quando o Navigation **diz** onde estamos: no primeiro quadro
+        // `atual` é nulo, e "ainda não sei" não é "nenhuma aba". Lendo o nulo como
+        // ausência, a pílula nascia transparente e clareava na cara de quem abriu
+        // o app — visível no aparelho, invisível no código.
+        var emAba by remember { mutableStateOf(true) }
+        if (destino != null) emAba = indice >= 0
+        val presenca by animateFloatAsState(if (emAba) 1f else 0f, tween(DURACAO_ABA))
+        val tinta = Slush.ink
+
         Row(
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier
+                .padding(horizontal = 6.dp, vertical = 6.dp)
+                // Desenhada aqui, e não como Box posicionado: o Row já sabe a
+                // largura e a altura finais, então a pílula acompanha fonte a
+                // 200% e tela larga sem nenhuma medida repetida em outro lugar.
+                .drawBehind {
+                    val vao = ESPACO_ABA.toPx()
+                    val largura = (size.width - vao * (ABAS.size - 1)) / ABAS.size
+                    drawRoundRect(
+                        color = tinta,
+                        topLeft = Offset(posicao * (largura + vao), 0f),
+                        size = Size(largura, size.height),
+                        cornerRadius = CornerRadius(size.height / 2),
+                        alpha = presenca,
+                    )
+                },
+            horizontalArrangement = Arrangement.spacedBy(ESPACO_ABA),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ABAS.forEach { (destino, rotulo) ->
-                val selecionada = atual?.destination?.hasRoute(destino::class) == true
+            ABAS.forEachIndexed { i, (destino, rotulo) ->
                 Aba(
                     rotulo = rotulo,
-                    selecionada = selecionada,
+                    selecionada = i == indice,
+                    // Quanto desta aba a pílula está cobrindo agora, de 0 a 1.
+                    // A tinta do rótulo sai daqui, e não de uma animação própria:
+                    // com duas animações separadas a pílula passa por cima da aba
+                    // do meio antes de o rótulo clarear, e a palavra some por um
+                    // instante — tinta sobre tinta. Assim ela clareia **porque**
+                    // a pílula chegou, no compasso exato.
+                    cobertura = (1f - abs(posicao - i)).coerceIn(0f, 1f) * presenca,
                     modifier = Modifier.weight(1f),
                     onClick = {
                         // `launchSingleTop` e o popUpTo na raiz mantêm a pilha em
@@ -409,11 +477,13 @@ private fun BarraInferior(nav: NavHostController) {
 private fun Aba(
     rotulo: String,
     selecionada: Boolean,
+    cobertura: Float,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val fundo = if (selecionada) Slush.ink else Slush.paper
-    val tinta = if (selecionada) Slush.paper else Slush.ink
+    // Sem fundo próprio: quem preenche é a pílula que desliza atrás. REQ-A11Y-003
+    // continua valendo — o sinal é preenchimento, e `selected` na semântica.
+    val tinta = lerp(Slush.ink, Slush.paper, cobertura)
 
     Surface(
         onClick = onClick,
@@ -424,9 +494,11 @@ private fun Aba(
             .minimumInteractiveComponentSize()
             .semantics { selected = selecionada },
         shape = Pill,
-        color = fundo,
+        color = Color.Transparent,
         contentColor = tinta,
-        border = if (selecionada) null else BorderStroke(OutlineWidth, Slush.ink),
+        // Sempre presente: com a pilula preenchida o contorno e `ink` sobre
+        // `ink` e some sozinho, sem o pulo de um `null` no meio da animacao.
+        border = BorderStroke(OutlineWidth, Slush.ink),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
     ) {

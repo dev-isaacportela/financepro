@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import app.financepro.data.db.ImportBatchDao
+import app.financepro.data.db.DesfeitoDoLote
 import app.financepro.data.db.ImportBatchEntity
 import app.financepro.data.db.TxnDao
 import app.financepro.data.db.TxnEntity
@@ -11,6 +12,7 @@ import app.financepro.data.repo.PayeeRuleRepository
 import app.financepro.domain.model.TxnType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -75,6 +77,12 @@ class ImportRepository @Inject constructor(
                 dedupeKey = it.dedupeKey,
             )
         }
+
+    /** Os lotes já importados, do mais recente para o mais antigo. REQ-IMP-011 */
+    fun observeLotes(): Flow<List<ImportBatchEntity>> = lotes.observeAll()
+
+    /** REQ-IMP-011 — a válvula de escape: o lote inteiro volta atrás. */
+    suspend fun desfazer(loteId: Long): DesfeitoDoLote = lotes.desfazer(loteId)
 
     /** REQ-ACT-002 — a categoria que o app já aprendeu para esta descrição. */
     suspend fun sugerir(descricao: String): Long? = pagadores.sugerir(descricao)

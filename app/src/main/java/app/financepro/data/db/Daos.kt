@@ -566,4 +566,52 @@ abstract class ImportBatchDao {
         inserirTxns(linhas.map { it.copy(importBatchId = id) })
         return id
     }
+
+    @Query("SELECT * FROM import_batch ORDER BY importedAt DESC")
+    abstract fun observeAll(): Flow<List<ImportBatchEntity>>
+
+    @Query("SELECT COUNT(*) FROM txn WHERE importBatchId = :loteId")
+    abstract suspend fun contar(loteId: Long): Int
+
+    /**
+     * As linhas do lote que **ninguém tocou** desde a importação. REQ-IMP-011
+     *
+     * `updatedAt <= createdAt` é a marca: a importação grava os dois com o mesmo
+     * instante, e toda edição posterior passa por `TxnRepository.salvar`, que
+     * avança só o `updatedAt`. Não é preciso coluna nova para saber quem foi
+     * mexido — o carimbo que já existe responde.
+     *
+     * `<=` e não `<` porque os dois nascem iguais, e um `<` estrito não apagaria
+     * nada.
+     */
+    @Query("DELETE FROM txn WHERE importBatchId = :loteId AND updatedAt <= createdAt")
+    abstract suspend fun apagarNaoEditadas(loteId: Long): Int
+
+    @Query("DELETE FROM import_batch WHERE id = :loteId")
+    abstract suspend fun apagarLote(loteId: Long)
+
+    /**
+     * Desfaz o lote. REQ-IMP-011 · ingestao.md §3.1
+     *
+     * A **válvula de escape** da importação: sem ela, um arquivo errado de 400
+     * linhas só se resolve apagando o app.
+     *
+     * O que foi editado à mão fica, e perde o vínculo com o lote — `importBatchId`
+     * é `SET_NULL`, então a linha que o usuário corrigiu vira uma transação
+     * comum em vez de sumir junto. Apagar o trabalho dele para desfazer o
+     * trabalho do app seria a troca errada.
+     *
+     * Tudo numa transação: um desfazer pela metade deixaria linhas órfãs
+     * apontando para um lote que não existe mais.
+     */
+    @Transaction
+    open suspend fun desfazer(loteId: Long): DesfeitoDoLote {
+        val antes = contar(loteId)
+        val removidas = apagarNaoEditadas(loteId)
+        apagarLote(loteId)
+        return DesfeitoDoLote(removidas = removidas, mantidas = antes - removidas)
+    }
 }
+
+/** O saldo de um desfazer: o que saiu, e o que ficou por ter sido editado. */
+data class DesfeitoDoLote(val removidas: Int, val mantidas: Int)

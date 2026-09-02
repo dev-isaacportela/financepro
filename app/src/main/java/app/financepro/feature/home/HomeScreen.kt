@@ -1,5 +1,6 @@
 package app.financepro.feature.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -31,7 +33,9 @@ import app.financepro.core.ui.theme.Label
 import app.financepro.core.ui.theme.MoneyBody
 import app.financepro.core.ui.theme.MoneyLg
 import app.financepro.core.ui.theme.Slush
+import app.financepro.core.ui.theme.SlushShapes
 import app.financepro.core.ui.theme.Subheading
+import app.financepro.core.ui.theme.VoltageViolet
 import app.financepro.domain.model.Txn
 import app.financepro.domain.usecase.Comparativo
 
@@ -99,11 +103,33 @@ fun HomeScreen(
     }
 }
 
+/**
+ * O saldo, e o único bloco preenchido do dashboard.
+ *
+ * A ênfase vai **onde o número importa**, e vai de uma vez: adesivo Voltage
+ * Violet cheio, tinta `onFill`, sem contorno — preenchimento saturado já separa,
+ * e um traço por cima seria a segunda resposta para a mesma pergunta.
+ *
+ * Violet é a única das seis que aceita branco por cima (6.02:1, medido em
+ * `ContrastTest`); as outras exigiriam tinta preta e, no tema escuro, uma ilha de
+ * tema invertido no meio da tela. E o adesivo é **idêntico nos dois temas**
+ * (REQ-DS-008), então isto não custa token novo nem par claro/escuro.
+ *
+ * Os blocos abaixo ficam em papel de propósito. Duas cores lado a lado não são
+ * duas ênfases: são duas coisas disputando, e nenhuma vence.
+ */
 @Composable
 private fun Saldo(cents: Long) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("SALDO TOTAL", style = Caption, color = Slush.ink)
-        MoneyText(cents = cents, style = MoneyLg)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SlushShapes.extraLarge)
+            .background(VoltageViolet)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text("SALDO TOTAL", style = Caption, color = Slush.onFill)
+        MoneyText(cents = cents, style = MoneyLg, cor = Slush.onFill)
     }
 }
 
@@ -224,6 +250,13 @@ private fun Comeco(onNovoLancamento: () -> Unit) {
     }
 }
 
+/**
+ * Bloco de seção do dashboard: título fora, card contornado dentro.
+ *
+ * Sem cor, e isso é a decisão: a cor do dashboard mora no bloco do saldo. As
+ * bandas pastel chegaram a entrar aqui e saíram — no escuro elas viram cinza com
+ * sotaque, e no claro competiam com o adesivo logo acima.
+ */
 @Composable
 private fun Bloco(titulo: String, conteudo: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

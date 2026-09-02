@@ -1,8 +1,14 @@
 package app.financepro.core.ui.component
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,9 +16,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -40,6 +49,13 @@ import app.financepro.domain.model.Category
  *
  * O nome fica **fora** do preenchimento porque a paleta é preenchimento e nunca
  * cor de texto (REQ-DS-006): "Mercado" em Carbon sobre Sunburst daria 1.40:1.
+ *
+ * **O toque afunda o adesivo, e não borra tinta nele.** O ripple do Material é
+ * uma mancha tonal — o mesmo erro de categoria que a sombra é aqui, e um sinal
+ * cinza por cima de Sunburst não lê como resposta, lê como sujeira. A escala
+ * substitui a indicação em vez de simplesmente apagá-la: pressionado encolhe,
+ * como adesivo inflado que cede ao dedo; focado por teclado ou D-pad **cresce**,
+ * que é o único sinal que sobraria sem o ripple para quem não usa o dedo.
  */
 @Composable
 fun CategorySticker(
@@ -48,10 +64,26 @@ fun CategorySticker(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val interacoes = remember { MutableInteractionSource() }
+    val pressionado by interacoes.collectIsPressedAsState()
+    val focado by interacoes.collectIsFocusedAsState()
+    val escala by animateFloatAsState(
+        targetValue = when {
+            pressionado -> AFUNDA
+            focado -> CRESCE
+            else -> 1f
+        },
+        animationSpec = spring(AMORTECIMENTO, Spring.StiffnessMediumLow),
+    )
+
     Column(
         modifier = modifier
             .width(STICKER)
-            .clickable(onClick = onClick)
+            .clickable(
+                interactionSource = interacoes,
+                indication = null, // a escala é a indicação
+                onClick = onClick,
+            )
             // O leitor anuncia nome e estado uma vez só. O parâmetro se chama
             // `selecionado` porque `selected` sombreia a propriedade de
             // semântica aqui dentro, e a atribuição viraria `val = val`.
@@ -65,6 +97,10 @@ fun CategorySticker(
         Box(
             Modifier
                 .size(STICKER)
+                // Só o quadrado se mexe: o nome embaixo fica parado, porque
+                // texto que encolhe no toque é texto que fica difícil de ler
+                // exatamente enquanto o dedo o cobre.
+                .scale(escala)
                 .clip(SlushShapes.small)
                 .background(Color(category.colorArgb))
                 .border(
@@ -86,3 +122,6 @@ fun CategorySticker(
 /** 64dp já passa dos 48dp de alvo mínimo sem `minimumInteractiveComponentSize`. */
 private val STICKER = 64.dp
 private val SELECIONADO = 3.dp
+private const val AFUNDA = 0.9f
+private const val CRESCE = 1.06f
+private const val AMORTECIMENTO = 0.55f

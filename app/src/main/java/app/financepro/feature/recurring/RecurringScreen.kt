@@ -34,15 +34,16 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.financepro.core.ui.component.CategorySticker
 import app.financepro.core.ui.component.Chips
+import app.financepro.core.ui.component.EstadoVazio
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyField
 import app.financepro.core.ui.component.MoneyText
 import app.financepro.core.ui.component.Rotulo
 import app.financepro.core.ui.component.SlushCard
-import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
+import app.financepro.core.ui.theme.Lavender
 import app.financepro.core.ui.theme.MoneyCaption
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
@@ -83,13 +84,13 @@ fun RecurringScreen(vm: RecurringViewModel = hiltViewModel()) {
     ) {
         Text("Recorrências", style = Subheading, color = Slush.ink)
 
-        if (state.regras.isEmpty()) {
+        if (state.regras.isEmpty() && state.carregado) {
             // REQ-UI-006 — o vazio traz a ação que o preenche, e diz para quê.
-            Text(
-                text = "Nada se repete ainda. Cadastre o aluguel, o salário ou a " +
-                    "assinatura, e eles aparecem sozinhos em Próximas contas.",
-                style = Body,
-                color = Slush.ink,
+            EstadoVazio(
+                titulo = "NADA SE REPETE",
+                sticker = Lavender,
+                descricao = "Cadastre o aluguel, o salário ou a assinatura, e eles " +
+                    "aparecem sozinhos em Próximas contas.",
             )
         } else {
             state.regras.forEach { regra ->

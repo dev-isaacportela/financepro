@@ -42,6 +42,8 @@ data class BudgetState(
     val categorias: List<Category> = emptyList(),
     val todas: List<Txn> = emptyList(),
     val folha: TetoEmEdicao? = null,
+    /** Se a primeira emissão do banco já chegou — ver `TransactionsState.carregado`. */
+    val carregado: Boolean = false,
 ) {
     /**
      * ponytail: `monthStartDay` fixo em 1 até existir tela de ajustes.
@@ -91,7 +93,9 @@ class BudgetViewModel @Inject constructor(
                 tetos.observeAll(),
             ) { cats, ts, bs -> Triple(cats, ts, bs) }
                 .collect { (cats, ts, bs) ->
-                    _state.update { it.copy(categorias = cats, todas = ts, tetos = bs) }
+                    _state.update {
+                        it.copy(categorias = cats, todas = ts, tetos = bs, carregado = true)
+                    }
                 }
         }
     }

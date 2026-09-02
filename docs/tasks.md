@@ -1578,8 +1578,36 @@ procurar o problema em trezentas linhas.
 **Fase** F2 · **Depende de** T-041 · **REQ** REQ-IMP-011
 
 **Pronto quando**
-- [ ] `ImportBatchTest`: desfazer remove exatamente as transações do lote
-- [ ] Transação editada manualmente após a importação **não** é removida pelo desfazer
+- [x] `ImportBatchTest`: desfazer remove exatamente as transações do lote, e não
+      encosta no que estava fora dele
+- [x] Transação editada manualmente após a importação **não** é removida pelo
+      desfazer — e perde o vínculo com o lote em vez de sumir junto com ele
+- [x] O lote sai da lista depois de desfeito, e desfazer um não mexe no outro
+
+**Como o app sabe que a linha foi editada, sem coluna nova.** A importação grava
+`createdAt` e `updatedAt` com o **mesmo** instante, e toda edição posterior passa
+por `TxnRepository.salvar`, que preserva o primeiro e avança o segundo. Então
+`updatedAt <= createdAt` é exatamente "ninguém tocou nisto desde que chegou". Uma
+coluna `editadaManualmente` diria a mesma coisa com um estado a mais para
+dessincronizar — e alguém esqueceria de marcá-la no primeiro caminho de escrita
+novo.
+
+**O que sobrou perde o vínculo, não a vida.** `txn.importBatchId` é `SET_NULL`:
+apagar o lote transforma a linha que o usuário corrigiu numa transação comum.
+Apagar o trabalho dele para desfazer o trabalho do app seria a troca errada.
+
+A lista aparece nos **dois** momentos em que serve: antes de importar, para
+conferir o que já entrou, e logo depois de importar, que é quando se descobre que
+o arquivo era o errado. Uma tela própria escondida no menu seria um caminho a
+mais justamente para quem está com pressa de desfazer.
+
+O recado diz as duas metades — quantas saíram e quantas ficaram por terem sido
+editadas. Dizer só "removidas" faria o usuário procurar no extrato as que
+sobraram, achando que o desfazer falhou.
+
+Conferido no emulador: lote de 3 linhas listado com nome e horário, saldo em
+R$ 5.433,52; depois do desfazer, "3 removidas", lista vazia e saldo de volta em
+R$ 666,92 — exatamente o que havia antes da importação.
 
 ---
 

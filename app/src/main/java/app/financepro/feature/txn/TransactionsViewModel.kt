@@ -56,6 +56,16 @@ data class TransactionsState(
     val ultimaQuantidade: Int = 1,
     /** REQ-TXN-009 — a parcela esperando a escolha de escopo. */
     val excluindo: Txn? = null,
+    /**
+     * Se a primeira emissão do banco já chegou.
+     *
+     * Sem isto, lista vazia significa duas coisas diferentes — "não há nada" e
+     * "ainda não chegou" — e a tela mostra o pôster de vazio durante a carga.
+     * Com uma linha de texto isso passava despercebido; com `Display` a 64sp e um
+     * sticker com mola, pisca. O mesmo `null` de `FinanceNav.precisaOnboarding`,
+     * em booleano porque aqui o estado inicial existe por outros motivos.
+     */
+    val carregado: Boolean = false,
 ) {
     /**
      * ponytail: `monthStartDay` fixo em 1 até existir tela de ajustes.
@@ -128,7 +138,9 @@ class TransactionsViewModel @Inject constructor(
                 txns.observeTudo(),
             ) { cs, cats, ts -> Triple(cs, cats, ts) }
                 .collect { (cs, cats, ts) ->
-                    _state.update { it.copy(contas = cs, categorias = cats, todas = ts) }
+                    _state.update {
+                        it.copy(contas = cs, categorias = cats, todas = ts, carregado = true)
+                    }
                 }
         }
     }

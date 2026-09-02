@@ -3,6 +3,7 @@ package app.financepro.feature.importer
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.financepro.data.db.ImportBatchEntity
 import app.financepro.data.ingest.Avaliada
 import app.financepro.data.ingest.Candidata
 import app.financepro.data.ingest.CsvFormato
@@ -77,6 +78,8 @@ data class ImportState(
     /** Quantas o dedupe descartou sozinho — chave exata (REQ-IMP-007/008). */
     val descartadas: Int = 0,
     val gravadas: Int = 0,
+    /** REQ-IMP-011 — os lotes já importados, para poder desfazer. */
+    val lotes: List<ImportBatchEntity> = emptyList(),
     val recado: String? = null,
     val trabalhando: Boolean = false,
 ) {
@@ -118,9 +121,13 @@ class ImportViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            combine(contas.observeActive(), categorias.observeActive()) { cs, cats -> cs to cats }
-                .collect { (cs, cats) ->
-                    _state.update { it.copy(contas = cs, categorias = cats) }
+            combine(
+                contas.observeActive(),
+                categorias.observeActive(),
+                importacao.observeLotes(),
+            ) { cs, cats, ls -> Triple(cs, cats, ls) }
+                .collect { (cs, cats, ls) ->
+                    _state.update { it.copy(contas = cs, categorias = cats, lotes = ls) }
                 }
         }
     }
@@ -170,20 +177,15 @@ class ImportViewModel @Inject constructor(
         }
     }
 
-    fun alternar(indice: Int) = _state.update { atual ->
-        atual.copy(
-            linhas = atual.linhas.mapIndexed { i, linha ->
-                if (i == indice) linha.copy(incluir = !linha.incluir) else linha
-            },
-        )
-    }
-
-    fun categoria(indice: Int, categoriaId: Long) = _state.update { atual ->
-        atual.copy(
-            linhas = atual.linhas.mapIndexed { i, linha ->
-                if (i == indice) linha.copy(categoriaId = categoriaId) else linha
-            },
-        )
+    /**
+     * Troca uma linha da revisão inteira — incluir, categoria, o que for.
+     *
+     * Uma função e não duas, como na folha de recorrência: a tela já tem a linha
+     * em mãos e faz o `copy`, e dois setters seriam o mesmo `mapIndexed` escrito
+     * duas vezes com nomes diferentes.
+     */
+    fun editar(indice: Int, linha: LinhaEmRevisao) = _state.update { atual ->
+        atual.copy(linhas = atual.linhas.mapIndexed { i, l -> if (i == indice) linha else l })
     }
 
     /**
@@ -210,9 +212,29 @@ class ImportViewModel @Inject constructor(
         }
     }
 
-    /** Volta ao começo mantendo contas e categorias, que não vieram do arquivo. */
+    /**
+     * Desfaz um lote inteiro. REQ-IMP-011
+     *
+     * O recado diz **as duas** metades: quantas saíram e quantas ficaram por
+     * terem sido editadas depois da importação. Dizer só "removidas" faria o
+     * usuário procurar no extrato as que sobraram, achando que o desfazer
+     * falhou.
+     */
+    fun desfazer(loteId: Long) = trabalhando {
+        val saldo = importacao.desfazer(loteId)
+        val mantidas = if (saldo.mantidas > 0) {
+            " ${saldo.mantidas} ficaram, porque você as editou depois."
+        } else {
+            ""
+        }
+        _state.update {
+            it.copy(trabalhando = false, recado = "${saldo.removidas} removidas.$mantidas")
+        }
+    }
+
+    /** Volta ao começo mantendo contas, categorias e lotes, que não vieram do arquivo. */
     fun recomecar() = _state.update {
-        ImportState(contas = it.contas, categorias = it.categorias)
+        ImportState(contas = it.contas, categorias = it.categorias, lotes = it.lotes)
     }
 
     private suspend fun abrirOfx(extratos: List<OfxStatement>, nome: String, contaId: Long) {

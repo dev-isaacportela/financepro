@@ -35,6 +35,8 @@ data class AccountsState(
     /** Conta em edição; `null` fecha o formulário. */
     val editando: Account? = null,
     val erro: String? = null,
+    /** Se a primeira emissão do banco já chegou — ver `TransactionsState.carregado`. */
+    val carregado: Boolean = false,
 ) {
     val visiveis: List<Account>
         get() = contas.filter { mostrarArquivadas || !it.archived }
@@ -55,7 +57,7 @@ class AccountsViewModel @Inject constructor(
         viewModelScope.launch {
             combine(contas.observeAll(), txns.observeTudo()) { cs, ts -> cs to ts }
                 .collect { (cs, ts) ->
-                    _state.update { it.copy(contas = cs, saldos = saldos(cs, ts)) }
+                    _state.update { it.copy(contas = cs, saldos = saldos(cs, ts), carregado = true) }
                 }
         }
     }

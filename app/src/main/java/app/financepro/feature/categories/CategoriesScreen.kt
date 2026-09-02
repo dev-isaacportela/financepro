@@ -67,6 +67,7 @@ fun CategoriesScreen(vm: CategoriesViewModel = hiltViewModel()) {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(state.categorias, key = { it.id }) { categoria ->
                 Linha(
+                    modifier = Modifier.animateItem(),
                     categoria = categoria,
                     onClick = { vm.editar(categoria) },
                     onExcluir = { vm.pedirExclusao(categoria) },
@@ -85,8 +86,13 @@ fun CategoriesScreen(vm: CategoriesViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun Linha(categoria: Category, onClick: () -> Unit, onExcluir: () -> Unit) {
-    SlushCard(Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+private fun Linha(
+    categoria: Category,
+    onClick: () -> Unit,
+    onExcluir: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SlushCard(modifier.fillMaxWidth().clickable(onClick = onClick)) {
         // `FlowRow` pelo mesmo motivo da lista de contas: a 200% o botão desce
         // de linha em vez de espremer o nome (REQ-A11Y-004).
         FlowRow(
