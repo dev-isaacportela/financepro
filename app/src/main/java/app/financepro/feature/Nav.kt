@@ -553,73 +553,94 @@ private fun MaisScreen(
     ) {
         Text("Mais", style = Subheading, color = Tema.ink)
 
-        Grupo("Cadastro") {
-            LinhaDeBlocos {
-                Bloco(
-                    titulo = "Contas",
-                    detalhe = contasDetalhe(state),
-                    onClick = { onIr(Contas) },
-                    modifier = Modifier.weight(1f),
-                )
-                Bloco(
-                    titulo = "Categorias",
-                    detalhe = plural(state.categorias, "categoria", "categorias"),
-                    onClick = { onIr(Categorias) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            LinhaDeBlocos {
-                Bloco(
-                    titulo = "Recorrências",
-                    detalhe = plural(state.recorrencias, "regra", "regras"),
-                    onClick = { onIr(Recorrencias) },
-                    modifier = Modifier.weight(1f),
-                )
-                // Uma preferência não é uma tela de ajustes. O estado vai
-                // **escrito** no detalhe, não sinalizado por cor (REQ-A11Y-003),
-                // e é o mesmo bloco — que também é o que o leitor anuncia.
-                Bloco(
-                    titulo = "Bloqueio do app",
-                    detalhe = if (bloqueio) "Ligado" else "Desligado",
-                    onClick = onAlternarBloqueio,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
+        GrupoCadastro(state, bloqueio, onIr, onAlternarBloqueio)
+        GrupoDados(onIr)
+        GrupoAnalise(onIr)
+    }
+}
 
-        Grupo("Dados") {
-            LinhaDeBlocos {
-                Bloco(
-                    titulo = "Importar",
-                    detalhe = "OFX ou CSV do banco",
-                    onClick = { onIr(Importar) },
-                    modifier = Modifier.weight(1f),
-                )
-                Bloco(
-                    titulo = "Backup",
-                    detalhe = "Cifrado, e exportação CSV",
-                    onClick = { onIr(Exportar) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-
-        Grupo("Análise") {
-            BlocoLargo(
-                titulo = "Relatórios",
-                detalhe = "Gastos por categoria, evolução do mês",
-                onClick = { onIr(Relatorios) },
+/** O que o usuário mantém: as três listas, e a preferência que não vale uma tela. */
+@Composable
+private fun GrupoCadastro(
+    state: MaisState,
+    bloqueio: Boolean,
+    onIr: (Any) -> Unit,
+    onAlternarBloqueio: () -> Unit,
+) {
+    Grupo("Cadastro") {
+        LinhaDeBlocos {
+            Bloco(
+                titulo = "Contas",
+                detalhe = contasDetalhe(state),
+                onClick = { onIr(Contas) },
+                modifier = Modifier.weight(1f),
             )
-            // REQ-INV-004 — investimento fica na Análise e não no Cadastro: a
-            // conta em si já se cria em Contas, e o que esta tela acrescenta é
-            // o acompanhamento. A barra inferior tem quatro lugares por
-            // REQ-UI-001, e o hub é o caminho esperado para o quinto.
-            BlocoLargo(
-                titulo = "Investimentos",
-                detalhe = "Rendimento mês a mês, taxa fixa ou CDI",
-                onClick = { onIr(Investimentos) },
+            Bloco(
+                titulo = "Categorias",
+                detalhe = plural(state.categorias, "categoria", "categorias"),
+                onClick = { onIr(Categorias) },
+                modifier = Modifier.weight(1f),
             )
         }
+        LinhaDeBlocos {
+            Bloco(
+                titulo = "Recorrências",
+                detalhe = plural(state.recorrencias, "regra", "regras"),
+                onClick = { onIr(Recorrencias) },
+                modifier = Modifier.weight(1f),
+            )
+            // Uma preferência não é uma tela de ajustes. O estado vai
+            // **escrito** no detalhe, não sinalizado por cor (REQ-A11Y-003),
+            // e é o mesmo bloco — que também é o que o leitor anuncia.
+            Bloco(
+                titulo = "Bloqueio do app",
+                detalhe = if (bloqueio) "Ligado" else "Desligado",
+                onClick = onAlternarBloqueio,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+/** O que entra e o que sai do banco. */
+@Composable
+private fun GrupoDados(onIr: (Any) -> Unit) {
+    Grupo("Dados") {
+        LinhaDeBlocos {
+            Bloco(
+                titulo = "Importar",
+                detalhe = "OFX ou CSV do banco",
+                onClick = { onIr(Importar) },
+                modifier = Modifier.weight(1f),
+            )
+            Bloco(
+                titulo = "Backup",
+                detalhe = "Cifrado, e exportação CSV",
+                onClick = { onIr(Exportar) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+/** Consulta, e não cadastro — por isso os dois são linha larga. */
+@Composable
+private fun GrupoAnalise(onIr: (Any) -> Unit) {
+    Grupo("Análise") {
+        BlocoLargo(
+            titulo = "Relatórios",
+            detalhe = "Gastos por categoria, evolução do mês",
+            onClick = { onIr(Relatorios) },
+        )
+        // REQ-INV-004 — investimento fica na Análise e não no Cadastro: a
+        // conta em si já se cria em Contas, e o que esta tela acrescenta é
+        // o acompanhamento. A barra inferior tem quatro lugares por
+        // REQ-UI-001, e o hub é o caminho esperado para o quinto.
+        BlocoLargo(
+            titulo = "Investimentos",
+            detalhe = "Rendimento mês a mês, taxa fixa ou CDI",
+            onClick = { onIr(Investimentos) },
+        )
     }
 }
 

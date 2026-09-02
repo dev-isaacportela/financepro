@@ -567,23 +567,6 @@ private fun Recado(texto: String) {
 }
 
 /**
- * O singular existe porque "1 parecidas" é o tipo de descuido que faz o usuário
- * desconfiar do resto da tela — e esta é justamente a tela em que ele precisa
- * confiar para confirmar trezentas linhas.
- */
-private fun possiveisEmPalavras(quantas: Int): String = if (quantas == 1) {
-    "⚠ 1 parecida com uma transação que já existe. Confira antes de confirmar."
-} else {
-    "⚠ $quantas parecidas com transações que já existem. Confira antes de confirmar."
-}
-
-private fun descartadasEmPalavras(quantas: Int): String = if (quantas == 1) {
-    "1 já estava na conta e foi descartada."
-} else {
-    "$quantas já estavam na conta e foram descartadas."
-}
-
-/**
  * O rótulo diz o que falta, e não só "salvar".
  *
  * REQ-TXN-005 exige categoria em receita e despesa, então o lote não pode ir com

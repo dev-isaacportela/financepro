@@ -107,34 +107,7 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
                 descricao = "Escolha uma categoria e um limite; o resto a tela preenche sozinha.",
             )
         } else {
-            // **Um card para todas**, e não um por categoria. Seis cards
-            // empilhados davam a cada teto o peso de uma seção, e a tela virava
-            // uma pilha de blocos onde o protótipo tem uma lista.
-            Cartao(Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "Por categoria",
-                            style = BodyStrong,
-                            color = Tema.ink,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Text(
-                            text = if (progresso.size == 1) "1 teto" else "${progresso.size} tetos",
-                            style = Caption,
-                            color = Tema.inkMute,
-                        )
-                    }
-                    progresso.forEach { Linha(it, onClick = { vm.abrirTeto(it.categoria.id) }) }
-                }
-            }
+            CardDeCategorias(progresso, onTeto = { vm.abrirTeto(it) })
         }
 
 
@@ -164,6 +137,40 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
             onRemover = vm::removerTeto,
             onDismiss = vm::fecharTeto,
         )
+    }
+}
+
+/**
+ * **Um card para todas**, e não um por categoria. Seis cards empilhados davam a
+ * cada teto o peso de uma seção, e a tela virava uma pilha de blocos onde o
+ * protótipo tem uma lista.
+ */
+@Composable
+private fun CardDeCategorias(progresso: List<BudgetProgress>, onTeto: (Long) -> Unit) {
+    Cartao(Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Por categoria",
+                    style = BodyStrong,
+                    color = Tema.ink,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = if (progresso.size == 1) "1 teto" else "${progresso.size} tetos",
+                    style = Caption,
+                    color = Tema.inkMute,
+                )
+            }
+            progresso.forEach { Linha(it, onClick = { onTeto(it.categoria.id) }) }
+        }
     }
 }
 

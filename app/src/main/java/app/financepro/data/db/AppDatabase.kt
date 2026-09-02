@@ -85,6 +85,6 @@ fun buildDatabase(context: Context): AppDatabase {
         .openHelperFactory(SupportOpenHelperFactory(DatabaseKey(context).getOrCreate()))
         .addCallback(AppDatabase.ForeignKeysOn)
         .addCallback(SeedCallback)
-        .addMigrations(*MIGRACOES)
+        .addMigrations(DE_1_PARA_2, DE_2_PARA_3, DE_3_PARA_4)
         .build()
 }

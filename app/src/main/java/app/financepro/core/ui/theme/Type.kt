@@ -110,7 +110,13 @@ val DisplayStyles = listOf(DisplayXl, Display, DisplaySm)
  */
 private const val TNUM = "tnum"
 
-val HeadingSm = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 28.sp, lineHeight = 1.19.em, letterSpacing = (-0.01).em)
+val HeadingSm = TextStyle(
+    fontFamily = Inter,
+    fontWeight = FontWeight.W500,
+    fontSize = 28.sp,
+    lineHeight = 1.19.em,
+    letterSpacing = (-0.01).em,
+)
 val Subheading = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 22.sp, lineHeight = 1.33.em)
 
 /**
