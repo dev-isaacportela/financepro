@@ -31,10 +31,10 @@ jobs:
         # um grep cru não distingue código de comentário. Agora rodam dentro do
         # trace.py, que remove comentários antes de varrer.
         #
-        # Ao fechar a F0, trocar por `--phase F0` — aí passa a cobrar também
-        # @Req no código para todo MUST daquela fase. Cada fase concluída
-        # avança este argumento.
-        run: python tools/trace.py
+        # `--phase F0` cobra, além disso, @Req no código para todo MUST da F0 —
+        # a fase está fechada, e sem isto um requisito entregue poderia perder
+        # o teste sem ninguém notar. Cada fase concluída avança este argumento.
+        run: python tools/trace.py --phase F0
 
   build:
     name: Build e testes

@@ -36,7 +36,7 @@ revisão vai recusar por um motivo que já estava escrito.
 Rode as mesmas três verificações que o CI roda.
 
 ```bash
-python tools/trace.py
+python tools/trace.py --phase F0
 ```
 
 ```bash
@@ -79,6 +79,31 @@ entra por parser de importação, nunca por cálculo.
 **Rede para qualquer host novo.** O app conhece um só, `api.bcb.gov.br`, e o
 build cai se aparecer outro em `src/main`
 ([REQ-SEC-007](docs/spec.md#req-sec-007--rede-só-para-o-índice-público)).
+
+## Publicar uma versão
+
+Quem tem permissão de push em `main` corta a release; o resto é do CI.
+
+1. `versionName` e `versionCode` em `app/build.gradle.kts`.
+2. A seção da versão no [CHANGELOG.md](CHANGELOG.md), com data.
+3. Commit, e então a tag: `git tag v0.1.0 && git push origin v0.1.0`.
+
+A tag dispara `.github/workflows/release.yml`, que confere se ela bate com o
+`versionName`, roda as mesmas guardas do CI, assina o APK com o keystore dos
+secrets e publica a release com o `.sha256` e o trecho do CHANGELOG.
+
+**O keystore nunca entra no repositório.** Localmente ele vive em
+`keystore.properties` na raiz, que o `.gitignore` barra:
+
+```properties
+storeFile=release.jks
+storePassword=...
+keyAlias=financepro
+keyPassword=...
+```
+
+Sem esse arquivo o `assembleRelease` sai **não assinado**, de propósito: revisar
+o que o R8 faz com o código não pode depender de ter a chave de publicação.
 
 ## Licença da sua contribuição
 

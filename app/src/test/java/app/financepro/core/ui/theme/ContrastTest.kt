@@ -8,7 +8,7 @@ import org.junit.Test
 import kotlin.math.pow
 
 /**
- * REQ-DS-006 · REQ-DS-007 · REQ-DS-008 · REQ-A11Y-005
+ * REQ-DS-002 · REQ-DS-006 · REQ-DS-007 · REQ-DS-008 · REQ-A11Y-005
  *
  * Recalcula o contraste **a partir dos tokens**, com a fórmula de luminância
  * relativa da WCAG 2.1. Uma tabela em Markdown mente assim que alguém mexe num
@@ -24,7 +24,7 @@ import kotlin.math.pow
  * de fato mora — seis reprovam. Medir o fundo fácil seria escrever um teste que
  * concorda com o erro.
  */
-@Req("REQ-DS-006", "REQ-DS-007", "REQ-DS-008")
+@Req("REQ-DS-002", "REQ-DS-006", "REQ-DS-007", "REQ-DS-008")
 class ContrastTest {
 
     @Test
@@ -127,6 +127,32 @@ class ContrastTest {
         assertEquals(InkLight, PaletaClara.ink)
         assertEquals(SurfaceElevated, PaletaEscura.surface)
         assertEquals(SurfaceSoft, PaletaClara.surface)
+    }
+
+    @Test
+    fun `o card se separa do canvas por degrau, e o degrau nao e contorno`() {
+        // REQ-DS-002. O card não leva contorno porque o degrau já o separa — e é
+        // exatamente por isso que o degrau precisa ser medido, e não escolhido.
+        //
+        // A faixa tem os dois lados. Abaixo de 1 não há degrau nenhum e o card
+        // some no canvas; em 3:1 ou mais ele deixa de ser o mesmo papel um passo
+        // acima e vira uma segunda tela — que é o efeito que o contorno teria, e
+        // o requisito proíbe dizer a mesma coisa duas vezes.
+        listOf(PaletaEscura, PaletaClara).forEach { tema ->
+            val degrau = contrast(tema.surface, tema.paper)
+            assertTrue("sem degrau entre paper e surface", degrau > 1.0)
+            assertTrue("degrau de $degrau já é contorno", degrau < NAO_TEXTO)
+        }
+    }
+
+    @Test
+    fun `o fio existe para o encosto de dois tons iguais, e nao repete o degrau`() {
+        // A segunda metade de REQ-DS-002: `hairline` é reservado para quando duas
+        // superfícies do MESMO tom se encostam — ali não há degrau para separar.
+        // Ele precisa aparecer sobre `surface`, que é o tom que se repete.
+        listOf(PaletaEscura, PaletaClara).forEach { tema ->
+            assertTrue("hairline igual à surface", tema.hairline != tema.surface)
+        }
     }
 
     @Test

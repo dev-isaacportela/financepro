@@ -741,7 +741,7 @@ leitor pela `contentDescription` do sticker.
       teste nova
 - [x] Workflow exercido de verdade — verde na primeira execução, em
       `dev-isaacportela/mobile-finance` (privado)
-- [ ] Ao fechar a F0, trocar `trace.py` por `trace.py --phase F0` no workflow.
+- [x] Ao fechar a F0, trocar `trace.py` por `trace.py --phase F0` no workflow.
       Hoje `--phase F0` falha com **1** erro, e ele é legítimo: `REQ-DATA-001`
       espera um `MigrationTest` que só faz sentido quando existir um schema v2.
       O segundo erro era `REQ-CAT-005`, e a T-016 o fechou — esta linha ficou
