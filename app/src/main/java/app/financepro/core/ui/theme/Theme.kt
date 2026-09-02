@@ -58,8 +58,20 @@ fun FinanceProTheme(
  * `error` é Danger porque é a cor do traço indicador de campo inválido. **Não é
  * cor de mensagem**: texto Danger sobre o card dá 4.20:1 e reprova, então o erro
  * escrito continua em `ink`, com palavras (REQ-DS-007, REQ-A11Y-003).
+ *
+ * **Todos os papéis são preenchidos, inclusive os que o app não usa.** O que
+ * `darkColorScheme` não recebe cai no neutro de referência do Material 3, que é
+ * **roxeado** — `surfaceContainer` vale `#211F26`, e `inverseSurface` é lavanda
+ * clara. Basta um componente que ninguém customizou — um `Snackbar`, um
+ * `TextField` preenchido, um menu — para o roxo aparecer numa tela que o resto
+ * do app pinta em cinza neutro.
+ *
+ * É o tipo de vazamento que não dá erro e não aparece no arquivo onde o
+ * componente está: aparece na tela, uma vez, e some da memória de quem viu.
+ * Preencher os cinco degraus de `surfaceContainer` com o mesmo `surface` custa
+ * dez linhas e fecha a porta inteira.
  */
-private fun Paleta.toDarkScheme() = darkColorScheme(
+internal fun Paleta.toDarkScheme() = darkColorScheme(
     primary = ink,
     onPrimary = paper,
     secondary = ink,
@@ -72,11 +84,47 @@ private fun Paleta.toDarkScheme() = darkColorScheme(
     onSurfaceVariant = inkMute,
     outline = hairline,
     outlineVariant = hairline,
+
+    // Os cinco degraus de container do Material viram o degrau único deste
+    // sistema: a escada aqui tem dois passos e para (REQ-DS-004).
+    surfaceContainerLowest = surface,
+    surfaceContainerLow = surface,
+    surfaceContainer = surface,
+    surfaceContainerHigh = surface,
+    surfaceContainerHighest = surface,
+    surfaceBright = surface,
+    surfaceDim = paper,
+
+    // `surfaceTint` é o que o Material mistura ao fundo quando há elevação.
+    // Igualando a `surface`, a mistura é consigo mesma e não tinge nada — que é
+    // o mesmo resultado de `tonalElevation = 0`, mas garantido para componente
+    // que ninguém customizou.
+    surfaceTint = surface,
+
+    // Fundo invertido, do `Snackbar`. Sem isto ele nasce lavanda claro.
+    inverseSurface = ink,
+    inverseOnSurface = paper,
+    inversePrimary = paper,
+    scrim = CanvasDark,
+
+    // Não usados hoje, e preenchidos justamente por isso: o dia em que alguém
+    // largar um componente novo na tela, ele nasce na paleta da casa.
+    tertiary = ink,
+    onTertiary = paper,
+    primaryContainer = surface,
+    onPrimaryContainer = ink,
+    secondaryContainer = surface,
+    onSecondaryContainer = ink,
+    tertiaryContainer = surface,
+    onTertiaryContainer = ink,
+    errorContainer = surface,
+    onErrorContainer = ink,
+
     error = Danger,
     onError = ink,
 )
 
-private fun Paleta.toLightScheme() = lightColorScheme(
+internal fun Paleta.toLightScheme() = lightColorScheme(
     primary = ink,
     onPrimary = paper,
     secondary = ink,
@@ -89,6 +137,42 @@ private fun Paleta.toLightScheme() = lightColorScheme(
     onSurfaceVariant = inkMute,
     outline = hairline,
     outlineVariant = hairline,
+
+    // Os cinco degraus de container do Material viram o degrau único deste
+    // sistema: a escada aqui tem dois passos e para (REQ-DS-004).
+    surfaceContainerLowest = surface,
+    surfaceContainerLow = surface,
+    surfaceContainer = surface,
+    surfaceContainerHigh = surface,
+    surfaceContainerHighest = surface,
+    surfaceBright = surface,
+    surfaceDim = paper,
+
+    // `surfaceTint` é o que o Material mistura ao fundo quando há elevação.
+    // Igualando a `surface`, a mistura é consigo mesma e não tinge nada — que é
+    // o mesmo resultado de `tonalElevation = 0`, mas garantido para componente
+    // que ninguém customizou.
+    surfaceTint = surface,
+
+    // Fundo invertido, do `Snackbar`. Sem isto ele nasce lavanda claro.
+    inverseSurface = ink,
+    inverseOnSurface = paper,
+    inversePrimary = paper,
+    scrim = CanvasDark,
+
+    // Não usados hoje, e preenchidos justamente por isso: o dia em que alguém
+    // largar um componente novo na tela, ele nasce na paleta da casa.
+    tertiary = ink,
+    onTertiary = paper,
+    primaryContainer = surface,
+    onPrimaryContainer = ink,
+    secondaryContainer = surface,
+    onSecondaryContainer = ink,
+    tertiaryContainer = surface,
+    onTertiaryContainer = ink,
+    errorContainer = surface,
+    onErrorContainer = ink,
+
     error = Danger,
     onError = paper,
 )
