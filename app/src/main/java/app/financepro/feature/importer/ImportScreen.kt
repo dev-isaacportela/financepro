@@ -427,7 +427,10 @@ private fun LinhaDaRevisao(
                     items(state.categorias.filter { it.kind == esperado }, key = { it.id }) { c ->
                         CategorySticker(
                             category = c,
-                            selecionado = c.id == linha.categoriaId,
+                            // Nunca marcado, e não por esquecimento: escolher preenche
+                            // `categoriaId`, o `if` acima vira falso e a fileira sai de
+                            // cena. Chip visível e chip não escolhido são a mesma coisa.
+                            selecionado = false,
                             onClick = { onCategoria(c.id) },
                         )
                     }
@@ -564,23 +567,6 @@ private fun Recado(texto: String) {
     Cartao(Modifier.fillMaxWidth()) {
         Text(texto, style = Body, color = Tema.ink, modifier = Modifier.padding(12.dp))
     }
-}
-
-/**
- * O singular existe porque "1 parecidas" é o tipo de descuido que faz o usuário
- * desconfiar do resto da tela — e esta é justamente a tela em que ele precisa
- * confiar para confirmar trezentas linhas.
- */
-private fun possiveisEmPalavras(quantas: Int): String = if (quantas == 1) {
-    "⚠ 1 parecida com uma transação que já existe. Confira antes de confirmar."
-} else {
-    "⚠ $quantas parecidas com transações que já existem. Confira antes de confirmar."
-}
-
-private fun descartadasEmPalavras(quantas: Int): String = if (quantas == 1) {
-    "1 já estava na conta e foi descartada."
-} else {
-    "$quantas já estavam na conta e foram descartadas."
 }
 
 /**

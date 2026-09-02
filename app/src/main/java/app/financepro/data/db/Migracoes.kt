@@ -34,6 +34,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * literal sem sinal não casaria com nenhuma linha — o erro silencioso clássico
  * desta migração.
  */
+// Migração publicada é dado congelado: cada literal aqui é o que já está gravado
+// no banco em v1. Apontar para a paleta viva faria a migração mudar de sentido no
+// dia em que o tema mudasse, que é o bug que ela existe para não ter.
+@Suppress("MagicNumber")
 val DE_1_PARA_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
         val de = longArrayOf(
@@ -92,6 +96,9 @@ val DE_1_PARA_2 = object : Migration(1, 2) {
  * Categoria criada pelo usuário nunca entra: os ids 1 a 10 são os do seed, e
  * `Seed.kt` os declara explicitamente por essa razão.
  */
+// Mesma razão de DE_1_PARA_2: cor e id de seed aqui são dado congelado, e os ids
+// vêm do `Seed.kt` de então — não do de agora.
+@Suppress("MagicNumber")
 val DE_2_PARA_3 = object : Migration(2, 3) {
     override fun migrate(db: SupportSQLiteDatabase) {
         val teal = -16734082L
@@ -153,6 +160,3 @@ val DE_3_PARA_4 = object : Migration(3, 4) {
         db.execSQL("ALTER TABLE account ADD COLUMN taxaBp INTEGER")
     }
 }
-
-/** Na ordem, para o builder não depender de alguém lembrar de listá-las. */
-val MIGRACOES = arrayOf(DE_1_PARA_2, DE_2_PARA_3, DE_3_PARA_4)
