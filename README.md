@@ -1,4 +1,4 @@
-# mobile-finance
+# financepro
 
 App Android nativo de finanças pessoais. Kotlin + Jetpack Compose, offline-first,
 com importação de extratos.

@@ -1,4 +1,4 @@
-# Especificação de requisitos — mobile-finance
+# Especificação de requisitos — financepro
 
 Fonte de verdade do comportamento do app. Nenhuma feature existe sem um `REQ-*`
 aqui ([constitution.md](constitution.md) Art. 1 e 2).

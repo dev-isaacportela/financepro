@@ -10,7 +10,7 @@
   exatamente o que aconteceu no onboarding, na S26 (T-013).
 -->
 <resources>
-    <style name="Theme.MobileFinance" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.FinancePro" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/paper</item>
         <item name="android:statusBarColor">@color/paper</item>
         <item name="android:windowLightStatusBar">true</item>
