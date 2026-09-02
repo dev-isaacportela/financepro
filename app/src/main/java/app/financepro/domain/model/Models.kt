@@ -17,7 +17,24 @@ import java.time.YearMonth
 enum class AccountType { CHECKING, SAVINGS, CASH, CREDIT_CARD, INVESTMENT }
 
 /**
- * REQ-ACC-001 · REQ-ACC-002 · REQ-CARD-001
+ * A que o rendimento de um investimento está atrelado. REQ-INV-001
+ *
+ * Dois, e não uma tabela de índices: `PREFIXADO` é a taxa que o papel promete e
+ * não depende de nada externo; `CDI` depende de um número que muda com a Selic e
+ * vem de fora do app. IPCA+ e poupança seriam um terceiro caso — outra série a
+ * buscar e outra linha na tela — e nenhum dos dois cobre CDB, LCI/LCA ou
+ * prefixado, que é o que a maioria acompanha.
+ */
+enum class Indexador { PREFIXADO, CDI }
+
+/**
+ * REQ-ACC-001 · REQ-ACC-002 · REQ-CARD-001 · REQ-INV-001
+ *
+ * [taxaBp] é **pontos-base**, e o que ela mede depende de [indexador]:
+ * `PREFIXADO` → taxa anual (`1250` = 12,50% a.a.); `CDI` → percentual do índice
+ * (`11000` = 110% do CDI). Uma coluna com dois significados é deliberada — é
+ * literalmente o número ao lado do indexador na tela, e duas colunas
+ * mutuamente exclusivas custariam uma migração a mais para dizer o mesmo.
  *
  * [colorArgb] e [iconKey] são obrigatórios porque REQ-ACC-001 diz que toda conta
  * tem cor e ícone. Sem valor padrão, ninguém cria conta sem eles por descuido —
@@ -38,8 +55,13 @@ data class Account(
     val closingDay: Int? = null,
     val dueDay: Int? = null,
     val paymentAccountId: Long? = null,
+    // Só INVESTMENT (REQ-INV-001):
+    val indexador: Indexador? = null,
+    val taxaBp: Int? = null,
 ) {
     val isCard: Boolean get() = type == AccountType.CREDIT_CARD
+
+    val isInvestimento: Boolean get() = type == AccountType.INVESTMENT
 }
 
 enum class CategoryKind { INCOME, EXPENSE }

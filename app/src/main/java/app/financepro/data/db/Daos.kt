@@ -82,6 +82,16 @@ abstract class CategoryDao {
     abstract suspend fun childrenOf(parentId: Long): List<CategoryEntity>
 
     /**
+     * REQ-INV-003 — a categoria do rendimento, achada por nome e tipo.
+     *
+     * `archived = 0` de propósito: quem arquivou a categoria não a quer mais no
+     * grid, e reusá-la faria o lançamento cair numa gaveta fechada. Sem ela,
+     * `idDeRendimentos` cria outra — que é o comportamento recuperável.
+     */
+    @Query("SELECT * FROM category WHERE archived = 0 AND kind = :kind AND name = :nome LIMIT 1")
+    abstract suspend fun byNome(nome: String, kind: String): CategoryEntity?
+
+    /**
      * Quantas transações seguram esta categoria. REQ-CAT-005
      *
      * A exclusão é recusada pelo banco de qualquer forma; isto existe para a

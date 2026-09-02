@@ -296,7 +296,7 @@ um problema que este app não tem.
 
 ## ADR-010 — SQLCipher, e sem permissão de rede até a F4
 
-**Status** Aceita · **Constituição** Art. 13
+**Status** Aceita, emendada pelo [ADR-012](#adr-012--rede-entra-para-um-índice-público-e-só) · **Constituição** Art. 13
 
 **Decisão.** Banco criptografado com SQLCipher, chave de 32 bytes no Android
 Keystore. `allowBackup="false"`. Nenhuma permissão `INTERNET` no manifesto nas
@@ -387,3 +387,58 @@ e não encosta em nenhum outro valor.
 inverso deste ADR, e o custo é o mesmo: cinco arquivos de tema, quatro de
 componente, três de teste — mais uma migração, agora que existe dado gravado na
 paleta atual.
+
+---
+
+## ADR-012 — Rede entra para um índice público, e só
+
+**Status** Aceita · **Emenda** [ADR-010](#adr-010--sqlcipher-e-sem-permissão-de-rede-até-a-f4) · **Constituição** Art. 13
+
+**Decisão.** A permissão `INTERNET` entra na T-051, para uma requisição: ler o
+CDI da série 4389 do SGS do Banco Central, uma vez por dia. Nenhum outro host, e
+nenhum dado do usuário no caminho.
+
+**Razão.** O módulo de investimento precisa saber quanto o CDI está pagando, e o
+CDI muda com a Selic, fora do app, sem o usuário fazer nada. As alternativas
+eram um campo para ele digitar a taxa a cada mudança — cerca de oito vezes por
+ano, com o app mostrando número errado nos intervalos em que ele esquecesse — ou
+uma tabela embutida, que é a mesma coisa com data de validade. Foi decisão
+explícita de quem usa o app.
+
+O que se pede é um número público que vale igual para todo mundo. A requisição é
+um `GET` sem parâmetro, sem cabeçalho de identificação, sem corpo e sem cookie: o
+servidor do BCB não fica sabendo nada além de que alguém perguntou o CDI.
+
+**O que se perdeu, e não é pouco.** A frase do ADR-010 — "a ausência de
+`INTERNET` é uma garantia que o usuário verifica sozinho nas informações do app"
+— deixou de ser verdade. Um app financeiro sem permissão de rede é uma afirmação
+que não precisa de confiança nenhuma para ser conferida, e nenhuma guarda de
+build a substitui inteira.
+
+Pior: o WorkManager, que faz a busca diária, trouxe `ACCESS_NETWORK_STATE`,
+`WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED` e `FOREGROUND_SERVICE` junto. Somadas à
+`USE_FINGERPRINT` que a `androidx.biometric` já trazia, a lista do app foi de
+duas permissões para sete. Quem abrir as informações do app hoje vê uma lista, e
+não uma linha.
+
+**Duas guardas no lugar da que caiu.**
+
+1. `ManifestTest` deixou de proibir três permissões pelo nome e passou a exigir o
+   **conjunto exato**. É mais forte que a regra anterior: qualquer permissão
+   nova reprova o build, inclusive — e principalmente — a que entra pelo
+   manifesto de um AAR que ninguém abriu. Foi assim que as quatro do WorkManager
+   apareceram, em vez de entrarem caladas.
+2. `tools/trace.py` varre `src/main` e reprova URL para host que não seja
+   `api.bcb.gov.br`. A permissão diz que o app **pode** falar com a rede; é esta
+   varredura que diz **com quem**. Uma sem a outra não garante coisa alguma.
+
+**Consequência.** Continua sem crash reporter, sem analytics e sem remote config
+— o Art. 13 não mudou, e o que entrou não abre precedente para eles: cada um
+seria um host novo, e o host novo reprova o build. Open Finance continua na F4,
+onde a diferença é justamente que lá trafega a conta bancária de alguém.
+
+**Gatilho de reversão.** Se um segundo host precisar entrar, a decisão volta à
+mesa antes de a linha ser escrita — a varredura de host existe para forçar essa
+conversa. Reverter esta ADR inteira é remover a dependência do WorkManager, o
+pacote `data/indices/` e a linha do manifesto, e devolver o campo manual de CDI
+como única fonte: nada mais no app depende de rede.

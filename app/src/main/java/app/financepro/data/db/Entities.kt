@@ -7,6 +7,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.model.CategoryKind
+import app.financepro.domain.model.Indexador
 import app.financepro.domain.model.TxnType
 import kotlinx.serialization.Serializable
 
@@ -28,7 +29,7 @@ import kotlinx.serialization.Serializable
  * coluna. `import_batch` e `payee_rule` ficam de fora enquanto nada as escreve.
  */
 
-/** REQ-ACC-001 · REQ-ACC-002 · REQ-CARD-001 */
+/** REQ-ACC-001 · REQ-ACC-002 · REQ-CARD-001 · REQ-INV-001 */
 @Serializable
 @Entity(
     tableName = "account",
@@ -57,6 +58,10 @@ data class AccountEntity(
     val closingDay: Int? = null,
     val dueDay: Int? = null,
     val paymentAccountId: Long? = null,
+    // Só INVESTMENT, pela mesma razão das quatro acima. `taxaBp` é pontos-base,
+    // e o que ela mede depende de `indexador` — ver o KDoc de `Account`.
+    val indexador: Indexador? = null,
+    val taxaBp: Int? = null,
 )
 
 /** REQ-CAT-001 · REQ-CAT-002 */

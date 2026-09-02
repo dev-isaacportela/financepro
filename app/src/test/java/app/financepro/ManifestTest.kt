@@ -13,37 +13,67 @@ import org.robolectric.RuntimeEnvironment
 import java.io.File
 
 /**
- * REQ-SEC-007 — o app não pede rede nas fases F0 a F3.
+ * REQ-SEC-007 — o app pede exatamente estas permissões, e nenhuma outra.
  *
- * Um app financeiro sem permissão de `INTERNET` é uma garantia que o usuário
- * confere sozinho nas informações do app, e não uma promessa na política de
- * privacidade. Este teste é o que impede a garantia de morrer sem ninguém
- * perceber.
+ * A regra anterior era "`INTERNET` não existe aqui". A T-050 a trouxe, para ler
+ * o CDI da série pública do Banco Central (ADR-012), e a garantia que a ausência
+ * dela dava precisava de substituta — senão a lista de permissões voltaria a
+ * crescer sem ninguém olhar, que é como ela sempre cresce.
  *
- * Lê o manifesto **mesclado**, via `PackageManager`, e não o do módulo: a
- * permissão quase nunca entra por alguém digitando `<uses-permission>` — entra
- * por dependência transitiva, no manifesto de um AAR que ninguém abriu.
+ * A substituta é **mais forte que a regra que ela troca**: em vez de proibir
+ * três permissões pelo nome, o teste exige o conjunto exato. Qualquer permissão
+ * nova reprova o build — inclusive, e principalmente, a que entra por
+ * dependência transitiva, no manifesto de um AAR que ninguém abriu. Foi assim
+ * que as quatro do WorkManager apareceram, e é por isso que elas estão
+ * nomeadas abaixo em vez de terem entrado caladas.
  *
- * A partir da F4 a T-049 adiciona `INTERNET` de propósito, e é **aqui** que a
- * regra muda junto, de preferência no mesmo commit.
+ * Lê o manifesto **mesclado**, via `PackageManager`, e não o do módulo.
+ *
+ * A outra metade da guarda está em `tools/trace.py`: `INTERNET` no manifesto
+ * permite falar com a rede, e é a varredura de URL no fonte que decide **com
+ * quem**. Uma sem a outra não garante nada.
  */
-@Req("REQ-SEC-007", "REQ-DS-010", "REQ-IMP-001")
+@Req("REQ-SEC-007", "REQ-DS-010", "REQ-IMP-001", "REQ-INV-005")
 @RunWith(RobolectricTestRunner::class)
 class ManifestTest {
 
     private val app = RuntimeEnvironment.getApplication()
 
     @Test
-    fun `manifesto mesclado nao declara INTERNET`() {
-        val permissoes = app.packageManager
-            .getPackageInfo(app.packageName, PackageManager.GET_PERMISSIONS)
-            .requestedPermissions
-            ?.toList()
-            .orEmpty()
+    fun `manifesto mesclado declara exatamente estas permissoes`() {
+        // Cada linha diz quem a pediu e para quê. Uma permissão a mais neste
+        // conjunto é uma decisão de produto, não um detalhe de dependência —
+        // e este teste é o lugar onde ela precisa ser escrita à mão para passar.
+        val esperadas = setOf(
+            // REQ-SEC-003 — bloqueio biométrico, declarado no nosso manifesto.
+            Manifest.permission.USE_BIOMETRIC,
+            // Herdada da androidx.biometric, para aparelho anterior ao Android 9.
+            "android.permission.USE_FINGERPRINT",
+            // REQ-INV-005 — o CDI da série pública do BCB, e nada mais.
+            Manifest.permission.INTERNET,
+            // As quatro abaixo vêm do WorkManager, que agenda a busca diária.
+            // Nenhuma delas foi digitada por nós; todas entraram com a
+            // dependência, e é exatamente por isso que estão listadas.
+            "android.permission.ACCESS_NETWORK_STATE",
+            "android.permission.WAKE_LOCK",
+            "android.permission.RECEIVE_BOOT_COMPLETED",
+            "android.permission.FOREGROUND_SERVICE",
+            // Também do WorkManager, e a única que não é do sistema: uma
+            // permissão do próprio app, com nível `signature`, para os
+            // receivers que ele registra em tempo de execução. Não pede nada
+            // ao usuário e não aparece na loja — mas aparece aqui, que é o
+            // ponto de o teste ler a lista inteira em vez de uma allowlist de
+            // prefixo "android.permission".
+            "app.financepro.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+        )
 
-        assertFalse(
-            "alguém — ou alguma dependência — trouxe INTERNET de volta: $permissoes",
-            Manifest.permission.INTERNET in permissoes,
+        val permissoes = declaradas()
+
+        assertEquals(
+            "a lista de permissões do app mudou — se foi de propósito, atualize " +
+                "REQ-SEC-007 e o ADR-012 no mesmo commit",
+            esperadas,
+            permissoes.toSet(),
         )
     }
 
@@ -54,11 +84,7 @@ class ManifestTest {
         // `READ_EXTERNAL_STORAGE` seria pedir a pasta inteira do usuário para
         // ler um arquivo que ele acabou de apontar — e a permissão entra tão
         // fácil por dependência transitiva quanto a INTERNET acima.
-        val permissoes = app.packageManager
-            .getPackageInfo(app.packageName, PackageManager.GET_PERMISSIONS)
-            .requestedPermissions
-            ?.toList()
-            .orEmpty()
+        val permissoes = declaradas()
 
         val armazenamento = listOf(
             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -71,6 +97,12 @@ class ManifestTest {
             permissoes.any { it in armazenamento },
         )
     }
+
+    private fun declaradas(): List<String> = app.packageManager
+        .getPackageInfo(app.packageName, PackageManager.GET_PERMISSIONS)
+        .requestedPermissions
+        ?.toList()
+        .orEmpty()
 
     @Test
     fun `as fontes estao empacotadas, sem Downloadable Fonts`() {

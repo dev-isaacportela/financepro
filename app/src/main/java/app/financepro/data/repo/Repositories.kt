@@ -9,6 +9,8 @@ import app.financepro.data.db.BudgetDao
 import app.financepro.data.db.BudgetEntity
 import app.financepro.data.db.CategoryDao
 import app.financepro.data.db.CategoryEntity
+import app.financepro.data.db.LIGHT_GREEN
+import app.financepro.data.db.NOME_RENDIMENTOS
 import app.financepro.data.db.PayeeRuleDao
 import app.financepro.data.db.RecurringDao
 import app.financepro.data.db.RecurringRuleEntity
@@ -89,6 +91,8 @@ class AccountRepository @Inject constructor(private val dao: AccountDao) {
             closingDay = conta.closingDay,
             dueDay = conta.dueDay,
             paymentAccountId = conta.paymentAccountId,
+            indexador = conta.indexador,
+            taxaBp = conta.taxaBp,
         ),
     )
 
@@ -153,6 +157,25 @@ class CategoryRepository @Inject constructor(
             archived = categoria.archived,
         ),
     )
+
+    /**
+     * A categoria que recebe o rendimento, criada na primeira vez. REQ-INV-003
+     *
+     * Acha por nome e tipo em vez de por id fixo — ver o KDoc de
+     * [NOME_RENDIMENTOS]. Se o usuário renomear ou arquivar a dele, a próxima
+     * chamada cria outra: duplicar uma categoria é recuperável em dois toques,
+     * e um lançamento que não grava não é.
+     */
+    suspend fun idDeRendimentos(): Long =
+        dao.byNome(NOME_RENDIMENTOS, CategoryKind.INCOME.name)?.id
+            ?: dao.upsert(
+                CategoryEntity(
+                    name = NOME_RENDIMENTOS,
+                    kind = CategoryKind.INCOME,
+                    iconKey = "cash",
+                    colorArgb = LIGHT_GREEN,
+                ),
+            )
 
     /** Quantas transações impedem a exclusão (REQ-CAT-005). */
     suspend fun transacoesEm(id: Long): Int = dao.contarTransacoes(id)

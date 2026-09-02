@@ -14,12 +14,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -27,7 +32,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import app.financepro.core.money.parseCents
 import app.financepro.core.ui.component.Chips
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
@@ -42,6 +49,7 @@ import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Tema
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
+import app.financepro.domain.model.Indexador
 import app.financepro.domain.usecase.CARD_DAY_RANGE
 
 /**
@@ -55,6 +63,9 @@ import app.financepro.domain.usecase.CARD_DAY_RANGE
  * Dia de fechamento e vencimento saem de uma lista de 1 a 28, não de um campo
  * livre: 29, 30 e 31 não existem em fevereiro, e a spec limita a faixa na
  * coluna. Recusar depois o que a interface ofereceu é pior que não oferecer.
+ *
+ * Investimento (REQ-INV-001) segue a mesma regra dos campos condicionais, com
+ * dois campos em vez de quatro.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -108,6 +119,7 @@ fun AccountFormSheet(
             )
 
             if (conta.isCard) CamposDeCartao(conta, contas, onChange)
+            if (conta.isInvestimento) CamposDeInvestimento(conta, onChange)
 
             if (erro != null) {
                 Text("⚠ $erro", style = Caption, color = Tema.ink)
@@ -154,6 +166,56 @@ private fun CamposDeCartao(conta: Account, contas: List<Account>, onChange: (Acc
         selecionado = conta.paymentAccountId,
         onClick = { onChange(conta.copy(paymentAccountId = it)) },
     )
+}
+
+/**
+ * REQ-INV-001 — os dois só existem para `INVESTMENT`.
+ *
+ * A taxa é um campo de texto e não um `MoneyField`: quem digita "110% do CDI"
+ * escreve 110, não 1,10, e a digitação da direita para a esquerda da maquininha
+ * está errada para percentual. Quem converte o texto é [parseCents], a mesma
+ * função do resto do app — duas casas decimais de por cento **são**
+ * pontos-base, então "12,5" vira 1250 sem nenhuma conversão nova.
+ */
+@Composable
+private fun CamposDeInvestimento(conta: Account, onChange: (Account) -> Unit) {
+    Rotulo("Rende conforme")
+    Chips(
+        itens = Indexador.entries.map { it to indexadorCurto(it) },
+        selecionado = conta.indexador,
+        onClick = { onChange(conta.copy(indexador = it)) },
+    )
+
+    // O rótulo muda com o indexador porque o número significa coisas
+    // diferentes: 110 é "110% do CDI", e 12,5 é "12,5% ao ano". Um rótulo só
+    // ("Taxa") deixaria a escala por conta do palpite de quem digita.
+    val comCdi = conta.indexador == Indexador.CDI
+    Rotulo(if (comCdi) "Percentual do CDI" else "Taxa ao ano")
+
+    var texto by remember(conta.id) { mutableStateOf(taxaTexto(conta.taxaBp)) }
+    OutlinedTextField(
+        value = texto,
+        onValueChange = {
+            texto = it
+            onChange(conta.copy(taxaBp = parseCents(it)?.toInt()))
+        },
+        suffix = { Text(if (comCdi) "% do CDI" else "% a.a.", style = Caption) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+/** Pontos-base de volta para o texto que a pessoa digitou: `11000` → `110`. */
+private fun taxaTexto(bp: Int?): String = when {
+    bp == null -> ""
+    bp % 100 == 0 -> (bp / 100).toString()
+    else -> "${bp / 100},${(bp % 100).toString().padStart(2, '0')}"
+}
+
+private fun indexadorCurto(indexador: Indexador) = when (indexador) {
+    Indexador.PREFIXADO -> "Taxa fixa"
+    Indexador.CDI -> "CDI"
 }
 
 private fun tipoCurto(tipo: AccountType) = when (tipo) {

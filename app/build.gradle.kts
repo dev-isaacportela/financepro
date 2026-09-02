@@ -88,6 +88,11 @@ dependencies {
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.datastore.preferences)
 
+    // T-050 — o worker diário que busca o CDI (REQ-INV-005). A versão estava
+    // declarada desde a T-001 e nunca aplicada: o worker de recorrências não
+    // entrou (ADR-006), e este é o primeiro trabalho de fundo do app.
+    implementation(libs.androidx.work.runtime.ktx)
+
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

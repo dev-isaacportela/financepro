@@ -2,6 +2,7 @@ package app.financepro.data.db
 
 import app.financepro.core.testing.Req
 import app.financepro.domain.model.AccountType
+import app.financepro.domain.model.Indexador
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -9,7 +10,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Req("REQ-ACC-001", "REQ-ACC-002", "REQ-CARD-001")
+@Req("REQ-ACC-001", "REQ-ACC-002", "REQ-CARD-001", "REQ-INV-001")
 class AccountDaoTest : DbTest() {
 
     private val dao get() = db.accountDao()
@@ -53,6 +54,27 @@ class AccountDaoTest : DbTest() {
         assertEquals(10, dao.byId(cartao)?.closingDay)
         assertEquals(17, dao.byId(cartao)?.dueDay)
         assertEquals(5_000_00L, dao.byId(cartao)?.creditLimitCents)
+    }
+
+    @Test
+    fun `indexador e taxa sobrevivem ao round-trip`() = runBlocking {
+        // Duas traduções em arquivos diferentes — `Mappers.kt` e
+        // `Repositories.kt` — e um `taxaBp` perdido no caminho faria o
+        // investimento aparecer sem taxa depois de salvo, sem erro nenhum.
+        val cdb = dao.upsert(
+            CONTA.copy(
+                name = "CDB",
+                type = AccountType.INVESTMENT,
+                indexador = Indexador.CDI,
+                taxaBp = 11_000,
+            ),
+        )
+        val corrente = dao.upsert(CONTA.copy(name = "Corrente"))
+
+        assertEquals(Indexador.CDI, dao.byId(cdb)?.indexador)
+        assertEquals(11_000, dao.byId(cdb)?.taxaBp)
+        assertNull(dao.byId(corrente)?.indexador)
+        assertNull(dao.byId(corrente)?.taxaBp)
     }
 
     @Test

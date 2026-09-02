@@ -131,5 +131,28 @@ val DE_2_PARA_3 = object : Migration(2, 3) {
 /** Uma troca de cor: o id, o que o app pode ter posto ali, e o que fica. */
 private data class Cor(val id: Long, val antes: List<Long>, val agora: Long)
 
+/**
+ * v3 → v4 — conta de investimento ganha indexador e taxa. REQ-INV-001
+ *
+ * Duas colunas nuláveis em `account`, no mesmo molde das quatro que só valem
+ * para cartão. `ALTER TABLE ADD COLUMN` é a única forma de DDL que o SQLite faz
+ * sem recriar a tabela, e nuláveis não precisam de `DEFAULT` — que é justamente
+ * por que o modelo as declara assim.
+ *
+ * **A categoria "Rendimentos" não entra aqui.** Seria a linha óbvia a
+ * acrescentar, e é a errada: os ids 1 a 10 são do seed, então o 11 é o da
+ * primeira categoria que o usuário criou. Um `INSERT OR IGNORE` naquele id
+ * seria ignorado em silêncio em toda instalação antiga, e o rendimento cairia
+ * na categoria que a pessoa chamou de "Pets". Quem cria a categoria é
+ * `CategoryRepository.idDeRendimentos()`, com id vindo do AUTOINCREMENT, na
+ * primeira vez que um rendimento é lançado.
+ */
+val DE_3_PARA_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE account ADD COLUMN indexador TEXT")
+        db.execSQL("ALTER TABLE account ADD COLUMN taxaBp INTEGER")
+    }
+}
+
 /** Na ordem, para o builder não depender de alguém lembrar de listá-las. */
-val MIGRACOES = arrayOf(DE_1_PARA_2, DE_2_PARA_3)
+val MIGRACOES = arrayOf(DE_1_PARA_2, DE_2_PARA_3, DE_3_PARA_4)

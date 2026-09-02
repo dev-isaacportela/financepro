@@ -9,6 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import app.financepro.core.ui.theme.FinanceProTheme
+import app.financepro.data.indices.CdiWorker
 import app.financepro.data.prefs.SecurityPrefs
 import app.financepro.data.repo.RecurringRepository
 import app.financepro.feature.FinanceNav
@@ -40,6 +41,7 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         protegerJanela()
         gerarRecorrencias()
+        CdiWorker.agendar(this)
         setContent {
             FinanceProTheme {
                 FinanceNav()
@@ -56,12 +58,21 @@ class MainActivity : FragmentActivity() {
      * `Activity` duas vezes já era.
      *
      * ponytail: sem o `WorkManager` diário do ADR-006. Nada no app produz saída
-     * com ele fechado — não há notificação de conta a vencer, e a permissão de
-     * rede está barrada até a F4 —, então materializar em segundo plano grava
-     * linhas que ninguém vê antes da próxima abertura, que é justamente quando
-     * isto aqui roda. O worker entra no dia em que existir consumidor de fundo
-     * (lembrete de vencimento, widget): é uma classe, e o gerador já está
-     * pronto para ser chamado por ela.
+     * com ele fechado — não há notificação de conta a vencer —, então
+     * materializar em segundo plano grava linhas que ninguém vê antes da
+     * próxima abertura, que é justamente quando isto aqui roda. O worker entra
+     * no dia em que existir consumidor de fundo (lembrete de vencimento,
+     * widget): é uma classe, e o gerador já está pronto para ser chamado por
+     * ela. A metade do argumento que citava a rede barrada caiu com o ADR-012;
+     * a outra metade continua de pé, e é ela que decide.
+     *
+     * O `WorkManager` que a T-051 trouxe **não** é esse worker: ele busca um
+     * número que muda fora do app, e é por isso que precisa rodar sem ninguém
+     * abrir nada. O agendamento fica no `onCreate` acima, e não na
+     * `FinanceApp`, porque `Application.onCreate` roda em todo teste de
+     * Robolectric — e `WorkManager.getInstance` estoura fora de um app de
+     * verdade. `KEEP` faz a chamada repetida ser barata: só a primeira
+     * enfileira.
      */
     private fun gerarRecorrencias() = lifecycleScope.launch {
         recorrencias.gerarPendentes(LocalDate.now())

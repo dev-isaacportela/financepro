@@ -169,9 +169,11 @@ um arquivo de fonte a mais.
 
 **As fontes são empacotadas em `res/font/`, não baixadas.** Downloadable Fonts
 exige rede e Google Play Services, e
-[REQ-SEC-007](spec.md#req-sec-007--sem-permissão-de-rede) proíbe a permissão
-`INTERNET` até a F4. Fonte remota seria a primeira coisa a furar essa garantia,
-sem ninguém perceber.
+[REQ-SEC-007](spec.md#req-sec-007--rede-só-para-o-índice-público) restringe a
+rede a um host só. A permissão `INTERNET` existe desde a T-051, e é exatamente
+por isso que esta regra ficou mais necessária, não menos: fonte remota entraria
+por um host novo, sem ninguém perceber, agora que a porta não está mais
+trancada por fora.
 
 Inter variável completa pesa ~876KB. Subsetada para latin + latin-ext fica em
 ~120KB. Vale o subset, e está marcado com `ponytail:` em `Type.kt`.

@@ -47,6 +47,7 @@ a task correspondente (Art. 5).
 | [`REQ-NOT`](#not--captura-por-notificação) | Notificação bancária | 6 |
 | [`REQ-OF`](#of--open-finance) | Open Finance | 4 |
 | [`REQ-RPT`](#rpt--relatórios) | Relatórios | 4 |
+| [`REQ-INV`](#inv--investimentos) | Investimentos e rendimento | 6 |
 | [`REQ-UI`](#ui--interface) | Navegação e telas | 7 |
 | [`REQ-DS`](#ds--sistema-visual) | Sistema visual | 10 |
 | [`REQ-A11Y`](#a11y--acessibilidade) | Acessibilidade | 6 |
@@ -917,6 +918,103 @@ de transações já filtrada por aquela categoria e período.
 
 ---
 
+# INV — investimentos
+
+Investimento **é uma conta** do tipo `INVESTMENT`, não uma entidade nova. Aporte
+e resgate já são transferências (REQ-TXN-003) e o saldo já é REQ-ACC-004; o que
+esta seção acrescenta é a taxa, o rendimento e o acompanhamento.
+
+### REQ-INV-001 — Indexador do investimento
+
+`F1` · `MUST` · Teste: `TaxaTest`
+
+ONDE o tipo da conta for `INVESTMENT`, O SISTEMA DEVE permitir escolher o
+indexador entre `PREFIXADO` e `CDI`, e armazenar a taxa em pontos-base.
+
+A taxa significa coisas diferentes conforme o indexador: em `PREFIXADO` é a taxa
+anual (`1250` = 12,50% a.a.); em `CDI` é o percentual do índice (`11000` = 110%
+do CDI).
+
+SE o tipo não for `INVESTMENT`, ENTÃO O SISTEMA DEVE ocultar os dois campos,
+como já faz com os campos de cartão (REQ-ACC-002).
+
+### REQ-INV-002 — Rendimento previsto do mês
+
+`F1` · `MUST` · Teste: `RendimentoTest`
+
+O SISTEMA DEVE calcular o rendimento previsto do mês como o saldo da conta
+multiplicado pela taxa **mensal composta** equivalente à taxa anual efetiva.
+
+```
+anualEfetivo(PREFIXADO) = taxaBp
+anualEfetivo(CDI)       = cdiAnualBp × taxaBp / 10000
+mensal                  = (1 + anualEfetivo)^(1/12) − 1
+previsto                = saldo × mensal, arredondado ao centavo
+```
+
+A taxa mensal é composta, não a anual dividida por doze: a diferença é de meio
+ponto percentual ao ano, que é o tamanho do desencontro entre o previsto e o
+extrato.
+
+SE o indexador for `CDI` e nenhum valor de CDI for conhecido, ENTÃO O SISTEMA
+DEVE exibir o rendimento como indisponível, e NÃO DEVE exibir zero.
+
+### REQ-INV-003 — Lançamento do rendimento
+
+`F1` · `MUST` · Teste: `CategoriaDeRendimentosTest`
+
+QUANDO o usuário confirma o rendimento de um mês, O SISTEMA DEVE gravar uma
+transação `INCOME` na conta do investimento, com o valor sugerido pelo cálculo e
+**editável** antes de gravar.
+
+O SISTEMA DEVE usar uma categoria de receita chamada "Rendimentos", criando-a se
+não existir. NÃO DEVE fixar o id dessa categoria: os ids 1 a 10 são do seed
+(REQ-CAT-004), e o 11 em diante pertence ao usuário.
+
+ENQUANTO o mês já tiver um rendimento lançado, O SISTEMA NÃO DEVE oferecer
+lançá-lo de novo.
+
+### REQ-INV-004 — Acompanhamento mensal
+
+`F1` · `MUST` · Teste: `RendimentoTest`
+
+O SISTEMA DEVE apresentar, para os últimos 12 meses, o rendimento, o aporte
+líquido e o saldo ao fim de cada mês, em lista **e** em gráfico.
+
+A classificação vem do tipo da transação, sem coluna nova: `INCOME` é
+rendimento, `TRANSFER` é aporte quando entra e resgate quando sai.
+
+O gráfico NÃO DEVE ser a única forma de ler os números (Art. 17): a lista mensal
+é a alternativa textual.
+
+### REQ-INV-005 — Origem do CDI
+
+`F1` · `MUST` · Teste: `BancoCentralTest`
+
+O SISTEMA DEVE obter o CDI da série 4389 do SGS do Banco Central
+(`api.bcb.gov.br`), e DEVE atualizá-lo uma vez por dia, com rede disponível.
+
+A requisição NÃO DEVE conter nenhum dado do usuário. O SISTEMA NÃO DEVE contatar
+nenhum outro host (REQ-SEC-007).
+
+SE a resposta não for legível, ENTÃO O SISTEMA DEVE manter o último valor
+conhecido.
+
+### REQ-INV-006 — Sem rede, o app continua inteiro
+
+`F1` · `MUST` · Teste: `manual`
+
+ENQUANTO não houver rede, O SISTEMA DEVE usar o último CDI conhecido e exibir a
+data **do dado**, não a da última tentativa.
+
+ENQUANTO nenhum CDI tiver sido obtido, O SISTEMA DEVE permitir que o usuário
+informe o valor à mão, e DEVE marcar na tela que o valor foi informado por ele.
+
+QUANDO uma busca bem-sucedida acontecer, O SISTEMA DEVE substituir o valor
+informado à mão: a rede é a fonte, e o campo manual é a ponte até ela.
+
+---
+
 # UI — interface
 
 ### REQ-UI-001 — Navegação principal
@@ -1205,8 +1303,9 @@ transações em 64sp violaria o caminho de 5 segundos do Art. 18.
 O SISTEMA DEVE empacotar as fontes em `res/font/` e NÃO DEVE usar Downloadable
 Fonts.
 
-Downloadable Fonts exige rede e Google Play Services, o que furaria
-[REQ-SEC-007](#req-sec-007--sem-permissão-de-rede) pela porta dos fundos.
+Downloadable Fonts exige rede e Google Play Services, e furaria
+[REQ-SEC-007](#req-sec-007--rede-só-para-o-índice-público) pela porta dos
+fundos: seria um segundo host, e o app conhece um.
 
 ---
 
@@ -1304,14 +1403,27 @@ impedindo captura de tela e ocultando o conteúdo na lista de recentes.
 O SISTEMA NÃO DEVE registrar valor monetário, descrição de transação, nome de
 estabelecimento ou saldo em log, incluindo builds de debug.
 
-### REQ-SEC-007 — Sem permissão de rede
+### REQ-SEC-007 — Rede só para o índice público
 
 `F0` · `MUST` · Teste: `ManifestTest`
 
-O SISTEMA NÃO DEVE declarar a permissão `INTERNET` no manifesto nas fases F0 a F3.
+O SISTEMA DEVE declarar exatamente as permissões que o `ManifestTest` nomeia, e
+nenhuma outra — inclusive vindas de dependência transitiva.
 
-Verificável por teste que lê o manifesto mesclado. É a garantia que o usuário
-confere sozinho nas informações do app.
+O SISTEMA NÃO DEVE contatar host algum além de `api.bcb.gov.br`, e a única
+requisição permitida é a leitura do CDI da série pública (REQ-INV-005).
+Verificável por varredura de `tools/trace.py` sobre `src/main`.
+
+Nenhum dado do usuário DEVE trafegar. Sincronização de conta bancária continua
+sendo assunto da F4 (REQ-OF-001).
+
+**Emenda.** Até a T-051 este requisito dizia "não declarar `INTERNET` nas fases
+F0 a F3", e a garantia era conferível pelo usuário na tela de informações do
+app. O módulo de investimento a trocou por duas guardas mais estreitas — o
+conjunto exato de permissões e a lista de hosts —, porque a antiga também
+proibia buscar um número público que muda sem o app saber. O
+[ADR-012](decisoes.md#adr-012--rede-entra-para-um-índice-público-e-só) registra
+o que se ganhou e o que se perdeu.
 
 ---
 

@@ -37,6 +37,8 @@ fun AccountEntity.toDomain() = Account(
     closingDay = closingDay,
     dueDay = dueDay,
     paymentAccountId = paymentAccountId,
+    indexador = indexador,
+    taxaBp = taxaBp,
 )
 
 fun CategoryEntity.toDomain() = Category(

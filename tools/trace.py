@@ -58,6 +58,16 @@ RE_LOG = re.compile(r"\bandroid\.util\.Log\b|\bLog\.(?:v|d|i|w|e|wtf|println)\s*
 # unica copia que sobra quando o aparelho se perde.
 MONEY_PATHS = ("/core/money/", "/domain/", "/data/ingest/", "/data/export/")
 
+# REQ-SEC-007 / ADR-012 — a permissao INTERNET entrou na T-050 para uma coisa
+# so: ler o CDI da serie publica do Banco Central. O manifesto diz que o app
+# PODE falar com a rede; e esta varredura que diz COM QUEM. Sem ela, a permissao
+# vale para qualquer host, e o ManifestTest continuaria verde.
+#
+# Roda sobre o fonte sem comentarios, como as outras guardas: link de
+# documentacao em KDoc nao e trafego.
+RE_URL = re.compile(r"https?://([A-Za-z0-9.\-]+)")
+HOSTS_PERMITIDOS = ("api.bcb.gov.br",)
+
 PHASES = ["F0", "F1", "F2", "F3", "F4"]
 
 
@@ -222,6 +232,15 @@ def check_constitution(errors):
                 errors.append(
                     f"{rel}:{line}: '{m.group(0)}' — nenhum log no app "
                     f"(Art. 15, REQ-SEC-006)")
+
+            # REQ-SEC-007 / ADR-012 — a outra metade da guarda do ManifestTest.
+            for m in RE_URL.finditer(code):
+                if m.group(1) in HOSTS_PERMITIDOS:
+                    continue
+                line = code[:m.start()].count(chr(10)) + 1
+                errors.append(
+                    f"{rel}:{line}: '{m.group(1)}' — o app so fala com "
+                    f"{', '.join(HOSTS_PERMITIDOS)} (REQ-SEC-007, ADR-012)")
 
         # Art. 6 — so em caminho de dinheiro, e so em src/main. Fora dai
         # toFloat e legitimo (alpha, progresso de animacao), e os testes usam

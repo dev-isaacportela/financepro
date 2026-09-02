@@ -2,12 +2,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-      REQ-SEC-007 — a permissão INTERNET NÃO é declarada nas fases F0 a F3.
-      É a garantia que o usuário confere sozinho nas informações do app.
-      Só a T-049 (Open Finance, F4) pode adicioná-la, e o ManifestTest da
-      T-019 falha se ela aparecer antes disso — inclusive por dependência
-      transitiva, porque o teste lê o manifesto MESCLADO.
+      REQ-SEC-007 — a rede entra para UMA coisa: ler o CDI da série pública do
+      Banco Central (T-050, ADR-012). A requisição é um GET sem parâmetro, sem
+      cabeçalho de identificação e sem corpo — nenhum dado do usuário sai do
+      aparelho, e não há para onde ele sair: api.bcb.gov.br é o único host que
+      o app conhece.
+
+      A garantia que a ausência desta linha dava passou para duas guardas que
+      valem mais que ela: o ManifestTest da T-019 exige o conjunto EXATO de
+      permissões do manifesto MESCLADO (qualquer uma a mais, inclusive vinda de
+      AAR transitivo, reprova), e tools/trace.py reprova o build se aparecer em
+      src/main uma URL para qualquer outro host.
+
+      Open Finance continua fora, e continua sendo assunto da T-049 na F4:
+      o que entrou aqui é um número público, não a conta de ninguém.
     -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!--
       REQ-SEC-003 — bloqueio biométrico opcional, com fallback para a credencial

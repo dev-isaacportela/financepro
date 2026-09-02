@@ -1360,6 +1360,60 @@ perguntando o saldo atual"): é mudança de requisito, e começa na spec.
 
 ---
 
+### T-051 — Módulo de investimento
+**Fase** F1 · **Depende de** T-015, T-033 · **REQ** REQ-INV-001, REQ-INV-002, REQ-INV-003, REQ-INV-004, REQ-INV-005, REQ-INV-006, REQ-SEC-007
+
+`AccountType.INVESTMENT` existia desde a T-004 como rótulo e nada mais: uma conta
+com saldo, sem taxa, sem rendimento, sem acompanhamento. Esta task fecha isso.
+
+Número alto para uma task de F1 pelo mesmo motivo da T-050: id é identificador,
+não ordem.
+
+**Investimento é conta, não tabela.** Duas colunas nuláveis em `account`, no
+molde exato das quatro que só valem para cartão. E nada novo para classificar o
+que acontece dentro dela: `TRANSFER` entrando é aporte, saindo é resgate,
+`INCOME` é rendimento, `EXPENSE` é taxa ou imposto — tudo já existia.
+
+**Pronto quando**
+- [ ] `TaxaTest` prova que a mensal é composta e que 110% do CDI a 14,90% dá
+      16,39% a.a., e fecha o ciclo: doze meses compostos voltam à taxa anual
+- [ ] `RendimentoTest` prova que aporte do mês não vira rendimento — a confusão
+      que faria a série mostrar um "rendimento" do tamanho do aporte
+- [ ] `CategoriaDeRendimentosTest` prova que a categoria não rouba o id 11
+- [ ] `BancoCentralTest` lê a resposta real da série 4389 sem rede, e devolve
+      nulo em tudo que não for ela
+- [ ] `ManifestTest` exige o conjunto exato de permissões, e `tools/trace.py`
+      reprova URL para host que não seja `api.bcb.gov.br`
+- [ ] Migração `3 → 4` com `4.json` commitado, e o ciclo de ida e volta da conta
+      com indexador no `AccountDaoTest`
+- [ ] Sem rede, a tela mostra o último CDI com a data **dele** e aceita o valor
+      digitado à mão
+
+**A permissão `INTERNET` entra aqui**, e é a parte da task que não é código:
+REQ-SEC-007 reescrito, ADR-010 emendado pelo
+[ADR-012](decisoes.md#adr-012--rede-entra-para-um-índice-público-e-só) e o
+`ManifestTest` trocado no mesmo commit (Art. 3).
+
+**O preço que o worker cobrou.** O WorkManager traz quatro permissões junto —
+`ACCESS_NETWORK_STATE`, `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED` e
+`FOREGROUND_SERVICE` —, e com a `USE_FINGERPRINT` que a `androidx.biometric` já
+trazia, a lista do app vai de duas para sete. Nenhuma foi digitada por nós.
+Estão nomeadas uma a uma no `ManifestTest` justamente por isso: a alternativa
+era a busca sob toque, sem worker, e a decisão de pagar o preço foi tomada
+sabendo o tamanho dele.
+
+**O ponto flutuante mora em `core/taxa/`**, fora dos quatro caminhos de dinheiro
+que o Art. 6 vigia. Converter taxa anual em mensal é uma raiz décima-segunda e
+não existe em `Long`; o que atravessa a fronteira de volta é um fator em partes
+por milhão, e quem multiplica dinheiro por ele é `rendimentoPrevisto`, no
+domínio, em inteiro.
+
+Fora do escopo, de propósito: IR regressivo e come-cotas (o lançado é bruto, e
+editável), IPCA+ e poupança (outra série, outra linha), e cotas com preço médio
+— que é outro problema, de quantidade e cotação, não de taxa.
+
+---
+
 # F2 — Importação de arquivo
 
 Design em [ingestao.md](ingestao.md).

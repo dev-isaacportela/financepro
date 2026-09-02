@@ -84,6 +84,7 @@ import app.financepro.feature.categories.CategoriesScreen
 import app.financepro.feature.export.ExportScreen
 import app.financepro.feature.home.HomeScreen
 import app.financepro.feature.importer.ImportScreen
+import app.financepro.feature.investments.InvestmentsScreen
 import app.financepro.feature.lock.LockScreen
 import app.financepro.feature.onboarding.OnboardingScreen
 import app.financepro.feature.recurring.RecurringScreen
@@ -150,6 +151,9 @@ data object Recorrencias
 
 @Serializable
 data object Relatorios
+
+@Serializable
+data object Investimentos
 
 @Serializable
 data object Exportar
@@ -330,6 +334,7 @@ private fun NavGraphBuilder.rotas(
     composable<Contas> { AccountsScreen() }
     composable<Categorias> { CategoriesScreen() }
     composable<Recorrencias> { RecurringScreen() }
+    composable<Investimentos> { InvestmentsScreen() }
     composable<Exportar> { ExportScreen() }
     composable<Importar> { ImportScreen() }
     composable<Relatorios> {
@@ -499,23 +504,38 @@ private fun MaisScreen(
         }
 
         Grupo("Análise") {
-            Cartao(Modifier.fillMaxWidth().clickable(onClickLabel = "Abrir") { onIr(Relatorios) }) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Relatórios", style = BodyStrong, color = Tema.ink)
-                        Text(
-                            text = "Gastos por categoria, evolução do mês",
-                            style = Caption,
-                            color = Tema.inkMute,
-                        )
-                    }
-                    Text("›", style = Subheading, color = Tema.inkMute)
-                }
+            BlocoLargo(
+                titulo = "Relatórios",
+                detalhe = "Gastos por categoria, evolução do mês",
+                onClick = { onIr(Relatorios) },
+            )
+            // REQ-INV-004 — investimento fica na Análise e não no Cadastro: a
+            // conta em si já se cria em Contas, e o que esta tela acrescenta é
+            // o acompanhamento. A barra inferior tem quatro lugares por
+            // REQ-UI-001, e o hub é o caminho esperado para o quinto.
+            BlocoLargo(
+                titulo = "Investimentos",
+                detalhe = "Rendimento mês a mês, taxa fixa ou CDI",
+                onClick = { onIr(Investimentos) },
+            )
+        }
+    }
+}
+
+/** O bloco de largura inteira da Análise: título, detalhe e a seta. */
+@Composable
+private fun BlocoLargo(titulo: String, detalhe: String, onClick: () -> Unit) {
+    Cartao(Modifier.fillMaxWidth().clickable(onClickLabel = "Abrir", onClick = onClick)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(titulo, style = BodyStrong, color = Tema.ink)
+                Text(detalhe, style = Caption, color = Tema.inkMute)
             }
+            Text("›", style = Subheading, color = Tema.inkMute)
         }
     }
 }

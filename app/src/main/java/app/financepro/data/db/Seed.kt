@@ -125,6 +125,22 @@ internal val CATEGORIAS_PADRAO = listOf(
 )
 
 /**
+ * O nome da categoria que recebe o rendimento. REQ-INV-003
+ *
+ * **Não** é uma décima primeira linha da semente, e não entra por migração com
+ * id fixo. Os ids 1 a 10 são os do seed e o 11 é o da **primeira categoria que
+ * o usuário criou** — um `INSERT OR IGNORE (11, 'Rendimentos')` seria ignorado
+ * em silêncio em toda instalação antiga, e o rendimento passaria a cair na
+ * categoria de outra pessoa.
+ *
+ * Em vez disso, `CategoryRepository.idDeRendimentos()` acha por nome e tipo, ou
+ * cria — o id sai do AUTOINCREMENT, que é a única fonte que não colide. A
+ * categoria nasce quando o primeiro rendimento é lançado, e não na instalação
+ * de quem nunca vai investir.
+ */
+const val NOME_RENDIMENTOS = "Rendimentos"
+
+/**
  * REQ-ACT-003 — para a primeira importação não chegar vazia.
  *
  * As chaves já estão na forma que `normalize` (T-036) produz: maiúsculas, sem
