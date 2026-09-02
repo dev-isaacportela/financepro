@@ -6,8 +6,30 @@ com importação de extratos.
 Código aberto sob a [Apache License 2.0](LICENSE). Sem backend, sem login, sem
 analytics, e um único host de rede.
 
+**<https://financepro-site-fawn.vercel.app>** percorre as telas do app e o
+raciocínio por trás delas. As telas de lá são reconstruções em HTML a partir
+dos tokens de `core/ui/theme`, não capturas, e os dados são fictícios e
+derivados de um mês com 31 lançamentos. Fonte em
+[financepro-site](https://github.com/dev-isaacportela/financepro-site).
+
 Desenvolvido em **SDD** (*Spec-Driven Development*): a especificação é a fonte de
 verdade, não a documentação do que já foi feito. Código sem requisito não entra.
+
+## Telas
+
+Capturas do app rodando, com dados de demonstração — não são mockups.
+
+| Início | Transações | Orçamento |
+|---|---|---|
+| ![Dashboard com saldo total, fatura do cartão e últimas transações](docs/img/inicio.png) | ![Lista do mês agrupada por dia, com filtros de entrada e saída](docs/img/transacoes.png) | ![Tetos por categoria, com barra de progresso e aviso de estouro](docs/img/orcamento.png) |
+
+| Relatórios | Fatura do cartão | Investimentos |
+|---|---|---|
+| ![Pizza de despesas por categoria, com legenda e percentuais](docs/img/relatorios.png) | ![Fatura agrupada por categoria, com vencimento e limite disponível](docs/img/fatura.png) | ![Rendimento mês a mês, com o CDI do Banco Central](docs/img/investimentos.png) |
+
+A tela **Mais** reúne cadastro, dados e análise:
+
+<img src="docs/img/mais.png" alt="Menu com contas, categorias, recorrências, bloqueio, importação, backup, relatórios e investimentos" width="320">
 
 ## Documentos
 
@@ -16,8 +38,8 @@ Leia nesta ordem:
 | Documento | O que é | Quando consultar |
 |---|---|---|
 | [constitution.md](docs/constitution.md) | 18 regras invioláveis | Antes do primeiro commit. Uma vez. |
-| [spec.md](docs/spec.md) | 120 requisitos `REQ-*` em EARS | Sempre. É a fonte de verdade. |
-| [tasks.md](docs/tasks.md) | 49 tasks ordenadas, com "pronto quando" | Ao escolher o que fazer |
+| [spec.md](docs/spec.md) | 126 requisitos `REQ-*` em EARS | Sempre. É a fonte de verdade. |
+| [tasks.md](docs/tasks.md) | 51 tasks ordenadas, com "pronto quando" | Ao escolher o que fazer |
 | [arquitetura.md](docs/arquitetura.md) | Camadas, schema, queries, testes | Ao implementar |
 | [design.md](docs/design.md) | Sistema visual Slush traduzido para Compose | Ao construir qualquer tela |
 | [ingestao.md](docs/ingestao.md) | Design das 3 camadas de importação | Nas fases F2–F4 |
@@ -63,12 +85,12 @@ python tools/trace.py --report
 Só o inventário, sem falhar. Estado atual:
 
 ```
-spec.md   120 requisitos
-tasks.md  50 tasks, cobrindo 120
-codigo    87 requisitos com @Req
+spec.md   126 requisitos
+tasks.md  51 tasks, cobrindo 126
+codigo    93 requisitos com @Req
 
-  F0   61 requisitos (53 MUST, 36 com teste automatizado)
-  F1   33 requisitos (27 MUST, 30 com teste automatizado)
+  F0   61 requisitos (53 MUST, 37 com teste automatizado)
+  F1   39 requisitos (33 MUST, 35 com teste automatizado)
   F2   16 requisitos (14 MUST, 13 com teste automatizado)
   F3    6 requisitos (5 MUST, 4 com teste automatizado)
   F4    4 requisitos (4 MUST, 0 com teste automatizado)
@@ -98,7 +120,7 @@ Sem backend, sem login, sem analytics, e **sem permissão `INTERNET`** até a F4
 | Fase | Entrega | Tasks | Bloqueio |
 |---|---|---|---|
 | **F0** | Contas, transações, categorias, saldo, dashboard | T-001…T-021 | — |
-| **F1** | Cartão com fatura, orçamento, recorrências, relatórios, backup | T-022…T-035 | F0 |
+| **F1** | Cartão com fatura, orçamento, recorrências, relatórios, backup, investimento | T-022…T-035, T-050, T-051 | F0 |
 | **F2** | Importação OFX/CSV com deduplicação | T-036…T-042 | F0 |
 | **F3** | Captura por notificação bancária | T-043…T-046 | F2 |
 | **F4** | Open Finance via agregador | T-047…T-049 | **CNPJ + contrato + backend** |
