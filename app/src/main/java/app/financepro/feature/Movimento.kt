@@ -19,7 +19,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 
 /**
  * Movimento entre telas. REQ-UI-001 ·
- * [design.md](../../../../../../../../docs/design.md) §8
+ * [design.md](../../../../../../../../docs/design.md) §6.4
  *
  * O padrão do `NavHost` é um fade, e fade é a ausência de decisão: não diz de
  * onde a tela nova veio nem para onde a anterior foi. Num app de quatro abas a

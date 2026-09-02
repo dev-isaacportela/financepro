@@ -477,6 +477,31 @@ Descrição e subtítulo são blocos empilhados, nunca lado a lado. Em Compose i
 uma `Column`; o erro equivalente no protótipo em HTML foi deixá-los como `span`
 inline, e os dois colaram na mesma linha.
 
+### 6.4 Movimento entre telas
+
+O padrão do `NavHost` é um fade, e fade é a ausência de decisão: não diz de onde
+a tela nova veio nem para onde a anterior foi. Num app de quatro abas a direção
+**existe** — Orçamento fica à direita de Transações, e Contas fica dentro de
+Mais —, e é ela que o movimento mostra.
+
+O sistema vive inteiro em `feature/Movimento.kt`, com três presets e um `val`
+para trocar. Todos são de **espaço, não de opacidade**, e nenhum usa sombra ou
+gradiente (REQ-DS-004):
+
+| Preset | O que faz |
+|---|---|
+| `Papel` | a tela nova entra pelo lado, a que sai anda um quarto no mesmo sentido. O parallax é o que separa isto de um slide seco. **Em vigor.** |
+| `Sticker` | mola com overshoot — a nova chega a 94% e assenta. O nome é do sistema visual anterior; o movimento não mudou com a troca. |
+| `Folha` | avançar sobe a tela nova de baixo, voltar derruba a de cima. Profundidade de pilha, e a mais discreta. |
+
+**Não é preferência do usuário.** Um ajuste a mais numa tela de finanças é uma
+pergunta que o app faz a quem só queria lançar uma despesa. Os três existem para
+serem comparados no aparelho por quem desenha, e o escolhido fica.
+
+A escala de animação do sistema continua valendo: quem desliga animações nas
+opções de acessibilidade recebe as telas sem transição, sem nada no código
+perguntar — o Compose lê a preferência no recompositor.
+
 ## 7. O bloco em Cobalto
 
 Cobalto é a assinatura da marca, e o sistema de origem o gasta em um lugar por
