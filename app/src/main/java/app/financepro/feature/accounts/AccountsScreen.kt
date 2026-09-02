@@ -1,7 +1,6 @@
 package app.financepro.feature.accounts
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,18 +23,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.component.EstadoVazio
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyText
-import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.Caption
-import app.financepro.core.ui.theme.LightBlue
-import app.financepro.core.ui.theme.OutlineWidth
-import app.financepro.core.ui.theme.Tema
 import app.financepro.core.ui.theme.Formas
+import app.financepro.core.ui.theme.LightBlue
+import app.financepro.core.ui.theme.Pill
 import app.financepro.core.ui.theme.Subheading
+import app.financepro.core.ui.theme.Tema
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
 
@@ -147,18 +146,27 @@ private fun Linha(
 /**
  * Ponto de cor, não bloco: a lista é densa e a cor aqui é identidade, não estado.
  *
- * O anel não é decoração, é o mesmo motivo de design.md §6.3: sobre a superfície
- * clara, um ponto Verde-azulado dá 2.77:1 e um Laranja 2.53:1 — abaixo dos 3:1
- * de elemento não textual, e leria como falha de renderização, não como escolha.
+ * A marca de cor da conta, **sem anel**.
+ *
+ * Era um ponto de 16dp, e abaixo de 24dp REQ-DS-006 exige o contorno de `ink` —
+ * o que numa lista de contas virava uma coluna de argolas brancas. Crescendo
+ * para 28dp ela sai da regra: a forma passa a ser identificável sozinha, que é o
+ * que o limiar de 24dp mede.
+ *
+ * Conta não tem ícone como categoria, então aqui é círculo de cor cheia — e
+ * mesmo assim ela nunca carrega significado sozinha: o nome e o tipo vêm
+ * escritos na mesma linha.
  */
 @Composable
 private fun PontoDeCor(colorArgb: Int) = Box(
     Modifier
-        .size(16.dp)
-        .clip(Formas.extraSmall)
-        .background(Color(colorArgb))
-        .border(OutlineWidth, Tema.ink, Formas.extraSmall),
+        .size(MARCA_DE_COR)
+        .clip(Pill)
+        .background(Color(colorArgb)),
 )
+
+/** 28dp: o mesmo da linha de teto, e acima dos 24dp de REQ-DS-006. */
+private val MARCA_DE_COR = 28.dp
 
 private fun rotulo(conta: Account): String {
     val tipo = tipoLegivel(conta)
