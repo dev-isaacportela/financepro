@@ -5,6 +5,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,8 +39,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.financepro.R
 import app.financepro.core.money.formatBRL
 import app.financepro.core.ui.component.AvatarDeCategoria
+import app.financepro.core.ui.component.BotaoCircular
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.component.CategorySticker
 import app.financepro.core.ui.component.EstadoVazio
 import app.financepro.core.ui.component.FilledCta
@@ -47,18 +51,17 @@ import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyField
 import app.financepro.core.ui.component.MoneyText
 import app.financepro.core.ui.component.Rotulo
-import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
-import app.financepro.core.ui.theme.DisplaySm
 import app.financepro.core.ui.theme.Danger
-import app.financepro.core.ui.theme.Teal
+import app.financepro.core.ui.theme.DisplaySm
+import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.MoneyCaption
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
-import app.financepro.core.ui.theme.Tema
-import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.Subheading
+import app.financepro.core.ui.theme.Teal
+import app.financepro.core.ui.theme.Tema
 import app.financepro.core.ui.theme.Warning
 import app.financepro.domain.usecase.ALERTA_PERCENT
 import app.financepro.domain.usecase.BudgetProgress
@@ -103,7 +106,34 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
                 descricao = "Escolha uma categoria e um limite; o resto a tela preenche sozinha.",
             )
         } else {
-            progresso.forEach { Linha(it, onClick = { vm.abrirTeto(it.categoria.id) }) }
+            // **Um card para todas**, e não um por categoria. Seis cards
+            // empilhados davam a cada teto o peso de uma seção, e a tela virava
+            // uma pilha de blocos onde o protótipo tem uma lista.
+            Cartao(Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "Por categoria",
+                            style = BodyStrong,
+                            color = Tema.ink,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            text = if (progresso.size == 1) "1 teto" else "${progresso.size} tetos",
+                            style = Caption,
+                            color = Tema.inkMute,
+                        )
+                    }
+                    progresso.forEach { Linha(it, onClick = { vm.abrirTeto(it.categoria.id) }) }
+                }
+            }
         }
 
 
@@ -207,78 +237,69 @@ private val AVATAR_TETO = 28.dp
 /** Mesma gramática do cabeçalho da lista (T-014): o mês em linha própria. */
 @Composable
 private fun Cabecalho(mes: YearMonth, onAnterior: () -> Unit, onSeguinte: () -> Unit) {
-    Column(Modifier.fillMaxWidth()) {
+    // Título e setas na mesma linha, como na lista de transações. O `weight` no
+    // título é quem cresce com a fonte a 200% (REQ-A11Y-004).
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Text(
             text = MES.format(mes).replaceFirstChar { it.uppercase() },
             style = Subheading,
             color = Tema.ink,
+            modifier = Modifier.weight(1f),
         )
-        Row(
-            Modifier.fillMaxWidth().padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            GhostButton(text = "◀", onClick = onAnterior)
-            GhostButton(text = "▶", onClick = onSeguinte)
-            Spacer(Modifier.weight(1f))
-        }
+        BotaoCircular(R.drawable.ic_voltar, "Mês anterior", onAnterior)
+        BotaoCircular(R.drawable.ic_avancar, "Próximo mês", onSeguinte)
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Linha(progresso: BudgetProgress, onClick: () -> Unit) {
-    Cartao(Modifier.fillMaxWidth()) {
-        Column(
-            Modifier
-                .padding(12.dp)
-                .semantics(mergeDescendants = true) { contentDescription = falado(progresso) },
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClickLabel = "Editar teto", onClick = onClick)
+            .semantics(mergeDescendants = true) { contentDescription = falado(progresso) },
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
         ) {
-            FlowRow(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
-            ) {
-                // A cor da categoria é a identidade dela, e faltava aqui: a
-                // linha dizia o nome e o estado, mas não *qual* categoria era —
-                // quem varre a tela procurando "Mercado" procurava por texto.
-                AvatarDeCategoria(
-                    colorArgb = progresso.categoria.colorArgb,
-                    iconKey = progresso.categoria.iconKey,
-                    tamanho = AVATAR_TETO,
-                )
-                Text(
-                    text = progresso.categoria.name,
-                    style = BodyStrong,
-                    color = Tema.ink,
-                    modifier = Modifier.weight(1f),
-                )
-                MoneyText(cents = progresso.spentCents, style = MoneyCaption)
-                // REQ-BUD-003 pede gasto, **limite** e percentual na tela. Sem
-                // o limite escrito, "82%" obriga a fazer a conta de cabeça para
-                // saber de quanto — e a barra sozinha não dá o número.
-                Text("de " + reais(progresso.limitCents), style = Caption, color = Tema.ink)
-            }
-
-            Barra(progresso.percent)
-
-            FlowRow(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = aviso(progresso),
-                    style = Caption,
-                    color = Tema.ink,
-                    modifier = Modifier.weight(1f),
-                )
-                GhostButton(text = "Teto", onClick = onClick)
-            }
+            // A cor da categoria é a identidade dela, e faltava aqui: a linha
+            // dizia o nome e o estado, mas não *qual* categoria era.
+            AvatarDeCategoria(
+                colorArgb = progresso.categoria.colorArgb,
+                iconKey = progresso.categoria.iconKey,
+                tamanho = AVATAR_TETO,
+            )
+            Text(
+                text = progresso.categoria.name,
+                style = BodyStrong,
+                color = Tema.ink,
+                modifier = Modifier.weight(1f),
+            )
+            MoneyText(cents = progresso.spentCents, style = MoneyCaption)
+            // REQ-BUD-003 pede gasto, **limite** e percentual na tela. Sem o
+            // limite escrito, "82%" obriga a fazer a conta de cabeça para saber
+            // de quanto — e a barra sozinha não dá o número.
+            Text("de " + reais(progresso.limitCents), style = Caption, color = Tema.inkMute)
         }
+
+        Barra(progresso.percent)
+
+        // O aviso carrega o que a barra não diz: o percentual (REQ-BUD-003) e a
+        // sobra diária ou o excesso (REQ-BUD-004). O protótipo não os mostra; a
+        // spec exige, e é ele que fica.
+        Text(text = aviso(progresso), style = Caption, color = Tema.inkMute)
     }
 }
+
+
 
 /**
  * A barra de REQ-BUD-003.

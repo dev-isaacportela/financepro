@@ -145,6 +145,18 @@ val Caption = TextStyle(
 val BodyStrong = Body.copy(fontWeight = FontWeight.W500)
 
 /**
+ * Etiqueta de seção: caixa alta, miúda e espaçada.
+ *
+ * É o rótulo que separa blocos sem gastar um título — "SALDO TOTAL", "GASTO DO
+ * TETO", o cabeçalho de dia da lista. A entreletra positiva de `+0.08em` é o que
+ * torna caixa alta legível; sem ela as maiúsculas colam e viram um bloco cinza.
+ *
+ * Vai sempre em `inkMute`: ela nomeia o que vem abaixo, e competir em tinta com
+ * o próprio conteúdo é o erro que a caixa alta convida a cometer.
+ */
+val Etiqueta = Caption.copy(fontWeight = FontWeight.W600, letterSpacing = 0.08.em)
+
+/**
  * O rótulo da barra de navegação, e o mesmo em peso 600.
  *
  * 11sp, e não `Caption`: "Transações" é a mais longa das quatro e, a 13sp, não

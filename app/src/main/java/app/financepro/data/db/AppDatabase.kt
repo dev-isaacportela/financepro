@@ -29,7 +29,7 @@ import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
         ImportBatchEntity::class,
         PayeeRuleEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -85,5 +85,6 @@ fun buildDatabase(context: Context): AppDatabase {
         .openHelperFactory(SupportOpenHelperFactory(DatabaseKey(context).getOrCreate()))
         .addCallback(AppDatabase.ForeignKeysOn)
         .addCallback(SeedCallback)
+        .addMigrations(*MIGRACOES)
         .build()
 }

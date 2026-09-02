@@ -369,6 +369,17 @@ sinal e pelo rótulo. A troca de marca não comprou uma exceção de acessibilid
 `paper`. Sobre preto puro os oito acentos passam de 4.5:1, e um teste que medisse
 esse fundo concordaria com o erro que a regra existe para impedir.
 
+**O que faltou, e só apareceu no aparelho.** O seed roda **uma vez**, em banco
+vazio. Quem já tinha o app instalado ficou com as seis cores do sistema anterior
+gravadas em `category` e `account` — cores que a paleta nova não tem e que o
+seletor não oferece mais, então nem editando dava para sair delas.
+
+`TokenLintTest` não pegou: ele compara `CATEGORIAS_PADRAO` com `Acentos`, duas
+constantes. Linha gravada no banco nenhuma varredura de fonte alcança. A correção
+é a migração `DE_1_PARA_2`, que remapeia exatamente os seis hexadecimais antigos
+e não encosta em nenhum outro valor.
+
 **Gatilho de reversão.** Nenhum técnico. Se a marca voltar atrás, o caminho é o
 inverso deste ADR, e o custo é o mesmo: cinco arquivos de tema, quatro de
-componente, três de teste.
+componente, três de teste — mais uma migração, agora que existe dado gravado na
+paleta atual.

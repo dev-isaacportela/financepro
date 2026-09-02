@@ -54,6 +54,7 @@ import app.financepro.core.ui.component.Superficie
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
+import app.financepro.core.ui.theme.Etiqueta
 import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.MoneyCaption
 import app.financepro.core.ui.theme.Pill
@@ -174,18 +175,17 @@ private fun Cabecalho(
     onSeguinte: () -> Unit,
     onFiltrar: () -> Unit,
 ) {
-    // Título em linha própria, e não espremido entre os botões: "Agosto de 2026"
-    // não cabe ao lado de três pílulas em 360dp e saía cortado em "Agosto de" —
-    // o aparelho mostrou, o emulador não. Em linha própria ele tem a largura
-    // toda, o que também é o que sobrevive à fonte a 200% (REQ-A11Y-004).
     Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-        Text(titulo, style = Subheading, color = Tema.ink)
+        // Título e setas na mesma linha, como no protótipo. Já esteve em linha
+        // própria porque três pílulas contornadas ao lado dele não cabiam em
+        // 360dp; com duas setas redondas de 40dp sobra largura, e o `weight` no
+        // título garante que quem cresce com a fonte a 200% é ele (REQ-A11Y-004).
         Row(
-            Modifier.fillMaxWidth().padding(top = 8.dp),
+            Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Spacer(Modifier.weight(1f))
+            Text(titulo, style = Subheading, color = Tema.ink, modifier = Modifier.weight(1f))
             BotaoCircular(R.drawable.ic_voltar, "Mês anterior", onAnterior)
             BotaoCircular(R.drawable.ic_avancar, "Próximo mês", onSeguinte)
         }
@@ -260,7 +260,10 @@ private fun Lista(
                 // Excluir, desfazer e trocar de filtro mexem na lista o tempo
                 // todo; uma linha por chave, e o resto se acomoda sozinho.
                 Deslizavel(onExcluir = { onExcluir(txn) }, modifier = Modifier.animateItem()) {
+                    // O fundo opaco é da caixa de deslize, não da linha: sem ele
+                    // o vermelho de "Excluir" apareceria através dela em repouso.
                     LinhaDeTransacao(
+                        modifier = Modifier.fillMaxWidth().background(Tema.paper),
                         txn = txn,
                         categoria = state.categoriaDe(txn.categoryId),
                         conta = state.contaDe(txn.accountId),
@@ -288,7 +291,14 @@ private fun CabecalhoDoDia(dia: DiaDeTransacoes) {
         // medidos primeiro e ficam com a largura que quiserem. Com a fonte a
         // 200% a data engolia a linha e o total sobrava com uma coluna de um
         // caractere — "−R / $ / 18, / 50", quatro linhas (REQ-A11Y-004).
-        Text(DIA.format(dia.data), style = Caption, color = Tema.ink, modifier = Modifier.weight(1f))
+        // Caixa alta e `inkMute`: o cabeçalho separa, não compete. Em `Caption`
+        // com a mesma tinta das linhas ele lia como mais uma transação.
+        Text(
+            text = DIA.format(dia.data).uppercase(),
+            style = Etiqueta,
+            color = Tema.inkMute,
+            modifier = Modifier.weight(1f),
+        )
         MoneyText(cents = dia.totalCents, style = MoneyCaption)
     }
 }
@@ -391,11 +401,15 @@ private fun rotuloDoEscopo(escopo: EscopoDeParcela) = when (escopo) {
 private fun FundoExcluir() = Box(
     modifier = Modifier
         .fillMaxSize()
-        // **O mesmo raio do card da linha.** Com 12dp atrás de um card de 20dp,
-        // o fundo aparecia pelos quatro cantos mesmo em repouso — e como `ink` é
-        // branco no tema escuro, cada linha da lista ganhava um contorno que
-        // ninguém desenhou. Parecia moldura; era o fundo de "Excluir" vazando.
-        .clip(Formas.medium)
+        // **Sem raio, e a linha por cima também sem.** Dois retângulos
+        // arredondados do mesmo tamanho não se cobrem nas bordas: o antialiasing
+        // de cada um cobre parte do pixel, e o que sobra é um aro cinza de 1px
+        // em toda linha em repouso. Foi diagnosticado medindo o pixel —
+        // rgb(63,63,63) onde deveria haver preto puro.
+        //
+        // Quadrado não custa nada aqui: a linha é plana sobre o canvas, então
+        // canto reto preto sobre preto não aparece, e o fundo de "Excluir" só
+        // existe durante o gesto.
         .background(Tema.ink)
         .padding(horizontal = 16.dp),
     contentAlignment = Alignment.CenterEnd,

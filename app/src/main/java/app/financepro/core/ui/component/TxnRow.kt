@@ -2,6 +2,7 @@ package app.financepro.core.ui.component
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,8 +30,13 @@ import app.financepro.domain.model.TxnType
  * `Rotulo`. Duas cópias divergiriam, e a que ficaria errada é a que ninguém
  * abre.
  *
- * A linha mora num `Cartao`, que é `surface` — um degrau acima do canvas e
- * sem moldura. Descrição e subtítulo são blocos **empilhados**, nunca lado a lado — é o erro
+ * **Ela não traz o próprio fundo.** Quem a coloca decide: na lista de
+ * transações são linhas planas sobre o canvas, agrupadas por dia; no dashboard
+ * são um bloco só dentro de um `Cartao`. Um card por linha, que era o desenho
+ * anterior, transformava dez transações em dez retângulos e dava a cada uma o
+ * peso de uma seção.
+ *
+ * Descrição e subtítulo são blocos **empilhados**, nunca lado a lado — é o erro
  * que o protótipo em HTML cometeu deixando-os como `span` inline. Sem altura
  * fixa: com fonte a 200% (REQ-A11Y-004) a linha precisa poder crescer.
  *
@@ -60,9 +66,9 @@ fun LinhaDeTransacao(
         Modifier.clickable(onClickLabel = "Editar", onClick = onClick)
     }
 
-    Cartao(modifier.fillMaxWidth().then(toque)) {
+    Box(modifier.fillMaxWidth().then(toque)) {
         Row(
-            Modifier.padding(12.dp),
+            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

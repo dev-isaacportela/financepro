@@ -267,16 +267,23 @@ private fun ProximasContas(state: HomeState, onEfetivar: (Txn) -> Unit, onEditar
 private fun Ultimas(state: HomeState, onVerTransacoes: () -> Unit, onEditar: (Long) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Últimas transações", style = Subheading, color = Tema.ink)
-        state.ultimas.forEach { txn ->
-            LinhaDeTransacao(
-                txn = txn,
-                categoria = state.categoriaDe(txn.categoryId),
-                conta = state.contaDe(txn.accountId),
-                destino = state.contaDe(txn.counterAccountId),
-                // A mesma linha da lista, o mesmo toque: comportamento que muda
-                // de tela para tela é o que faz o usuário parar de tentar.
-                onClick = { onEditar(txn.id) },
-            )
+        // Um card com as linhas dentro, e não um card por linha: cinco
+        // retângulos empilhados davam a cada transação o peso de uma seção.
+        Cartao(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(vertical = 4.dp)) {
+                state.ultimas.forEach { txn ->
+                    LinhaDeTransacao(
+                        txn = txn,
+                        categoria = state.categoriaDe(txn.categoryId),
+                        conta = state.contaDe(txn.accountId),
+                        destino = state.contaDe(txn.counterAccountId),
+                        // A mesma linha da lista, o mesmo toque: comportamento
+                        // que muda de tela para tela faz o usuário parar de
+                        // tentar.
+                        onClick = { onEditar(txn.id) },
+                    )
+                }
+            }
         }
         GhostButton(text = "Ver todas", onClick = onVerTransacoes)
     }
