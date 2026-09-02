@@ -30,15 +30,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.financepro.core.ui.component.AvatarDeCategoria
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
-import app.financepro.core.ui.component.Cartao
+import app.financepro.core.ui.component.SeletorDeCor
+import app.financepro.core.ui.component.SeletorDeIcone
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.Caption
-import app.financepro.core.ui.theme.OutlineWidth
-import app.financepro.core.ui.theme.Tema
 import app.financepro.core.ui.theme.Formas
+import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Subheading
+import app.financepro.core.ui.theme.Tema
 import app.financepro.domain.model.Category
 import app.financepro.domain.model.CategoryKind
 
@@ -100,15 +103,7 @@ private fun Linha(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             itemVerticalAlignment = Alignment.CenterVertically,
         ) {
-            // Anel pelo mesmo motivo de design.md §6.3: sem ele um ponto
-            // Laranja sobre a superfície clara dá 2.53:1 e some.
-            Box(
-                Modifier
-                    .size(16.dp)
-                    .clip(Formas.extraSmall)
-                    .background(Color(categoria.colorArgb))
-                    .border(OutlineWidth, Tema.ink, Formas.extraSmall),
-            )
+            AvatarDeCategoria(colorArgb = categoria.colorArgb, iconKey = categoria.iconKey)
             Column(Modifier.weight(1f)) {
                 Text(categoria.name, style = Body, color = Tema.ink, maxLines = 1)
                 Text(
@@ -150,6 +145,17 @@ private fun FormSheet(
                 }
             }
         }
+        Text("Cor", style = Caption, color = Tema.ink)
+        SeletorDeCor(
+            selecionada = categoria.colorArgb,
+            onEscolher = { onChange(categoria.copy(colorArgb = it)) },
+        )
+        Text("Ícone", style = Caption, color = Tema.ink)
+        SeletorDeIcone(
+            cor = categoria.colorArgb,
+            selecionado = categoria.iconKey,
+            onEscolher = { onChange(categoria.copy(iconKey = it)) },
+        )
         if (erro != null) Text("⚠ $erro", style = Caption, color = Tema.ink)
         FilledCta(text = "Salvar", onClick = onSalvar, modifier = Modifier.fillMaxWidth())
     }

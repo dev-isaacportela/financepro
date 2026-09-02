@@ -28,9 +28,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import app.financepro.core.ui.theme.CanvasDark
 import app.financepro.core.ui.theme.Caption
-import app.financepro.core.ui.theme.Tema
 import app.financepro.core.ui.theme.Formas
+import app.financepro.core.ui.theme.Tema
 import app.financepro.domain.model.Category
 
 /**
@@ -96,7 +97,8 @@ fun CategorySticker(
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(
-            Modifier
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
                 .size(STICKER)
                 // Só o quadrado se mexe: o nome embaixo fica parado, porque
                 // texto que encolhe no toque é texto que fica difícil de ler
@@ -104,12 +106,29 @@ fun CategorySticker(
                 .scale(escala)
                 .clip(Formas.medium)
                 .background(Color(category.colorArgb))
-                .border(
-                    width = if (selecionado) SELECIONADO else 0.dp,
-                    color = Tema.ink,
-                    shape = Formas.medium,
+                // `then` e não `border(0.dp)`: largura zero **não** é ausência de
+                // borda. O Compose repassa `Stroke(0f)`, que o Skia desenha como
+                // linha de um pixel — o adesivo não selecionado ficava com um
+                // anel branco fino que ninguém pediu, e o código dizia zero.
+                .then(
+                    if (selecionado) {
+                        Modifier.border(SELECIONADO, Tema.ink, Formas.medium)
+                    } else {
+                        Modifier
+                    },
                 ),
-        )
+        ) {
+            // O desenho da categoria, e não só a cor: cinco quadrados coloridos
+            // lado a lado obrigam a ler o nome embaixo de cada um para escolher.
+            // Com o ícone, a cartela vira reconhecível de relance — que é a
+            // razão de o lançamento rápido existir (Art. 18).
+            Icone(
+                id = iconeDaCategoria(category.iconKey),
+                descricao = null,
+                modifier = Modifier.size(GLIFO_STICKER),
+                tint = CanvasDark,
+            )
+        }
         Text(
             text = category.name,
             style = Caption,
@@ -122,6 +141,9 @@ fun CategorySticker(
 
 /** 64dp já passa dos 48dp de alvo mínimo sem `minimumInteractiveComponentSize`. */
 private val STICKER = 64.dp
+
+/** O glifo ocupa pouco mais de um terço do adesivo, como no avatar da lista. */
+private val GLIFO_STICKER = 26.dp
 private val SELECIONADO = 3.dp
 private const val AFUNDA = 0.9f
 private const val CRESCE = 1.06f

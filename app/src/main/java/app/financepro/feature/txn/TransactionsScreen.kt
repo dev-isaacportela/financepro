@@ -1,6 +1,7 @@
 package app.financepro.feature.txn
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -40,6 +42,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.financepro.R
+import app.financepro.core.ui.component.BotaoCircular
+import app.financepro.core.ui.component.Chip
 import app.financepro.core.ui.component.EstadoVazio
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
@@ -49,18 +54,19 @@ import app.financepro.core.ui.component.Superficie
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
+import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.MoneyCaption
 import app.financepro.core.ui.theme.Pill
-import app.financepro.core.ui.theme.Tema
-import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.Subheading
+import app.financepro.core.ui.theme.Tema
 import app.financepro.core.ui.theme.Warning
 import app.financepro.domain.model.Txn
+import app.financepro.domain.model.TxnType
 import app.financepro.domain.usecase.DiaDeTransacoes
 import app.financepro.domain.usecase.EscopoDeParcela
-import kotlinx.coroutines.withTimeoutOrNull
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Lista de transações. REQ-TXN-010 · REQ-TXN-011 · REQ-TXN-012 · REQ-UI-006
@@ -116,6 +122,8 @@ fun TransactionsScreen(
             Cabecalho(
                 titulo = tituloDoPeriodo(state),
                 filtrosAtivos = state.filtro.ativo,
+                tipo = state.filtro.tipo,
+                onTipo = vm::tipo,
                 onAnterior = vm::mesAnterior,
                 onSeguinte = vm::mesSeguinte,
                 onFiltrar = { filtrando = true },
@@ -160,6 +168,8 @@ fun TransactionsScreen(
 private fun Cabecalho(
     titulo: String,
     filtrosAtivos: Boolean,
+    tipo: TxnType?,
+    onTipo: (TxnType?) -> Unit,
     onAnterior: () -> Unit,
     onSeguinte: () -> Unit,
     onFiltrar: () -> Unit,
@@ -175,11 +185,29 @@ private fun Cabecalho(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            GhostButton(text = "◀", onClick = onAnterior)
-            GhostButton(text = "▶", onClick = onSeguinte)
             Spacer(Modifier.weight(1f))
+            BotaoCircular(R.drawable.ic_voltar, "Mês anterior", onAnterior)
+            BotaoCircular(R.drawable.ic_avancar, "Próximo mês", onSeguinte)
+        }
+
+        // Rolagem horizontal: a 200% de fonte os quatro chips passam da largura,
+        // e cortar "Filtros" tiraria o acesso ao resto dos recortes
+        // (REQ-A11Y-004).
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Chip("Tudo", tipo == null, onClick = { onTipo(null) })
+            Chip("Entradas", tipo == TxnType.INCOME, onClick = { onTipo(TxnType.INCOME) })
+            Chip("Saídas", tipo == TxnType.EXPENSE, onClick = { onTipo(TxnType.EXPENSE) })
             // O ponto no rótulo sinaliza filtro ativo além da cor (REQ-A11Y-003).
-            GhostButton(text = if (filtrosAtivos) "Filtros •" else "Filtros", onClick = onFiltrar)
+            // `Filtros` não é um recorte, é a folha com os demais — por isso ele
+            // nunca aparece selecionado, mesmo com filtro ligado.
+            Chip(if (filtrosAtivos) "Filtros •" else "Filtros", selecionado = false, onClick = onFiltrar)
         }
     }
 }

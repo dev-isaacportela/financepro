@@ -12,6 +12,7 @@ import app.financepro.data.repo.TxnRepository
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.Category
 import app.financepro.domain.model.Txn
+import app.financepro.domain.model.TxnType
 import app.financepro.domain.usecase.DiaDeTransacoes
 import app.financepro.domain.usecase.EscopoDeParcela
 import app.financepro.domain.usecase.Filtro
@@ -21,14 +22,14 @@ import app.financepro.domain.usecase.filtrar
 import app.financepro.domain.usecase.parcelasNoEscopo
 import app.financepro.feature.Transacoes
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.YearMonth
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.YearMonth
-import javax.inject.Inject
 
 /**
  * O que a lista de transações precisa saber. REQ-TXN-010 · REQ-TXN-011 · REQ-TXN-012
@@ -154,6 +155,21 @@ class TransactionsViewModel @Inject constructor(
     fun todoOPeriodo(ligado: Boolean) = _state.update { it.copy(periodoTodo = ligado) }
 
     fun aplicar(filtro: Filtro) = _state.update { it.copy(filtro = filtro) }
+
+    /**
+     * REQ-RPT-004 — o recorte por entrada e saída, direto na fileira de chips.
+     *
+     * `Filtro.tipo` existia desde a T-014 e só a folha de filtros o acionava, o
+     * que punha dois toques e uma sobreposição entre o usuário e o recorte que
+     * ele mais usa. Nulo é "Tudo": um estado a menos que um booleano por chip,
+     * que precisaria de regra para o caso de os dois estarem ligados.
+     *
+     * `TRANSFER` fica de fora dos chips de propósito — transferência entre contas
+     * próprias não é entrada nem saída, e um terceiro chip para ela seria um
+     * recorte que quase ninguém pede ocupando a largura que "Filtros" precisa.
+     * Em "Tudo" ela continua aparecendo.
+     */
+    fun tipo(tipo: TxnType?) = _state.update { it.copy(filtro = it.filtro.copy(tipo = tipo)) }
 
     fun limparFiltros() = _state.update { it.copy(filtro = Filtro()) }
 

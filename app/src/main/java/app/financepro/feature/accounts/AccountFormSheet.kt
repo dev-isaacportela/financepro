@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -32,16 +33,16 @@ import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.MoneyField
 import app.financepro.core.ui.component.Rotulo
+import app.financepro.core.ui.component.SeletorDeCor
+import app.financepro.core.ui.theme.Acentos
 import app.financepro.core.ui.theme.Caption
-import app.financepro.core.ui.theme.OutlineWidth
-import app.financepro.core.ui.theme.Tema
 import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.NomesDeAcento
-import app.financepro.core.ui.theme.Acentos
+import app.financepro.core.ui.theme.OutlineWidth
+import app.financepro.core.ui.theme.Tema
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.usecase.CARD_DAY_RANGE
-import androidx.compose.ui.graphics.toArgb
 
 /**
  * Formulário de conta. REQ-ACC-001 · REQ-ACC-002 · REQ-UI-003
@@ -98,7 +99,7 @@ fun AccountFormSheet(
             )
 
             Rotulo("Cor")
-            Cores(selecionada = conta.colorArgb, onClick = { onChange(conta.copy(colorArgb = it)) })
+            SeletorDeCor(selecionada = conta.colorArgb, onEscolher = { onChange(conta.copy(colorArgb = it)) })
 
             Rotulo("Saldo de abertura")
             MoneyField(
@@ -153,38 +154,6 @@ private fun CamposDeCartao(conta: Account, contas: List<Account>, onChange: (Acc
         selecionado = conta.paymentAccountId,
         onClick = { onChange(conta.copy(paymentAccountId = it)) },
     )
-}
-
-@Composable
-private fun Cores(selecionada: Int, onClick: (Int) -> Unit) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(Acentos) { cor ->
-            val argb = cor.toArgb()
-            Box(
-                Modifier
-                    .size(48.dp)
-                    .clip(Formas.extraSmall)
-                    .background(cor)
-                    // Seleção pela espessura do contorno, não por outra cor:
-                    // a cor aqui já é o conteúdo (REQ-A11Y-003).
-                    .border(
-                        width = if (argb == selecionada) 3.dp else OutlineWidth,
-                        color = Tema.ink,
-                        shape = Formas.extraSmall,
-                    )
-                    .clickable { onClick(argb) }
-                    // Nome da cor, e não "Cor": seis quadrados com a mesma
-                    // descrição deixam quem usa leitor escolhendo às cegas
-                    // (REQ-A11Y-001). E `selected`, porque a seleção aqui é
-                    // espessura de contorno — que o leitor não enxerga
-                    // (REQ-A11Y-003).
-                    .semantics {
-                        contentDescription = NomesDeAcento[cor] ?: "Cor"
-                        selected = argb == selecionada
-                    },
-            )
-        }
-    }
 }
 
 private fun tipoCurto(tipo: AccountType) = when (tipo) {

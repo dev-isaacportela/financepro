@@ -1,10 +1,10 @@
 package app.financepro.core.ui.component
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -35,6 +36,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -43,11 +45,12 @@ import app.financepro.core.money.spokenBRL
 import app.financepro.core.ui.theme.BodyLg
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.Display
+import app.financepro.core.ui.theme.Formas
+import app.financepro.core.ui.theme.Label
 import app.financepro.core.ui.theme.MoneyBody
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
 import app.financepro.core.ui.theme.Tema
-import app.financepro.core.ui.theme.Formas
 
 /**
  * Componentes base. REQ-DS-002 · REQ-DS-004 · REQ-A11Y-002 ·
@@ -178,6 +181,49 @@ fun BotaoCircular(
 
 private val BOTAO_CIRCULAR = 40.dp
 private val GLIFO_CIRCULAR = 18.dp
+
+/**
+ * Chip de filtro. REQ-A11Y-003
+ *
+ * Existe ao lado de [GhostButton] por uma razão de medida, não de estilo: o
+ * botão secundário tem 27dp de padding lateral, e quatro deles numa fileira
+ * passam de 360dp. O chip tem 14dp, que é o que faz "Tudo · Entradas · Saídas ·
+ * Filtros" caber na largura de um telefone comum.
+ *
+ * **Seleção é preenchimento**, e não uma segunda cor: selecionado é a pílula de
+ * `ink`, não selecionado é a de `surface`. A mesma gramática do botão primário,
+ * e a que sobrevive ao daltonismo. `selected` na semântica porque preenchimento
+ * é justamente o que o leitor de tela não enxerga.
+ *
+ * O alvo vai a 48dp por `minimumInteractiveComponentSize` sem mexer no desenho
+ * (REQ-A11Y-002).
+ */
+@Composable
+fun Chip(
+    texto: String,
+    selecionado: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .minimumInteractiveComponentSize()
+            .clip(Pill)
+            .background(if (selecionado) Tema.ink else Tema.surface)
+            .border(OutlineWidth, if (selecionado) Tema.ink else Tema.hairline, Pill)
+            .clickable(onClickLabel = texto, onClick = onClick)
+            .semantics { selected = selecionado }
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = texto,
+            style = Label,
+            color = if (selecionado) Tema.paper else Tema.ink,
+            maxLines = 1,
+        )
+    }
+}
 
 @Composable
 fun Cartao(

@@ -71,8 +71,21 @@ fun iconeDaCategoria(iconKey: String): Int = when (iconKey) {
     "repeat" -> R.drawable.ic_cat_repeat
     "cash" -> R.drawable.ic_cat_cash
     "dots" -> R.drawable.ic_cat_dots
+    "tag" -> R.drawable.ic_cat_tag
     else -> R.drawable.ic_cat_generico
 }
+
+/**
+ * As chaves que o seletor oferece, na ordem em que aparecem.
+ *
+ * Lista e não `iconeDaCategoria.keys`: o mapeamento aceita chave desconhecida de
+ * propósito (importação, restauração), e oferecer o genérico como escolha seria
+ * deixar alguém pegar "sem ícone" achando que é um ícone.
+ */
+val ICONES_DE_CATEGORIA = listOf(
+    "utensils", "car", "home", "cross", "confetti",
+    "book", "bag", "repeat", "cash", "tag", "dots",
+)
 
 /**
  * O adesivo redondo da categoria: preenchimento de acento com o ícone dentro.
