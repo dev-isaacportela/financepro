@@ -2,7 +2,7 @@
 
 ## Como relatar
 
-Use o **[relato privado de vulnerabilidade do GitHub](https://github.com/dev-isaacportela/mobile-finance/security/advisories/new)**.
+Use o **[relato privado de vulnerabilidade do GitHub](https://github.com/dev-isaacportela/financepro/security/advisories/new)**.
 Não abra issue pública para falha de segurança, e não mande detalhes por
 pull request.
 
