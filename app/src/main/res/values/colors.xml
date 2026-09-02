@@ -5,11 +5,14 @@
   core/ui/theme/Color.kt; estes dois existem porque `windowBackground` não é
   Compose e não enxerga os tokens.
 
-  São o único par de cores do app fora de core/ui/theme, e por isso o único que
-  o TokenLintTest não alcança: quem trocar CanvasDark tem de trocar aqui na mão,
-  senão a barra de status fica um degrau fora do fundo que o Compose pinta.
+  São as únicas cores do app fora de core/ui/theme, e por isso as únicas que o
+  TokenLintTest não alcança: quem trocar CanvasDark tem de trocar aqui na mão,
+  senão a barra de status fica um degrau fora do fundo que o Compose pinta. O
+  mesmo vale para `marca` contra `Cobalt` — é o fundo do ícone adaptativo, e o
+  `<background>` de um adaptive-icon também não enxerga Compose.
 -->
 <resources>
     <color name="paper">#FFFFFF</color>
     <color name="paper_dark">#000000</color>
+    <color name="marca">#494FDF</color>
 </resources>

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,7 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import app.financepro.R
 import app.financepro.core.ui.component.FilledCta
+import app.financepro.core.ui.component.Icone
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.HeadingSm
 import app.financepro.core.ui.theme.Tema
@@ -37,6 +40,12 @@ import app.financepro.core.ui.theme.Tema
  *
  * O prompt sobe sozinho ao entrar, e o botão existe para quem cancelou: sem
  * ele, cancelar deixaria a pessoa numa tela sem saída.
+ *
+ * É a porta do app, e a única tela sem dado nenhum para mostrar — por isso é
+ * aqui que a marca aparece, e não no onboarding, onde ela disputaria altura com
+ * o `DisplayXl` a 200% de fonte (REQ-A11Y-004). Em `ink`, nunca em cobalto:
+ * cobalto é o carimbo do ícone do launcher e não entra como bloco de tela
+ * (design.md §7).
  */
 @Composable
 fun LockScreen(onDesbloqueado: () -> Unit) {
@@ -58,6 +67,14 @@ fun LockScreen(onDesbloqueado: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        // Decoração: "Bloqueado" vem logo abaixo, e uma descrição aqui faria o
+        // leitor de tela anunciar a tela duas vezes.
+        Icone(
+            id = R.drawable.ic_marca,
+            descricao = null,
+            modifier = Modifier.size(MARCA),
+            tint = Tema.ink,
+        )
         Text("Bloqueado", style = HeadingSm, color = Tema.ink)
         erro?.let { Text(it, style = Body, color = Tema.ink) }
         FilledCta(text = "Desbloquear", onClick = pedir)
@@ -108,3 +125,6 @@ private fun promptInfo(): BiometricPrompt.PromptInfo {
     }
     return info.build()
 }
+
+/** Um degrau acima do `HeadingSm` de 28sp: a marca abre a tela, não ilustra. */
+private val MARCA = 40.dp

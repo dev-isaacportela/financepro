@@ -565,6 +565,60 @@ sobre o card (2.94:1) e sobre o canvas preto (3.47:1).
 `primary` do Material ele viraria a cor de todo botão do app — que é exatamente
 por que `primary` recebe `ink`, e a ação mais forte da tela é uma pílula branca.
 
+### 7.1 O um lugar por página: o ícone do launcher
+
+O sistema de origem gasta cobalto **uma vez por página**, no card em destaque.
+O app não tem esse card, e por sete versões deste documento a conclusão foi que
+então cobalto não teria onde morar. Tem: o ícone do launcher é a única superfície
+do produto que **não está dentro de nenhum dos dois canvas**, e a única que
+precisa se distinguir de trinta vizinhos numa grade que o app não desenhou.
+
+Branco sobre cobalto dá 6.06:1 — é o par que §2.2 já tinha registrado como
+legível e guardado para o dia em que preenchimento saturado com conteúdo fosse
+mesmo necessário. É este o dia, e ele acontece fora do app, onde a regra de
+"acento é preenchimento, nunca texto" não tem card para proteger.
+
+Dentro do app a marca continua em `ink`. A regra não mudou; o launcher é que
+está do lado de fora dela.
+
+### 7.2 A marca: um degrau
+
+`res/drawable/ic_marca.xml` — `M5,19 V13 H12 V5 H19 V19 Z`, um sólido de dois
+níveis em malha de 24.
+
+Não é gráfico de barras, e o que separa uma coisa da outra é a **ausência de
+folga**: duas barras separadas seriam um gráfico, e gráfico é o clichê que todo
+app de finanças já desenhou. Uma forma só, com um degrau no meio, é a frase que
+o §4 já dizia em prosa — *a profundidade inteira do desenho é um único degrau de
+luminância* — desenhada. Que em finanças ela também leia como subida é lucro, não
+premissa.
+
+Duas notas de execução que se perdem no primeiro ajuste, se não ficarem escritas:
+
+- **Os cantos são arredondados sem arco no `pathData`.** O polígono é desenhado
+  uma unidade para dentro, e o traço de 2 com junta redonda o devolve ao tamanho
+  cheio arredondando as seis quinas de graça. Fill e stroke são a mesma tinta.
+  Escrever seis `a` de raio 2 no path daria o mesmo desenho e um arquivo que
+  ninguém reedita.
+- **O ícone do launcher é um segundo arquivo**, `ic_marca_launcher.xml`, e não o
+  mesmo escalado: a malha lá é 108, e o glifo tem de caber na zona segura de
+  66dp porque o launcher recorta o resto com a máscara que ele quiser. Ocupa 51
+  das 108 unidades — encher a zona segura faria a forma encostar na borda das
+  máscaras redondas.
+
+Só `mipmap-anydpi-v26/`, e sem um único PNG: `minSdk = 26` é exatamente onde o
+ícone adaptativo entrou, então não existe aparelho suportado que caia num
+fallback de bitmap. A camada `monochrome` aponta para o mesmo vetor — o ícone
+temático do Android 13 tinge pelo alfa, e o branco de lá não aparece.
+
+Sem `roundIcon` no manifesto: o launcher já aplica a própria máscara sobre as
+camadas do adaptativo, e um segundo arquivo idêntico só daria duas coisas para
+divergirem.
+
+Dentro do app a marca aparece **em um lugar**, a tela de bloqueio: é a porta, e
+a única tela sem dado nenhum para mostrar. Não entra no onboarding, onde
+disputaria altura com o `DisplayXl` a 200% de fonte (§4.3).
+
 ## 8. O que não foi portado, e por quê
 
 Registrar isto evita que alguém "complete" o design mais tarde achando que faltou.

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A mesma marca de `ic_marca.xml` na malha de 108 do icone adaptativo, que e a
+  unica razao de existirem dois arquivos: o glifo tem de caber na zona segura de
+  66dp, porque o launcher recorta o resto com a mascara que ele quiser.
+
+  O degrau ocupa 51 das 108 unidades, centrado. Encher a zona segura faria a
+  forma encostar na borda das mascaras redondas.
+
+  Serve tambem de camada `monochrome` (icone tematico do Android 13): o sistema
+  tinge pelo alfa, entao o branco daqui nao aparece la.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M31.6,76.4 V57.2 H54 V31.6 H76.4 V76.4 Z"
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6.4"
+        android:strokeLineJoin="round" />
+</vector>

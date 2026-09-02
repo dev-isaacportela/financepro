@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A marca: **um degrau**.
+
+  Nao e grafico de barras, e por isso os dois niveis sao uma forma so, sem folga
+  entre eles: duas barras separadas seriam um grafico, e um grafico e o clichê
+  que todo app de financas ja desenhou. Aqui o degrau e literal — a profundidade
+  inteira do sistema visual e um degrau de luminancia acima do canvas
+  (design.md §4), e a marca e essa frase desenhada.
+
+  Cantos arredondados sem arco no `pathData`: o poligono e desenhado 1 unidade
+  para dentro e o traco de 2 com junta redonda o devolve ao tamanho cheio,
+  arredondando as seis quinas de graca. Fill e stroke sao a mesma tinta.
+
+  Tingido em tempo de composicao por `Icon(tint = ...)`, como todo icone do app;
+  a cor aqui e so o valor de partida. Dentro do app a marca e `ink` — cobalto e
+  carimbo do launcher, e nao entra como bloco de tela (design.md §7).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M5,19 V13 H12 V5 H19 V19 Z"
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineJoin="round" />
+</vector>
