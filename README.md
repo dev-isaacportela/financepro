@@ -18,7 +18,7 @@ Leia nesta ordem:
 | [arquitetura.md](docs/arquitetura.md) | Camadas, schema, queries, testes | Ao implementar |
 | [design.md](docs/design.md) | Sistema visual Slush traduzido para Compose | Ao construir qualquer tela |
 | [ingestao.md](docs/ingestao.md) | Design das 3 camadas de importação | Nas fases F2–F4 |
-| [decisoes.md](docs/decisoes.md) | 10 ADRs com o porquê e o que se perdeu | Antes de propor mudar uma decisão |
+| [decisoes.md](docs/decisoes.md) | 11 ADRs com o porquê e o que se perdeu | Antes de propor mudar uma decisão |
 
 ## O ciclo
 

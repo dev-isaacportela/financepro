@@ -54,7 +54,7 @@ import app.financepro.core.ui.theme.Pill
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
 import app.financepro.core.ui.theme.Subheading
-import app.financepro.core.ui.theme.Sunburst
+import app.financepro.core.ui.theme.Warning
 import app.financepro.domain.model.Txn
 import app.financepro.domain.usecase.DiaDeTransacoes
 import app.financepro.domain.usecase.EscopoDeParcela
@@ -198,14 +198,14 @@ private fun Vazio(comFiltro: Boolean, onLancar: () -> Unit, onLimpar: () -> Unit
         if (comFiltro) {
             EstadoVazio(
                 titulo = "NADA CASA",
-                sticker = Sunburst,
+                sticker = Warning,
                 descricao = "Nenhum lançamento passa por esses filtros.",
             )
             GhostButton(text = "Limpar filtros", onClick = onLimpar)
         } else {
             EstadoVazio(
                 titulo = "MÊS EM BRANCO",
-                sticker = Sunburst,
+                sticker = Warning,
                 descricao = "Nenhum lançamento neste período.",
             )
             FilledCta(text = "Lançar", onClick = onLancar)

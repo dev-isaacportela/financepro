@@ -37,7 +37,8 @@ import app.financepro.domain.model.TxnType
  * `Rotulo`. Duas cópias divergiriam, e a que ficaria errada é a que ninguém
  * abre.
  *
- * Descrição e subtítulo são blocos **empilhados**, nunca lado a lado — é o erro
+ * A linha mora num `SlushCard`, que é `surface` — um degrau acima do canvas e
+ * sem moldura. Descrição e subtítulo são blocos **empilhados**, nunca lado a lado — é o erro
  * que o protótipo em HTML cometeu deixando-os como `span` inline. Sem altura
  * fixa: com fonte a 200% (REQ-A11Y-004) a linha precisa poder crescer.
  *
@@ -99,9 +100,18 @@ fun LinhaDeTransacao(
 }
 
 /**
- * Ponto de 10dp, não sticker. O contorno não é decoração: sem ele um ponto
- * Sunburst sobre papel branco dá 1.40:1 e some — leria como falha de
- * renderização, não como escolha (design.md §6.3).
+ * Ponto de 10dp, não adesivo, e **com anel de `ink`**.
+ *
+ * O anel parecia dispensável — o nome da categoria vem escrito no subtítulo, a
+ * uma linha de distância, então o ponto nunca carrega significado sozinho. A
+ * medição desfez o argumento: sobre a superfície clara, Verde-azulado dá 2.77:1
+ * e Laranja 2.53:1, abaixo dos 3:1 de elemento não textual da WCAG. A isenção
+ * por redundância existe na letra da norma e custa mais para defender do que
+ * 1dp custa para desenhar (design.md §6.3).
+ *
+ * Categoria ausente vira `inkMute`, e não `hairline`: o fio existe para separar
+ * dois tons iguais e some sobre o card, enquanto "sem categoria" precisa ocupar
+ * o mesmo lugar visual que as outras — 6.40:1 no claro, 8.97:1 no escuro.
  */
 @Composable
 private fun PontoDeCategoria(colorArgb: Int?) = Box(
@@ -109,7 +119,7 @@ private fun PontoDeCategoria(colorArgb: Int?) = Box(
         .padding(top = 5.dp)
         .size(10.dp)
         .clip(Pill)
-        .background(colorArgb?.let { Color(it) } ?: Slush.paper)
+        .background(colorArgb?.let { Color(it) } ?: Slush.inkMute)
         .border(OutlineWidth, Slush.ink, Pill),
 )
 

@@ -43,7 +43,7 @@ import app.financepro.core.ui.component.Rotulo
 import app.financepro.core.ui.component.SlushCard
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
-import app.financepro.core.ui.theme.Lavender
+import app.financepro.core.ui.theme.LightGreen
 import app.financepro.core.ui.theme.MoneyCaption
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
@@ -88,7 +88,7 @@ fun RecurringScreen(vm: RecurringViewModel = hiltViewModel()) {
             // REQ-UI-006 — o vazio traz a ação que o preenche, e diz para quê.
             EstadoVazio(
                 titulo = "NADA SE REPETE",
-                sticker = Lavender,
+                sticker = LightGreen,
                 descricao = "Cadastre o aluguel, o salário ou a assinatura, e eles " +
                     "aparecem sozinhos em Próximas contas.",
             )

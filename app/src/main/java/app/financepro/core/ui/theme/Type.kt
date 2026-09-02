@@ -1,6 +1,6 @@
 // `FontVariation` ainda é experimental no Compose. O opt-in é deliberado: é o
-// que permite tirar dois pesos de Inter de um arquivo só, em vez de empacotar
-// dois estáticos. Se a API mudar, muda aqui, num arquivo.
+// que permite tirar três pesos de Inter de um arquivo só, em vez de empacotar
+// três estáticos. Se a API mudar, muda aqui, num arquivo.
 @file:OptIn(ExperimentalTextApi::class)
 
 package app.financepro.core.ui.theme
@@ -27,18 +27,15 @@ import app.financepro.R
  * rede e Google Play Services, e seriam a primeira coisa a furar a garantia de
  * REQ-SEC-007 sem ninguém perceber. `ManifestTest` guarda esse flanco.
  *
- * Antonio e Inter são variáveis, um arquivo por família. `FontVariation.weight`
- * escolhe o eixo `wght` em tempo de execução (API 26+, que é o `minSdk`) — dois
- * estáticos de Inter custariam o dobro de APK pelo mesmo resultado.
+ * **Uma família só, três pesos.** O sistema de origem usa uma display
+ * proprietária que não é licenciável aqui, e ele próprio nomeia o substituto:
+ * Inter, com entrelinha travada em `1.0` e entreletra negativa nos tamanhos
+ * grandes. Trocar de família no display renderia menos que acertar essas duas
+ * medidas, e custaria um arquivo de fonte a mais no APK.
+ *
+ * Inter é variável, um arquivo por família. `FontVariation.weight` escolhe o
+ * eixo `wght` em tempo de execução (API 26+, que é o `minSdk`).
  */
-
-private val Antonio = FontFamily(
-    Font(
-        R.font.antonio,
-        weight = FontWeight.W700,
-        variationSettings = FontVariation.Settings(FontVariation.weight(WEIGHT_BOLD)),
-    ),
-)
 
 // ponytail: Inter variável completa, 876KB. Subsetar para latin + latin-ext
 // derruba para ~120KB (design.md §3) — exige fontTools, que não instala nesta
@@ -46,27 +43,35 @@ private val Antonio = FontFamily(
 private val Inter = FontFamily(
     Font(
         R.font.inter,
+        weight = FontWeight.W400,
+        variationSettings = FontVariation.Settings(FontVariation.weight(WEIGHT_REGULAR)),
+    ),
+    Font(
+        R.font.inter,
         weight = FontWeight.W500,
         variationSettings = FontVariation.Settings(FontVariation.weight(WEIGHT_MEDIUM)),
     ),
     Font(
         R.font.inter,
-        weight = FontWeight.W700,
-        variationSettings = FontVariation.Settings(FontVariation.weight(WEIGHT_BOLD)),
+        weight = FontWeight.W600,
+        variationSettings = FontVariation.Settings(FontVariation.weight(WEIGHT_SEMIBOLD)),
     ),
 )
 
+private const val WEIGHT_REGULAR = 400
 private const val WEIGHT_MEDIUM = 500
-private const val WEIGHT_BOLD = 700
+private const val WEIGHT_SEMIBOLD = 600
 
 /**
- * Os dois ajustes sem os quais o `lineHeight` esmagado **não aparece na tela**.
+ * Os dois ajustes sem os quais a entrelinha travada **não aparece na tela**.
  *
  * O Compose acrescenta a folga de métrica da fonte acima e abaixo de cada linha;
- * com ela, um `lineHeight` de 0.78em rende o espaçamento de um parágrafo comum. O
- * efeito escultural — a única razão de a regra existir — se perde em silêncio, com
- * o código parecendo correto. É o erro que se comete uma vez e demora a
- * diagnosticar, e por isso `TypographyTest` o vigia.
+ * com ela, um `lineHeight` de `1.0em` rende o espaçamento de um parágrafo comum.
+ * O empilhamento apertado — a única razão de a regra existir — se perde em
+ * silêncio, com o código parecendo correto. É o erro que se comete uma vez e
+ * demora a diagnosticar, e por isso `TypographyTest` o vigia.
+ *
+ * O mecanismo é o mesmo de antes; o que mudou foi o número que ele entrega.
  */
 private val CrushedLeading = PlatformTextStyle(includeFontPadding = false)
 private val TrimBoth = LineHeightStyle(
@@ -74,18 +79,27 @@ private val TrimBoth = LineHeightStyle(
     trim = LineHeightStyle.Trim.Both,
 )
 
-private fun display(size: TextUnit, leading: Float) = TextStyle(
-    fontFamily = Antonio,
-    fontWeight = FontWeight.W700,
+/**
+ * Display: peso 500, entrelinha `1.0em`, entreletra negativa que **cresce com o
+ * tamanho**. Um título de 64sp com o tracking de um corpo de texto lê como
+ * banner de anúncio; é o ajuste que separa tipo grande de tipo apenas ampliado.
+ */
+private fun display(size: TextUnit, tracking: Float) = TextStyle(
+    fontFamily = Inter,
+    fontWeight = FontWeight.W500,
     fontSize = size,
-    lineHeight = leading.em,
+    lineHeight = LEADING_DISPLAY.em,
+    letterSpacing = tracking.em,
     platformStyle = CrushedLeading,
     lineHeightStyle = TrimBoth,
 )
 
-val DisplayXl = display(88.sp, 0.78f) // onboarding
-val Display = display(64.sp, 0.80f) // estados vazios, banners de seção
-val DisplaySm = display(44.sp, 0.82f) // saldo, total da fatura
+/** Travada em 1.0 por REQ-DS-005. Afrouxar aqui desmonta o empilhamento. */
+private const val LEADING_DISPLAY = 1.0f
+
+val DisplayXl = display(64.sp, -0.020f) // onboarding
+val Display = display(44.sp, -0.015f) // estados vazios, banners de seção
+val DisplaySm = display(34.sp, -0.010f) // saldo, total da fatura
 
 /** Os três, para `TypographyTest` não depender de alguém lembrar de listá-los. */
 val DisplayStyles = listOf(DisplayXl, Display, DisplaySm)
@@ -96,50 +110,58 @@ val DisplayStyles = listOf(DisplayXl, Display, DisplaySm)
  */
 private const val TNUM = "tnum"
 
-val HeadingSm = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W700, fontSize = 30.sp, lineHeight = 1.1.em)
-val Subheading = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W700, fontSize = 24.sp, lineHeight = 1.2.em)
+val HeadingSm = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 28.sp, lineHeight = 1.19.em, letterSpacing = (-0.01).em)
+val Subheading = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 22.sp, lineHeight = 1.33.em)
+
+/**
+ * Corpo com entreletra **positiva**.
+ *
+ * É o detalhe que dá a precisão mecânica que o sistema pede: a mesma frase com
+ * tracking zero lê como texto de artigo, e com `+0.015em` lê como rótulo de
+ * interface. Vale só para o corpo e os rótulos — no display o sinal se inverte.
+ */
 val BodyLg = TextStyle(
     fontFamily = Inter,
-    fontWeight = FontWeight.W500,
-    fontSize = 15.sp,
-    lineHeight = 1.39.em,
-    letterSpacing = (-0.01).em,
+    fontWeight = FontWeight.W400,
+    fontSize = 18.sp,
+    lineHeight = 1.56.em,
+    letterSpacing = 0.005.em,
 )
 val Body = TextStyle(
     fontFamily = Inter,
-    fontWeight = FontWeight.W500,
-    fontSize = 14.sp,
-    letterSpacing = (-0.01).em,
+    fontWeight = FontWeight.W400,
+    fontSize = 16.sp,
+    lineHeight = 1.5.em,
+    letterSpacing = 0.015.em,
 )
 val Caption = TextStyle(
     fontFamily = Inter,
-    fontWeight = FontWeight.W500,
-    fontSize = 12.sp,
-    lineHeight = 1.56.em,
-    letterSpacing = (-0.01).em,
+    fontWeight = FontWeight.W400,
+    fontSize = 13.sp,
+    lineHeight = 1.4.em,
 )
 
-/** A descrição da linha de transação, que design.md §6.3 pede em peso 700. */
-val BodyStrong = Body.copy(fontWeight = FontWeight.W700)
+/** A descrição da linha de transação, que design.md §6.3 pede em peso 500. */
+val BodyStrong = Body.copy(fontWeight = FontWeight.W500)
 
-/** Nav, botões e rótulos: a abertura é o que dá ar aos controles pill. */
+/** Nav, botões e rótulos. Peso 600 — o sistema não usa o 500 aqui, e nem o 700. */
 val Label = TextStyle(
     fontFamily = Inter,
-    fontWeight = FontWeight.W700,
-    fontSize = 13.sp,
-    letterSpacing = 0.032.em,
+    fontWeight = FontWeight.W600,
+    fontSize = 14.sp,
+    lineHeight = 1.43.em,
 )
 
 // Todo valor monetário passa por um destes dois, via `MoneyText` (REQ-DS-007).
 val MoneyLg = DisplaySm.copy(fontFeatureSettings = TNUM)
-val MoneyBody = Body.copy(fontWeight = FontWeight.W700, fontSize = 15.sp, fontFeatureSettings = TNUM)
+val MoneyBody = Body.copy(fontWeight = FontWeight.W600, letterSpacing = 0.em, fontFeatureSettings = TNUM)
 
 /** Saldo corrente do extrato: `tnum` também aqui, senão a coluna não alinha. */
 val MoneyCaption = Caption.copy(fontFeatureSettings = TNUM)
 
 /**
  * O mapa para o Material 3, para que um `Text` sem `style` explícito já caia num
- * estilo Slush em vez do Roboto padrão.
+ * estilo do tema em vez do Roboto padrão.
  */
 val SlushTypography = Typography(
     displayLarge = DisplayXl,

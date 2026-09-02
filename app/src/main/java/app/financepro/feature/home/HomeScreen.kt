@@ -35,7 +35,7 @@ import app.financepro.core.ui.theme.MoneyLg
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
 import app.financepro.core.ui.theme.Subheading
-import app.financepro.core.ui.theme.VoltageViolet
+import app.financepro.core.ui.theme.Cobalt
 import app.financepro.domain.model.Txn
 import app.financepro.domain.usecase.Comparativo
 
@@ -124,7 +124,7 @@ private fun Saldo(cents: Long) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(SlushShapes.extraLarge)
-            .background(VoltageViolet)
+            .background(Cobalt)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {

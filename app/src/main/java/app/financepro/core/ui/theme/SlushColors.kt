@@ -6,38 +6,50 @@ import androidx.compose.ui.graphics.Color
 /**
  * Os tokens de um tema. REQ-DS-002 · REQ-DS-008
  *
- * [ink] é ao mesmo tempo a cor do texto e a do contorno. É o que faz o contorno
- * inverter junto com o tema **sem nenhuma condicional espalhada pelas telas** —
- * nenhuma tela pergunta se está no escuro.
+ * [paper] é o canvas do modo e [surface] o único degrau acima dele. Os dois
+ * juntos são a linguagem de profundidade inteira: um card não tem sombra nem
+ * contorno pesado, ele é a superfície mais clara (ou mais escura) que o fundo.
  *
- * As seis cores de sticker não aparecem aqui de propósito: elas são idênticas
+ * [hairline] existe para o caso em que duas superfícies do mesmo tom se
+ * encostam — lista dentro de card, campo dentro de folha. É fio de 1dp, não
+ * moldura: no escuro é branco a 12%, e some assim que houver diferença de
+ * luminância para fazer o trabalho.
+ *
+ * As oito cores de acento não aparecem aqui de propósito: elas são idênticas
  * nos dois temas (REQ-DS-008) e vivem soltas em `Color.kt`. O que muda por tema
- * é o papel, a tinta e as três bandas.
+ * é o canvas, o degrau, a tinta e o fio.
  */
 @Immutable
 data class SlushColors(
-    val paper: Color, // fundo da superfície
-    val ink: Color, // texto e contorno
-    val bandSky: Color,
-    val bandNeutral: Color,
-    val bandLavender: Color,
-    val onFill: Color, // texto sobre preenchimento saturado
+    val paper: Color, // canvas do modo — preto absoluto ou branco
+    val surface: Color, // o degrau único acima do canvas
+    val ink: Color, // texto primário
+    val inkMute: Color, // texto secundário; passa em 4.5:1 sobre paper e surface
+    val hairline: Color, // fio de 1dp entre superfícies de mesmo tom
+    val onFill: Color, // texto sobre preenchimento saturado — só sobre Cobalt
+)
+
+/**
+ * O modo escuro é o principal, e não uma variação do claro.
+ *
+ * A ordem das declarações registra isso: o app de finanças passa a maior parte
+ * do tempo mostrando números sobre preto, e o modo claro é a banda de catálogo
+ * — ajustes, listas longas de cadastro, formulários.
+ */
+val DarkSlush = SlushColors(
+    paper = CanvasDark,
+    surface = SurfaceElevated,
+    ink = CanvasLight,
+    inkMute = MuteDark,
+    hairline = HairlineDark,
+    onFill = CanvasLight,
 )
 
 val LightSlush = SlushColors(
-    paper = PaperWhite,
-    ink = Carbon,
-    bandSky = SkyWash,
-    bandNeutral = ConcreteGray,
-    bandLavender = Lavender,
-    onFill = PaperWhite,
-)
-
-val DarkSlush = SlushColors(
-    paper = CarbonPaper,
-    ink = PaperWhite,
-    bandSky = SkyWashDark,
-    bandNeutral = ConcreteDark,
-    bandLavender = LavenderDark,
-    onFill = PaperWhite,
+    paper = CanvasLight,
+    surface = SurfaceSoft,
+    ink = InkLight,
+    inkMute = MuteLight,
+    hairline = HairlineLight,
+    onFill = CanvasLight,
 )

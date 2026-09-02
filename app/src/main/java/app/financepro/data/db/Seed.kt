@@ -55,21 +55,28 @@ internal fun categoriasSemeadas(): List<CategoryEntity> = CATEGORIAS_PADRAO.map 
 }
 
 /**
- * As cores são os stickers de [design.md](../../../../../../../../docs/design.md)
+ * As cores são os acentos de [design.md](../../../../../../../../docs/design.md)
  * §1, como Int ARGB com sinal. Ficam aqui, e não em `core/ui/theme/`, porque
  * `data/` não importa nada de Compose — o tema declara os mesmos hex do lado
- * dele (T-010). São seis stickers para dez categorias; a repetição é do design.
+ * dele (T-010), e `TokenLintTest` reprova o build se os dois divergirem.
+ *
+ * São **seis** para dez categorias, e não as oito da paleta: Laranja e Vermelho
+ * ficam de fora do sorteio porque também são estado de orçamento (REQ-BUD-003).
+ * Um ponto vermelho de categoria ao lado de uma barra vermelha de estouro faz o
+ * usuário ler significado onde só há identidade. As duas continuam no seletor,
+ * para quem quiser escolhê-las de propósito — o que é diferente de o app
+ * atribuí-las sozinho.
  */
-internal const val ELECTRIC_BLUE = 0xFF4DA2FF.toInt()
-internal const val MINT_POP = 0xFF55DB9C.toInt()
-internal const val LAVENDER = 0xFFE9CCFF.toInt()
-internal const val EMBER = 0xFFFB4903.toInt()
-internal const val SUNBURST = 0xFFFFD731.toInt()
-internal const val VOLTAGE_VIOLET = 0xFF5C4ADE.toInt()
+internal const val TEAL = 0xFF00A87E.toInt()
+internal const val LIGHT_BLUE = 0xFF007BC2.toInt()
+internal const val LIGHT_GREEN = 0xFF428619.toInt()
+internal const val YELLOW = 0xFFB09000.toInt()
+internal const val PINK = 0xFFE61E49.toInt()
+internal const val BROWN = 0xFF936D62.toInt()
 
 /** As contas do onboarding (REQ-UI-005) saem da mesma paleta, não de hex soltos. */
-internal const val ACCOUNT_CASH_COLOR = MINT_POP
-internal const val ACCOUNT_CHECKING_COLOR = ELECTRIC_BLUE
+internal const val ACCOUNT_CASH_COLOR = TEAL
+internal const val ACCOUNT_CHECKING_COLOR = LIGHT_BLUE
 
 internal data class CategoriaPadrao(
     val id: Long,
@@ -86,28 +93,33 @@ internal data class CategoriaPadrao(
  * AUTOINCREMENT decidir daria os mesmos números hoje e um bug silencioso no dia
  * em que alguém inserisse uma categoria antes destas.
  *
- * **As cores são distribuídas pela ordem alfabética, não pelo id.** São seis
- * stickers para dez categorias, então repetir é inevitável — o que dá para
+ * **As cores são distribuídas pela ordem alfabética do grid de despesas.** São
+ * seis acentos para nove despesas, então repetir é inevitável — o que dá para
  * escolher é *onde* repete. Enquanto todo `useCount` é zero, o grid sai em
  * ordem alfabética, que é exatamente o que o usuário novo vê; percorrendo essa
  * ordem em ciclo pela paleta, duas categorias da mesma cor ficam sempre seis
  * posições distantes e nunca vizinhas.
  *
+ * **Salário fica fora da conta**: é a única receita, e receita tem grid próprio.
+ * Distribuir sobre as dez, com ela no meio, empurrava Compras e Saúde para cinco
+ * posições de distância — que foi como `SeedTest` pegou a versão anterior desta
+ * troca de paleta.
+ *
  * A versão anterior atribuía por id e punha Salário e Saúde, lado a lado no
  * grid, com o mesmo Mint Pop. `SeedTest` agora falha se isso voltar.
  */
 internal val CATEGORIAS_PADRAO = listOf(
-    CategoriaPadrao(1, "Alimentação", CategoryKind.EXPENSE, "utensils", ELECTRIC_BLUE),
-    CategoriaPadrao(2, "Transporte", CategoryKind.EXPENSE, "car", LAVENDER),
-    CategoriaPadrao(3, "Moradia", CategoryKind.EXPENSE, "home", VOLTAGE_VIOLET),
-    CategoriaPadrao(4, "Saúde", CategoryKind.EXPENSE, "cross", MINT_POP),
-    CategoriaPadrao(5, "Lazer", CategoryKind.EXPENSE, "confetti", SUNBURST),
-    CategoriaPadrao(6, "Educação", CategoryKind.EXPENSE, "book", EMBER),
-    CategoriaPadrao(7, "Compras", CategoryKind.EXPENSE, "bag", LAVENDER),
-    CategoriaPadrao(8, "Assinaturas", CategoryKind.EXPENSE, "repeat", MINT_POP),
+    CategoriaPadrao(1, "Alimentação", CategoryKind.EXPENSE, "utensils", TEAL),
+    CategoriaPadrao(2, "Transporte", CategoryKind.EXPENSE, "car", LIGHT_GREEN),
+    CategoriaPadrao(3, "Moradia", CategoryKind.EXPENSE, "home", BROWN),
+    CategoriaPadrao(4, "Saúde", CategoryKind.EXPENSE, "cross", LIGHT_BLUE),
+    CategoriaPadrao(5, "Lazer", CategoryKind.EXPENSE, "confetti", PINK),
+    CategoriaPadrao(6, "Educação", CategoryKind.EXPENSE, "book", YELLOW),
+    CategoriaPadrao(7, "Compras", CategoryKind.EXPENSE, "bag", LIGHT_GREEN),
+    CategoriaPadrao(8, "Assinaturas", CategoryKind.EXPENSE, "repeat", LIGHT_BLUE),
     // Sozinha no grid de receita: vizinhança não é problema dela.
-    CategoriaPadrao(9, "Salário", CategoryKind.INCOME, "cash", SUNBURST),
-    CategoriaPadrao(10, "Outros", CategoryKind.EXPENSE, "dots", ELECTRIC_BLUE),
+    CategoriaPadrao(9, "Salário", CategoryKind.INCOME, "cash", YELLOW),
+    CategoriaPadrao(10, "Outros", CategoryKind.EXPENSE, "dots", TEAL),
 )
 
 /**

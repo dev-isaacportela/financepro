@@ -175,7 +175,7 @@ private fun Pizza(state: ReportsState, onVerCategoria: (Long, YearMonth) -> Unit
 
 /**
  * Uma linha da legenda. O ponto de cor é o mesmo da lista de transações, com
- * contorno pela mesma razão: um Sunburst sobre papel branco dá 1.40:1 e some.
+ * anel pela mesma razão: um Laranja sobre a superfície clara dá 2.53:1 e some.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

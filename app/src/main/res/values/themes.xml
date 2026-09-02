@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Tema mínimo de plataforma, só para o Android ter o que aplicar antes do
-  Compose assumir. O sistema visual de verdade (Slush) é a T-010, em
-  core/ui/theme, e não vive em XML.
+  Compose assumir. O sistema visual de verdade vive em core/ui/theme, e não
+  em XML.
 
   O `windowBackground` **precisa** acompanhar o modo noturno: ele é o que
   aparece atrás de qualquer tela que não pinte o próprio fundo, e um branco

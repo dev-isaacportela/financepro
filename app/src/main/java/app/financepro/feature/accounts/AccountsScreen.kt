@@ -31,7 +31,7 @@ import app.financepro.core.ui.component.MoneyText
 import app.financepro.core.ui.component.SlushCard
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.Caption
-import app.financepro.core.ui.theme.ElectricBlue
+import app.financepro.core.ui.theme.LightBlue
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
@@ -63,7 +63,7 @@ fun AccountsScreen(vm: AccountsViewModel = hiltViewModel()) {
         if (state.visiveis.isEmpty() && state.carregado) {
             // REQ-UI-006: estado vazio traz a ação que o preenche.
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                EstadoVazio(titulo = "SEM CONTAS AINDA", sticker = ElectricBlue)
+                EstadoVazio(titulo = "SEM CONTAS AINDA", sticker = LightBlue)
                 FilledCta(text = "Criar a primeira", onClick = vm::nova)
             }
         }
@@ -147,9 +147,9 @@ private fun Linha(
 /**
  * Ponto de cor, não bloco: a lista é densa e a cor aqui é identidade, não estado.
  *
- * O contorno não é decoração, é o mesmo motivo de design.md §6.3: um ponto
- * Sunburst sobre papel branco dá 1.40:1 e desaparece — leria como falha de
- * renderização, não como escolha.
+ * O anel não é decoração, é o mesmo motivo de design.md §6.3: sobre a superfície
+ * clara, um ponto Verde-azulado dá 2.77:1 e um Laranja 2.53:1 — abaixo dos 3:1
+ * de elemento não textual, e leria como falha de renderização, não como escolha.
  */
 @Composable
 private fun PontoDeCor(colorArgb: Int) = Box(

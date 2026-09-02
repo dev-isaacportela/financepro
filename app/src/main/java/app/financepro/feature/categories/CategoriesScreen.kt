@@ -100,8 +100,8 @@ private fun Linha(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             itemVerticalAlignment = Alignment.CenterVertically,
         ) {
-            // Contorno pelo mesmo motivo de design.md §6.3: sem ele um ponto
-            // Sunburst sobre papel branco dá 1.40:1 e some.
+            // Anel pelo mesmo motivo de design.md §6.3: sem ele um ponto
+            // Laranja sobre a superfície clara dá 2.53:1 e some.
             Box(
                 Modifier
                     .size(16.dp)

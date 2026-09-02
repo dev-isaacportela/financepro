@@ -48,7 +48,7 @@ a task correspondente (Art. 5).
 | [`REQ-OF`](#of--open-finance) | Open Finance | 4 |
 | [`REQ-RPT`](#rpt--relatórios) | Relatórios | 4 |
 | [`REQ-UI`](#ui--interface) | Navegação e telas | 7 |
-| [`REQ-DS`](#ds--sistema-visual) | Sistema visual (Slush) | 10 |
+| [`REQ-DS`](#ds--sistema-visual) | Sistema visual | 10 |
 | [`REQ-A11Y`](#a11y--acessibilidade) | Acessibilidade | 6 |
 | [`REQ-SEC`](#sec--segurança) | Segurança | 7 |
 | [`REQ-BAK`](#bak--backup-e-exportação) | Backup e export | 4 |
@@ -988,18 +988,20 @@ O SISTEMA DEVE suportar tema claro, escuro e seguir o sistema.
 O SISTEMA NÃO DEVE usar cores dinâmicas (Material You). A paleta é fixa e de
 marca: cor dinâmica derivada do papel de parede sobrescreveria os tokens de
 [REQ-DS-001](#req-ds-001--tokens-como-fonte-única) e destruiria as garantias de
-contraste de [REQ-DS-006](#req-ds-006--paleta-de-sticker-é-preenchimento), que
+contraste de [REQ-DS-006](#req-ds-006--paleta-de-acento-é-preenchimento), que
 dependem de hexadecimais conhecidos.
 
 O mapeamento entre os dois temas está em
-[REQ-DS-008](#req-ds-008--tema-escuro-preserva-a-lógica-de-sticker).
+[REQ-DS-008](#req-ds-008--tema-escuro-preserva-a-lógica-de-acento).
 
 ---
 
 # DS — sistema visual
 
-Tradução do style reference **Slush** para Android. Design, rationale e os três
-conflitos resolvidos estão em [design.md](design.md).
+Tradução do style reference para Android — dois modos de tela cheia, preto e
+branco, com um degrau de luminância no lugar do contorno. Design, rationale e os
+conflitos resolvidos estão em [design.md](design.md); a troca do sistema anterior
+e o que ela custou estão em [ADR-011](decisoes.md).
 
 ### REQ-DS-001 — Tokens como fonte única
 
@@ -1010,24 +1012,46 @@ O SISTEMA DEVE definir toda cor, forma e estilo de texto em `core/ui/theme/`.
 SE uma cor literal aparecer fora desse pacote, ENTÃO a verificação estática DEVE
 falhar.
 
-### REQ-DS-002 — Superfícies contornadas
+### REQ-DS-002 — Superfícies por degrau de luminância
 
-`F0` · `MUST` · Teste: `manual`
+`F0` · `MUST` · Teste: `ContrastTest`
 
-O SISTEMA DEVE aplicar contorno de 1dp na cor `ink` a todo card, botão, chip,
-campo e superfície interativa.
+O SISTEMA DEVE desenhar card, folha e superfície de conteúdo na cor `surface`,
+que é um degrau de luminância acima do canvas `paper`, e NÃO DEVE contorná-los.
 
-`ink` é Carbon no tema claro e Paper White no escuro, invertendo junto com o
-papel. O contorno é a linguagem visual, não um recurso de contingência.
+O SISTEMA DEVE reservar o fio de 1dp em `hairline` para o caso em que duas
+superfícies do mesmo tom se encostam.
+
+A escada tem **dois passos e para**: `paper` e `surface`, por modo. Um terceiro
+tom seria elevação tonal com outro nome, que
+[REQ-DS-004](#req-ds-004--sem-sombra-e-sem-gradiente) proíbe. Contornar o card
+além do degrau diria a mesma coisa duas vezes.
+
+**O anel de `ink` continua existindo em um lugar**: ao redor de preenchimento
+colorido pequeno — o ponto de categoria e a amostra do seletor de cores —, onde
+a cor não separa sozinha do fundo. A medição está em
+[REQ-DS-006](#req-ds-006--paleta-de-acento-é-preenchimento).
 
 ### REQ-DS-003 — Raios e contornos
 
 `F0` · `MUST` · Teste: `manual`
 
-O SISTEMA DEVE usar `CircleShape` em nav, botões, chips e tags, e raio entre 16dp
-e 40dp em cards e folhas.
+O SISTEMA DEVE usar `CircleShape` em nav, botões, chips e badges, e a escala de
+8dp, 12dp, 20dp e 28dp em todo o resto.
 
-SE algum raio for menor que 16dp, ENTÃO a revisão DEVE rejeitar a mudança.
+| Raio | Onde |
+|---|---|
+| 8dp | tag inline, chip pequeno |
+| 12dp | campo de texto, tile |
+| 20dp | card e folha |
+| 28dp | folha de fundo, chrome de dispositivo |
+
+SE algum raio ficar fora dessa escala, ENTÃO a revisão DEVE rejeitar a mudança.
+
+**Ação é pílula, conteúdo é 20dp.** Não é preferência: a diferença entre o botão
+e o card passa a ser a forma, e não a cor — o que sobrevive ao daltonismo e à
+troca de canvas sem nenhuma condicional
+([REQ-A11Y-003](#req-a11y-003--cor-não-é-sinal-único)).
 
 ### REQ-DS-004 — Sem sombra e sem gradiente
 
@@ -1040,44 +1064,60 @@ Material 3 aplica elevação por padrão em `Card`, `Button`, `FloatingActionBut
 e `Surface` — os quatro exigem `0.dp` explícito, e `Surface` também
 `tonalElevation = 0.dp`.
 
-### REQ-DS-005 — Tipografia display esmagada
+### REQ-DS-005 — Tipografia display travada
 
 `F0` · `MUST` · Teste: `TypographyTest`
 
-O SISTEMA DEVE renderizar os estilos display com `lineHeight` ≤ `0.85.em`,
+O SISTEMA DEVE renderizar os estilos display com `lineHeight` de `1.0.em`,
 `includeFontPadding = false` e `LineHeightStyle.Trim.Both`.
 
-| Estilo | Tamanho | `lineHeight` |
-|---|---|---|
-| `DisplayXl` | 88sp | 0.78em |
-| `Display` | 64sp | 0.80em |
-| `DisplaySm` | 44sp | 0.82em |
+| Estilo | Tamanho | `lineHeight` | Entreletra |
+|---|---|---|---|
+| `DisplayXl` | 64sp | 1.0em | −0.020em |
+| `Display` | 44sp | 1.0em | −0.015em |
+| `DisplaySm` | 34sp | 1.0em | −0.010em |
+
+O SISTEMA DEVE usar entreletra **negativa** no display e **positiva** no corpo.
+O aperto é o que separa tipo grande de tipo apenas ampliado; a abertura do corpo
+é o que dá aos rótulos a precisão mecânica que o sistema pede.
 
 Sem `includeFontPadding = false` e `Trim.Both`, o Compose adiciona a folga de
-métrica da fonte e o `lineHeight` esmagado não aparece na tela — o efeito se perde
+métrica da fonte e a entrelinha travada não aparece na tela — o efeito se perde
 silenciosamente, com o código parecendo correto.
 
 O SISTEMA NÃO DEVE truncar display type com reticências. Texto que não couber
 quebra em mais linhas, e o contêiner cresce.
 
-### REQ-DS-006 — Paleta de sticker é preenchimento
+### REQ-DS-006 — Paleta de acento é preenchimento
 
 `F0` · `MUST` · Teste: `ContrastTest`
 
-O SISTEMA DEVE usar Electric Blue, Mint Pop, Lavender, Ember, Sunburst e Voltage
-Violet exclusivamente como preenchimento de superfície, sticker ou banda
-decorativa.
+O SISTEMA DEVE usar as oito cores de acento — Verde-azulado, Azul, Verde,
+Amarelo, Laranja, Rosa, Vermelho e Marrom — exclusivamente como preenchimento de
+ponto, ícone, barra ou superfície.
 
 O SISTEMA NÃO DEVE usar nenhuma delas como cor de texto, cor de link ou cor de
 ação.
 
-Medido sobre branco: apenas Voltage Violet atinge 4.5:1 (6.02:1). Electric Blue dá
-2.65:1, Mint Pop 1.75:1 e Sunburst 1.40:1. Sobre papel escuro a relação se
-inverte. A regra única elimina a classe de erro em vez de administrar a tabela.
+**A medição é contra `surface`, não contra `paper`.** Sobre preto puro as oito
+passam de 4.5:1, e é exatamente aí que a regra se perderia por descuido — parece
+que dá para usar qualquer uma como texto. Sobre o card, que é onde o conteúdo de
+fato mora, cinco reprovam: Azul 3.91, Rosa 3.94, Verde 3.95, Marrom 3.90 e
+Vermelho 4.20. E nenhuma das oito passa nos **dois** temas: Verde-azulado dá 5.85
+no escuro e 2.77 no claro. A regra única elimina a classe de erro em vez de
+administrar uma tabela por superfície e por tema.
 
-Único padrão permitido com texto sobre preenchimento saturado: **Paper White sobre
-Voltage Violet** (6.02:1) ou sobre Carbon (21:1). Paper White sobre Ember reprova
-(3.47:1).
+SE um preenchimento de acento tiver menos de 24dp, ENTÃO O SISTEMA DEVE
+contorná-lo com 1dp de `ink`. Sobre a superfície clara, Verde-azulado dá 2.77:1 e
+Laranja 2.53:1 — abaixo dos 3:1 de elemento não textual da WCAG. Vale para o
+ponto da linha de transação e para a amostra do seletor de cores.
+
+Único padrão permitido com texto sobre preenchimento saturado: **branco sobre
+Cobalto** (6.06:1). Branco sobre Vermelho reprova (4.24:1), e os dois parecem
+igualmente seguros a olho.
+
+Cobalto é o carimbo da marca e fica **fora** da paleta de acento: é preenchimento
+de no máximo um bloco em destaque por tela, nunca cor de categoria.
 
 ### REQ-DS-007 — Valor monetário em tinta neutra
 
@@ -1088,27 +1128,40 @@ O SISTEMA DEVE exibir todo valor monetário na cor `ink`, com algarismos tabular
 [REQ-CORE-005](#req-core-005--formatação-pt-br) e pelo rótulo da categoria.
 
 O SISTEMA NÃO DEVE usar verde ou vermelho como portadores de significado — nem
-para receita e despesa, nem para sucesso e erro (Slush trata verde como acento
-decorativo, e [REQ-A11Y-003](#req-a11y-003--cor-não-é-sinal-único) proíbe cor como
-sinal único).
+para receita e despesa, nem para sucesso e erro.
+
+A regra sobreviveu à troca de sistema visual por medição, e não por herança:
+sobre o card, um par verde/vermelho de valores reprovaria justamente na metade
+vermelha, que é a que avisa (Vermelho 4.20:1, Rosa 3.94:1). Cor em só uma das
+polaridades é pior que cor em nenhuma, e
+[REQ-A11Y-003](#req-a11y-003--cor-não-é-sinal-único) proíbe cor como sinal único
+de qualquer forma.
 
 Estados de orçamento de [REQ-BUD-003](#req-bud-003--progresso-e-alerta) usam
-sticker **com ícone**: sem preenchimento dentro do teto, Sunburst com ícone de
-atenção em ≥ 80%, Ember com ícone de estouro em ≥ 100%.
+preenchimento **com ícone**: sem preenchimento dentro do teto, Laranja com ícone
+de atenção em ≥ 80%, Vermelho com ícone de estouro em ≥ 100%. A palavra
+"estourou" fica em `ink` — Vermelho como texto sobre o card dá 4.20:1 e
+reprovaria.
 
 `tnum` não é enfeite: sem ele os valores não alinham na vertical, e uma coluna de
 dinheiro desalinhada é mais difícil de conferir contra o extrato do banco.
 
-### REQ-DS-008 — Tema escuro preserva a lógica de sticker
+### REQ-DS-008 — Tema escuro preserva a lógica de acento
 
 `F0` · `MUST` · Teste: `ContrastTest`
 
-QUANDO o tema escuro está ativo, O SISTEMA DEVE inverter papel e tinta
-(`#111111` / Paper White), DEVE manter as seis cores de sticker **idênticas**, e
-DEVE substituir as três bandas pastel por equivalentes dessaturados.
+QUANDO o tema escuro está ativo, O SISTEMA DEVE usar preto absoluto (`#000000`)
+como canvas e `#16181A` como superfície, DEVE manter as oito cores de acento
+**idênticas**, e DEVE trocar apenas canvas, superfície, tinta e fio.
 
-Um adesivo colorido contornado funciona sobre papel claro ou escuro; é a mesma
-gramática. Os fundos pastel `#dceeff`, `#cccccc` e `#e9ccff` é que não sobrevivem.
+O modo escuro é o principal, e não uma variação do claro: o app passa a maior
+parte do tempo mostrando números, e o modo claro é a banda de catálogo — cadastro,
+ajustes, formulários.
+
+Preto absoluto, e não quase-preto: `#0A0A0A` existe no sistema de origem para
+cards embutidos, e usá-lo como canvas achataria a única troca de banda que o
+desenho tem. A cor de uma categoria é identidade, e identidade não muda quando
+anoitece.
 
 ### REQ-DS-009 — Intensidade proporcional à densidade
 
@@ -1116,20 +1169,19 @@ gramática. Os fundos pastel `#dceeff`, `#cccccc` e `#e9ccff` é que não sobrev
 
 O SISTEMA DEVE reduzir a expressão visual conforme a densidade de dados da tela.
 
-| Tela | Display type | Fita 3D |
+| Tela | Display type | Bloco em Cobalto |
 |---|---|---|
-| Onboarding | `DisplayXl` | diferida |
-| Estados vazios | `Display` | não |
-| Dashboard, cartão, orçamento | `DisplaySm` | não |
+| Onboarding | `DisplayXl` (64sp) | não |
+| Estados vazios | `Display` (44sp) | não |
+| Dashboard, cartão, orçamento | `DisplaySm` (34sp) | um, no saldo |
 | Lista de transações, importação, ajustes | **nenhum** | não |
 
-**A fita 3D está diferida por decisão do dono do produto (2026-08-31).** Ela é
-arte — renders 3D — e não existe. Até existir, o onboarding é pôster de tipografia
-pura: `DisplayXl`, stickers e banda de cor, sem a fita. O requisito não some, fica
-`diferida`, para que a ausência seja uma escolha registrada e não um esquecimento.
+O SISTEMA NÃO DEVE exibir mais de um bloco em Cobalto por tela. Cobalto é
+assinatura; dois na mesma viewport e ele vira tema de cor, que é o oposto do que
+a marca faz com ele.
 
 O SISTEMA NÃO DEVE usar display type em listas roláveis de dados. Uma lista de 100
-transações em 88sp violaria o caminho de 5 segundos do Art. 18.
+transações em 64sp violaria o caminho de 5 segundos do Art. 18.
 
 ### REQ-DS-010 — Fontes empacotadas
 

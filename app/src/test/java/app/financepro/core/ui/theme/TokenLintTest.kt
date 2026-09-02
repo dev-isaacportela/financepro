@@ -66,22 +66,22 @@ class TokenLintTest {
     }
 
     @Test
-    fun `as cores das categorias semeadas sao as seis do tema`() {
+    fun `as cores das categorias semeadas saem da paleta do tema`() {
         // O furo que a varredura de `Color(0x` não pega: `Seed.kt` guarda ARGB
         // como Int porque `data/` não importa Compose, então ele não é uma cor
         // literal no sentido do lint — mas divergiria da paleta em silêncio.
-        val doTema = Stickers.map { it.toArgb() }.toSet()
+        val doTema = Acentos.map { it.toArgb() }.toSet()
         val doSeed = CATEGORIAS_PADRAO.map { it.corArgb }.toSet()
 
         assertEquals(emptySet<Int>(), doSeed - doTema)
     }
 
     @Test
-    fun `toda cor de sticker tem nome falado`() {
+    fun `toda cor de acento tem nome falado`() {
         // O mapa e a lista são duas declarações, e a segunda cor nova entraria
         // só numa delas. Sem esta linha, o seletor de cores volta a anunciar
         // "Cor" para ela e ninguém percebe (REQ-A11Y-001).
-        assertEquals(emptyList<Color>(), Stickers.filterNot { it in StickerNames })
+        assertEquals(emptyList<Color>(), Acentos.filterNot { it in NomesDeAcento })
     }
 
     private fun semComentarios(arquivo: File): String = arquivo.readText()

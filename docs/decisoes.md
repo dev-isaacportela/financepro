@@ -313,3 +313,62 @@ privacidade que ninguém lê.
 **Consequência.** Nada de crash reporter, analytics ou remote config. Diagnóstico
 de bug depende do usuário exportar e enviar — o que é exatamente o comportamento
 que o Art. 13 quer.
+
+---
+
+## ADR-011 — O sistema visual passa de Slush para dois modos de tela cheia
+
+**Status** Aceita · **Afeta** `core/ui/theme/`, `core/ui/component/`, toda tela ·
+**Constituição** Art. 1, Art. 3
+
+**Decisão.** O style reference deixa de ser Slush — papel branco, contorno preto
+de 1dp em toda superfície, display condensado com entrelinha esmagada — e passa
+a ser um sistema de **duas bandas**: preto absoluto para o conteúdo, branco para
+as listas de cadastro, com um único degrau de luminância acima de cada canvas no
+lugar do contorno. Ação vira pílula, card vira 20dp, display vira Inter em peso
+500 com entrelinha travada em `1.0`.
+
+**Razão.** A escolha foi do dono do produto, sobre três propostas em protótipo.
+Não há aqui um argumento técnico que a justifique: é decisão de marca, e este ADR
+existe para registrar o que ela custou, não para reabri-la.
+
+O que **não** mudou é o que vale registrar. Três das dez regras de design
+sobreviveram intactas porque nunca foram sobre Slush:
+
+- REQ-DS-001 (tokens como fonte única) — a razão de a troca inteira caber em
+  cinco arquivos de tema e quatro de componente. Sem ela, seria uma varredura por
+  dezoito telas.
+- REQ-DS-004 (sem sombra e sem gradiente) — os dois sistemas comunicam
+  profundidade por banda de cor. Só mudou o mecanismo: era contorno, virou degrau.
+- REQ-DS-010 (fontes empacotadas) — e a troca ainda **removeu** um arquivo de
+  fonte, porque o novo display sai da família que já estava no APK.
+
+**O que se perdeu.**
+
+*A moldura.* O contorno de 1dp em toda superfície era a assinatura de Slush e a
+razão de o app não parecer nenhum outro. O degrau de luminância é mais discreto e
+mais comum — o app ficou mais parecido com o resto da categoria.
+
+*O display condensado.* Antonio, a 88sp com `0.78em`, dava ao onboarding e aos
+estados vazios um peso de pôster que Inter a 64sp com `1.0em` não alcança. A
+fonte saiu de `res/font/`; recuperar o efeito é recuperar o arquivo.
+
+*A paleta pastel.* As três bandas (`#DCEEFF`, `#CCCCCC`, `#E9CCFF`) não têm
+equivalente no sistema novo, que só tem dois tons por modo. Os tokens foram
+apagados, e nenhuma tela os usava fora do próprio tema — o que, olhando de volta,
+já dizia que eram decoração sem função.
+
+**O que a medição obrigou a manter.** A intenção original era usar verde para
+receita e vermelho para despesa, como no protótipo. O cálculo de contraste
+sobre `surface` reprovou justamente a metade que avisa: Danger dá 4.20:1 e Pink
+3.94:1 sobre o card. Cor em só uma das polaridades é pior que cor em nenhuma, e
+por isso REQ-DS-007 continua exigindo valor em tinta neutra, distinguido pelo
+sinal e pelo rótulo. A troca de marca não comprou uma exceção de acessibilidade.
+
+**Consequência.** `ContrastTest` passou a medir contra `surface` e não contra
+`paper`. Sobre preto puro os oito acentos passam de 4.5:1, e um teste que medisse
+esse fundo concordaria com o erro que a regra existe para impedir.
+
+**Gatilho de reversão.** Nenhum técnico. Se a marca voltar atrás, o caminho é o
+inverso deste ADR, e o custo é o mesmo: cinco arquivos de tema, quatro de
+componente, três de teste.

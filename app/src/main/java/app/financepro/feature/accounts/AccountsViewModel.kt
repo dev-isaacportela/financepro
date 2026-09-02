@@ -3,7 +3,7 @@ package app.financepro.feature.accounts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.compose.ui.graphics.toArgb
-import app.financepro.core.ui.theme.ConcreteGray
+import app.financepro.core.ui.theme.LightBlue
 import app.financepro.data.repo.AccountRepository
 import app.financepro.data.repo.TxnRepository
 import app.financepro.domain.model.Account
@@ -71,7 +71,7 @@ class AccountsViewModel @Inject constructor(
             id = 0,
             name = "",
             type = AccountType.CHECKING,
-            colorArgb = ConcreteGray.toArgb(),
+            colorArgb = LightBlue.toArgb(),
             iconKey = "wallet",
         )
         it.copy(editando = vazia, erro = null)

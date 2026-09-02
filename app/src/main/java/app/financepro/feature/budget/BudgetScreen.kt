@@ -49,15 +49,15 @@ import app.financepro.core.ui.component.Rotulo
 import app.financepro.core.ui.component.SlushCard
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
-import app.financepro.core.ui.theme.Ember
-import app.financepro.core.ui.theme.MintPop
+import app.financepro.core.ui.theme.Danger
+import app.financepro.core.ui.theme.Teal
 import app.financepro.core.ui.theme.MoneyCaption
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
 import app.financepro.core.ui.theme.Subheading
-import app.financepro.core.ui.theme.Sunburst
+import app.financepro.core.ui.theme.Warning
 import app.financepro.domain.usecase.ALERTA_PERCENT
 import app.financepro.domain.usecase.BudgetProgress
 import app.financepro.domain.usecase.ESTOURO_PERCENT
@@ -93,7 +93,7 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
             // começar do zero, ou repetir o que o mês passado já dizia.
             EstadoVazio(
                 titulo = "SEM TETO NESTE MÊS",
-                sticker = MintPop,
+                sticker = Teal,
                 descricao = "Escolha uma categoria e um limite; o resto a tela preenche sozinha.",
             )
         } else {
@@ -216,8 +216,8 @@ private fun Barra(percent: Int) {
     LaunchedEffect(alvo) { fracao.animateTo(alvo, tween(CRESCIMENTO_MS, easing = FastOutSlowInEasing)) }
 
     val preenchimento = when {
-        percent >= ESTOURO_PERCENT -> Ember
-        percent >= ALERTA_PERCENT -> Sunburst
+        percent >= ESTOURO_PERCENT -> Danger
+        percent >= ALERTA_PERCENT -> Warning
         else -> Slush.ink
     }
     Box(

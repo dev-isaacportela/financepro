@@ -5,7 +5,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,12 +55,24 @@ import app.financepro.core.ui.theme.SlushShapes
  * visível. Zerar os quatro em cada tela é uma linha para esquecer; zerar aqui é
  * uma vez.
  *
- * Todos nascem com contorno `ink` de 1dp e alvo de toque de 48dp. A
- * acessibilidade vence o token visual: o padding de Slush é menor, então o alvo é
- * ampliado por `minimumInteractiveComponentSize` sem mexer no desenho.
+ * **Superfície não tem moldura, tem degrau.** Card e folha são `surface`, um
+ * passo de luminância acima do canvas — a profundidade inteira do sistema. O fio
+ * de `hairline` fica para o caso em que dois tons iguais se encostam, e não para
+ * contornar tudo por hábito (REQ-DS-002).
+ *
+ * Ação é pílula, conteúdo é 20dp: a diferença entre botão e card passa a ser a
+ * **forma**, que sobrevive ao daltonismo e à troca de canvas sem condicional.
+ *
+ * Todos nascem com alvo de toque de 48dp. A acessibilidade vence o token visual:
+ * o padding do desenho é menor, então o alvo é ampliado por
+ * `minimumInteractiveComponentSize` sem mexer no que se vê.
  */
 
-/** Ação primária: preenchimento `ink`, texto `paper`. Nunca azul. */
+/**
+ * Ação primária: pílula de `ink` com texto `paper` — branca sobre preto no modo
+ * escuro, preta sobre branco no claro. É o pixel mais forte da tela, e é assim
+ * de propósito: cobalto é carimbo de card em destaque, não cor de botão.
+ */
 @Composable
 fun FilledCta(
     text: String,
@@ -73,19 +84,23 @@ fun FilledCta(
         onClick = onClick,
         modifier = modifier.minimumInteractiveComponentSize(),
         enabled = enabled,
-        shape = SlushShapes.extraLarge,
+        shape = Pill,
         colors = ButtonDefaults.buttonColors(
             containerColor = Slush.ink,
             contentColor = Slush.paper,
         ),
         elevation = null, // sem sombra, nunca
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+        contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
     ) {
         Text(text)
     }
 }
 
-/** Ação secundária, chips de nav e tags: pill contornada sobre papel. */
+/**
+ * Ação secundária e chip não selecionado: pílula contornada em `ink` sobre o
+ * canvas. O contorno aqui não é a moldura que sumiu das superfícies — é o que
+ * distingue a ação secundária da primária **sem** usar uma segunda cor.
+ */
 @Composable
 fun GhostButton(
     text: String,
@@ -103,23 +118,29 @@ fun GhostButton(
             containerColor = Slush.paper,
             contentColor = Slush.ink,
         ),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+        contentPadding = PaddingValues(horizontal = 27.dp, vertical = 13.dp),
     ) {
         Text(text)
     }
 }
 
+/**
+ * O card. É `surface`, e é só isso: um degrau de luminância acima do canvas.
+ *
+ * Sem `border` de propósito. A moldura de 1dp existia para separar dois brancos;
+ * com o degrau, contorná-lo também seria dizer a mesma coisa duas vezes — e o
+ * fio ao redor de um card de 20dp sobre preto lê como caixa de diálogo.
+ */
 @Composable
 fun SlushCard(
     modifier: Modifier = Modifier,
-    shape: Shape = SlushShapes.small,
+    shape: Shape = SlushShapes.medium,
     content: @Composable () -> Unit,
 ) {
     Card(
         modifier = modifier,
         shape = shape,
-        border = BorderStroke(OutlineWidth, Slush.ink),
-        colors = CardDefaults.cardColors(containerColor = Slush.paper, contentColor = Slush.ink),
+        colors = CardDefaults.cardColors(containerColor = Slush.surface, contentColor = Slush.ink),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         content()
@@ -136,9 +157,8 @@ fun SlushSurface(
     Surface(
         modifier = modifier,
         shape = shape,
-        color = Slush.paper,
+        color = Slush.surface,
         contentColor = Slush.ink,
-        border = BorderStroke(OutlineWidth, Slush.ink),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
     ) {
@@ -186,10 +206,14 @@ fun SlushFab(
  * desalinhada é mais difícil de conferir contra o extrato.
  *
  * [cor] existe por **um** motivo: valor sobre preenchimento saturado, onde a
- * tinta obrigatória é `onFill` — branco sobre Voltage Violet passa em 6.02:1, e
- * `ink` no tema claro reprovaria em 3.5:1. Não é porta para verde e vermelho:
- * receita e despesa continuam se distinguindo pelo **sinal** e pelo rótulo da
- * categoria, nunca por cor (REQ-A11Y-003), e `ContrastTest` guarda o resto.
+ * tinta obrigatória é `onFill` — branco sobre Cobalto passa em 6.06:1, e `ink`
+ * no tema claro reprovaria. Não é porta para verde e vermelho: receita e despesa
+ * continuam se distinguindo pelo **sinal** e pelo rótulo da categoria, nunca por
+ * cor (REQ-A11Y-003).
+ *
+ * E a medição diz que não é preciosismo. Sobre o card `surface`, Pink dá 3.94:1
+ * e Danger 4.20:1 — um par verde/vermelho de valores reprovaria justamente na
+ * metade vermelha, que é a que avisa. `ContrastTest` guarda o resto.
  *
  * E é aqui que REQ-A11Y-006 se resolve de uma vez: a `contentDescription` traz
  * o valor por extenso, de [spokenBRL]. O texto na tela continua `−R$ 18,50`,
@@ -286,9 +310,8 @@ fun EstadoVazio(
             Modifier
                 .size(STICKER_VAZIO)
                 .scale(escala.value)
-                .clip(SlushShapes.small)
-                .background(sticker)
-                .border(OutlineWidth, Slush.ink, SlushShapes.small),
+                .clip(SlushShapes.medium)
+                .background(sticker),
         )
         Text(text = titulo, style = Display, color = Slush.ink)
         if (descricao != null) Text(text = descricao, style = BodyLg, color = Slush.ink)

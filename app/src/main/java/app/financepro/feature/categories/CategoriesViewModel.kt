@@ -3,7 +3,7 @@ package app.financepro.feature.categories
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.compose.ui.graphics.toArgb
-import app.financepro.core.ui.theme.ConcreteGray
+import app.financepro.core.ui.theme.LightBlue
 import app.financepro.data.repo.CategoryRepository
 import app.financepro.domain.model.Category
 import app.financepro.domain.model.CategoryKind
@@ -118,6 +118,6 @@ class CategoriesViewModel @Inject constructor(
          * tema, e uma cor solta seria exatamente o que REQ-DS-001 proíbe — só
          * que num formato que a varredura de `Color(0x` não pegaria.
          */
-        val PADRAO = ConcreteGray.toArgb()
+        val PADRAO = LightBlue.toArgb()
     }
 }

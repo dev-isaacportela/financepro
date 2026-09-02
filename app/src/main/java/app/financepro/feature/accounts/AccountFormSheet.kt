@@ -36,8 +36,8 @@ import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
-import app.financepro.core.ui.theme.StickerNames
-import app.financepro.core.ui.theme.Stickers
+import app.financepro.core.ui.theme.NomesDeAcento
+import app.financepro.core.ui.theme.Acentos
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.AccountType
 import app.financepro.domain.usecase.CARD_DAY_RANGE
@@ -158,7 +158,7 @@ private fun CamposDeCartao(conta: Account, contas: List<Account>, onChange: (Acc
 @Composable
 private fun Cores(selecionada: Int, onClick: (Int) -> Unit) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(Stickers) { cor ->
+        items(Acentos) { cor ->
             val argb = cor.toArgb()
             Box(
                 Modifier
@@ -179,7 +179,7 @@ private fun Cores(selecionada: Int, onClick: (Int) -> Unit) {
                     // espessura de contorno — que o leitor não enxerga
                     // (REQ-A11Y-003).
                     .semantics {
-                        contentDescription = StickerNames[cor] ?: "Cor"
+                        contentDescription = NomesDeAcento[cor] ?: "Cor"
                         selected = argb == selecionada
                     },
             )

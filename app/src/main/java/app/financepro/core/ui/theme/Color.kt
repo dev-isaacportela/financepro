@@ -9,62 +9,106 @@ import androidx.compose.ui.graphics.Color
  * `TokenLintTest` reprova o build se aparecer. Uma cor solta numa tela é uma
  * cor que não inverte com o tema e não entra na conta do `ContrastTest`.
  *
- * As seis cores de sticker são **idênticas nos dois temas** (REQ-DS-008): um
- * adesivo colorido contornado funciona sobre papel claro ou escuro. O que
- * inverte é o papel e a tinta; o que não sobrevive no escuro são as três bandas
- * pastel, que ganham equivalentes dessaturados.
+ * O sistema tem **dois modos de tela cheia** e nada entre eles: preto absoluto
+ * para narrar, branco para catalogar. Cada modo tem exatamente um degrau acima
+ * — [SurfaceElevated] no escuro, [SurfaceSoft] no claro. Profundidade é a troca
+ * de canvas e esse degrau de luminância, nunca sombra (REQ-DS-004).
+ *
+ * As oito cores de acento são **idênticas nos dois temas** (REQ-DS-008), pela
+ * mesma razão de sempre: uma delas é a identidade de uma categoria, e categoria
+ * não muda de cor quando anoitece. O que inverte é o canvas e a tinta.
  */
 
-// Papel e tinta.
-val Carbon = Color(0xFF000000)
-val PaperWhite = Color(0xFFFFFFFF)
-
-// Bandas pastel — tema claro.
-val SkyWash = Color(0xFFDCEEFF)
-val ConcreteGray = Color(0xFFCCCCCC)
-val SoftMist = Color(0xFFE9E9E9)
+// Os dois canvas. Preto absoluto, não quase-preto: `#0A0A0A` existe no sistema
+// de origem para cards embutidos, e usá-lo como fundo achataria a única troca
+// de banda que o desenho tem.
+val CanvasDark = Color(0xFF000000)
+val CanvasLight = Color(0xFFFFFFFF)
 
 /**
- * Stickers. **Preenchimento, nunca cor de texto** (REQ-DS-006).
+ * O degrau único acima de cada canvas.
  *
- * Sobre branco só Voltage Violet passa em 4.5:1; sobre papel escuro a relação se
- * inverte e é o Violet que reprova. A regra única elimina a classe de erro em vez
- * de administrar a tabela dos dois lados.
+ * A escada tem **dois passos e para**: preto e [SurfaceElevated] no escuro,
+ * branco e [SurfaceSoft] no claro. Um terceiro tom viraria elevação tonal com
+ * outro nome, que é o que REQ-DS-004 proíbe.
  */
-val ElectricBlue = Color(0xFF4DA2FF) // fita 3D, assinatura da marca
-val MintPop = Color(0xFF55DB9C)
-val Lavender = Color(0xFFE9CCFF)
-val Ember = Color(0xFFFB4903)
-val Sunburst = Color(0xFFFFD731)
-val VoltageViolet = Color(0xFF5C4ADE)
+val SurfaceElevated = Color(0xFF16181A)
+val SurfaceSoft = Color(0xFFF4F4F4)
 
-// Papel escuro.
-val CarbonPaper = Color(0xFF111111)
-val SkyWashDark = Color(0xFF0D1A26)
-val ConcreteDark = Color(0xFF1C1C1C)
-val LavenderDark = Color(0xFF1E1729)
+// Tinta. `InkLight` é mais quente que preto puro de propósito: texto longo em
+// #000 sobre branco vibra, e o canvas escuro já gasta o preto absoluto.
+val InkLight = Color(0xFF191C1F)
+val MuteLight = Color(0xFF505A63)
 
-/** As seis, para quem precisa percorrer o conjunto — `ContrastTest`, por exemplo. */
-val Stickers = listOf(ElectricBlue, MintPop, Lavender, Ember, Sunburst, VoltageViolet)
+/**
+ * Branco a 72% **já achatado** sobre preto.
+ *
+ * Guardar a cor composta em vez de `Color.White.copy(alpha = .72f)` é o que
+ * permite ao `ContrastTest` medir o que o olho vê. Alfa por cima de superfície
+ * variável dá um número por fundo, e o teste passaria medindo o caso fácil.
+ */
+val MuteDark = Color(0xFFB8B8B8)
+
+// Fios de 1dp. No claro é linha desenhada; no escuro é branco a 12%, que sobre
+// preto vira o contorno mais fraco que ainda separa duas superfícies.
+val HairlineLight = Color(0xFFE2E2E7)
+val HairlineDark = Color(0x1FFFFFFF)
+
+/**
+ * O carimbo da marca. **Escasso por regra**, não por gosto.
+ *
+ * Cobalto é preenchimento de um card em destaque por tela, e o par branco sobre
+ * ele é o único texto permitido sobre cor saturada — 6.06:1. Como cor de texto
+ * ele reprova nos dois fundos escuros (3.47:1 sobre preto, 2.94:1 sobre o card),
+ * e por isso está fora de [Acentos]: não é cor de categoria, é assinatura.
+ */
+val Cobalt = Color(0xFF494FDF)
+val CobaltDeep = Color(0xFF3A40C4)
+
+/**
+ * Acentos. **Preenchimento, nunca cor de texto** (REQ-DS-006).
+ *
+ * Sobre preto puro as oito passam em 4.5:1 — e é exatamente aí que a regra
+ * seria perdida por descuido, porque *parece* que dá para usar qualquer uma
+ * como texto. Sobre o card [SurfaceElevated], que é onde o conteúdo real vive,
+ * cinco delas reprovam: Light Blue 3.91, Pink 3.94, Light Green 3.95, Brown
+ * 3.90 e Danger 4.20.
+ *
+ * A regra única elimina a classe de erro em vez de administrar a tabela por
+ * superfície. `ContrastTest` mede os dois fundos e guarda esse flanco.
+ */
+val Teal = Color(0xFF00A87E)
+val LightBlue = Color(0xFF007BC2)
+val LightGreen = Color(0xFF428619)
+val Yellow = Color(0xFFB09000)
+val Warning = Color(0xFFEC7E00)
+val Pink = Color(0xFFE61E49)
+val Danger = Color(0xFFE23B4A)
+val Brown = Color(0xFF936D62)
+
+/** As oito, para quem precisa percorrer o conjunto — `ContrastTest`, por exemplo. */
+val Acentos = listOf(Teal, LightBlue, LightGreen, Yellow, Warning, Pink, Danger, Brown)
 
 /**
  * Como cada cor se chama em voz alta. REQ-A11Y-001
  *
- * Um seletor de cores é o caso em que a cor **é** o conteúdo, e seis quadrados
+ * Um seletor de cores é o caso em que a cor **é** o conteúdo, e oito quadrados
  * anunciados como "Cor" deixam quem usa leitor de tela escolhendo às cegas
- * entre seis coisas idênticas.
+ * entre oito coisas idênticas.
  *
- * Nome de uso, não do token: "Azul", e não "Electric Blue". Quem ouve está
- * escolhendo a cor da conta, não lendo o guia de marca.
+ * Nome de uso, não do token: "Verde", e não "Light Green". Quem ouve está
+ * escolhendo a cor da categoria, não lendo o guia de marca.
  *
  * Mapa e não lista paralela — índices desalinhados renomeariam cores em
- * silêncio. `TokenLintTest` prova que as seis estão aqui.
+ * silêncio. `TokenLintTest` prova que as oito estão aqui.
  */
-val StickerNames = mapOf(
-    ElectricBlue to "Azul",
-    MintPop to "Verde",
-    Lavender to "Lilás",
-    Ember to "Laranja",
-    Sunburst to "Amarelo",
-    VoltageViolet to "Roxo",
+val NomesDeAcento = mapOf(
+    Teal to "Verde-azulado",
+    LightBlue to "Azul",
+    LightGreen to "Verde",
+    Yellow to "Amarelo",
+    Warning to "Laranja",
+    Pink to "Rosa",
+    Danger to "Vermelho",
+    Brown to "Marrom",
 )

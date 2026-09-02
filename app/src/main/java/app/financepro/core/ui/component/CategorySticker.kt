@@ -29,7 +29,6 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.financepro.core.ui.theme.Caption
-import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Slush
 import app.financepro.core.ui.theme.SlushShapes
 import app.financepro.domain.model.Category
@@ -42,17 +41,19 @@ import app.financepro.domain.model.Category
  * próprios, então o grid vira literalmente uma cartela de adesivos, sem inventar
  * nada.
  *
- * **Seleção é a espessura do contorno, não a cor.** A cor já é a identidade da
+ * **Seleção é um anel de `ink`, não a cor.** A cor já é a identidade da
  * categoria; usá-la também para estado a tornaria sinal único duplamente
- * sobrecarregado, e quem não distingue as seis cores perderia as duas
- * informações de uma vez.
+ * sobrecarregado, e quem não distingue as oito cores perderia as duas
+ * informações de uma vez. Não selecionado não tem anel nenhum — a presença do
+ * contorno é o sinal, e presença lê melhor que espessura.
  *
  * O nome fica **fora** do preenchimento porque a paleta é preenchimento e nunca
- * cor de texto (REQ-DS-006): "Mercado" em Carbon sobre Sunburst daria 1.40:1.
+ * cor de texto (REQ-DS-006): sobre o card, cinco dos oito acentos reprovam em
+ * 4.5:1, e Rosa daria 3.94:1.
  *
- * **O toque afunda o adesivo, e não borra tinta nele.** O ripple do Material é
+ * **O toque afunda o quadrado, e não borra tinta nele.** O ripple do Material é
  * uma mancha tonal — o mesmo erro de categoria que a sombra é aqui, e um sinal
- * cinza por cima de Sunburst não lê como resposta, lê como sujeira. A escala
+ * cinza por cima de Laranja não lê como resposta, lê como sujeira. A escala
  * substitui a indicação em vez de simplesmente apagá-la: pressionado encolhe,
  * como adesivo inflado que cede ao dedo; focado por teclado ou D-pad **cresce**,
  * que é o único sinal que sobraria sem o ripple para quem não usa o dedo.
@@ -101,12 +102,12 @@ fun CategorySticker(
                 // texto que encolhe no toque é texto que fica difícil de ler
                 // exatamente enquanto o dedo o cobre.
                 .scale(escala)
-                .clip(SlushShapes.small)
+                .clip(SlushShapes.medium)
                 .background(Color(category.colorArgb))
                 .border(
-                    width = if (selecionado) SELECIONADO else OutlineWidth,
+                    width = if (selecionado) SELECIONADO else 0.dp,
                     color = Slush.ink,
-                    shape = SlushShapes.small,
+                    shape = SlushShapes.medium,
                 ),
         )
         Text(

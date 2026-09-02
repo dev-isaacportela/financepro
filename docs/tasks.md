@@ -1191,8 +1191,8 @@ frase em REQ-REC-008 — mas é mudança de requisito, e começa na spec.
 **Nenhuma dependência de gráficos.** A pizza é um `drawArc` por fatia e a
 evolução são dois `Path` — juntos, menos de sessenta linhas de `Canvas`. A Vico,
 que o catálogo já nomeava para esta task, saiu de `libs.versions.toml`: ela traz
-tema próprio para brigar com o de Slush (REQ-DS-004 proíbe superfície tonal, e o
-contorno é a gramática da casa) e **não desenha pizza** — seria dependência nova
+tema próprio para brigar com o da casa (REQ-DS-004 proíbe superfície tonal) e
+**não desenha pizza** — seria dependência nova
 para metade do trabalho. Pino de versão sem uso apodrece; por isso foi removido
 no mesmo commit, e não deixado "para o caso de".
 

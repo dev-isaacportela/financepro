@@ -33,9 +33,10 @@ import app.financepro.core.ui.theme.Slush
  * As duas contas saem prontas: `CASH` zerada e `CHECKING` com o valor informado.
  * O resto do cadastro é da T-015, quando o usuário quiser.
  *
- * É o único **pôster completo** do app (REQ-DS-009). A fita 3D está diferida,
- * então o pôster é tipografia — `DisplayXl` a 88sp, que em 360dp ocupa quase a
- * largura toda e é exatamente o efeito escultural que a fita reforçaria.
+ * É o único **pôster completo** do app (REQ-DS-009): `DisplayXl` a 64sp com
+ * entrelinha travada em 1.0, que em 360dp ocupa quase a largura toda. O canvas
+ * preto sangra até a borda — é a única tela do app em que ele não é fundo de
+ * card, e sim o próprio pôster.
  */
 @Composable
 fun OnboardingScreen(vm: OnboardingViewModel = hiltViewModel()) {
