@@ -1,6 +1,5 @@
 package app.financepro.feature.categories
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -57,7 +56,7 @@ import app.financepro.domain.model.CategoryKind
 fun CategoriesScreen(vm: CategoriesViewModel = hiltViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
 
-    Column(Modifier.fillMaxSize().background(Tema.paper).padding(16.dp)) {
+    Column(Modifier.fillMaxSize().padding(16.dp)) {
         Row(
             Modifier.fillMaxWidth().padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,

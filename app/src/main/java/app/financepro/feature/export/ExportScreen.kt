@@ -69,7 +69,7 @@ fun ExportScreen(vm: ExportViewModel = hiltViewModel()) {
             .verticalScroll(rolagem)
             .imePadding()
             .padding(horizontal = 16.dp)
-            .padding(top = 16.dp, bottom = 96.dp),
+            .padding(top = 16.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text("Backup e dados", style = Subheading, color = Tema.ink)

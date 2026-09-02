@@ -95,7 +95,7 @@ fun ImportScreen(vm: ImportViewModel = hiltViewModel()) {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
-                .padding(top = 16.dp, bottom = 96.dp),
+                .padding(top = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text("Importar extrato", style = Subheading, color = Tema.ink)
@@ -217,7 +217,7 @@ private fun Revisao(state: ImportState, vm: ImportViewModel) {
         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(
             top = 16.dp,
-            bottom = 96.dp,
+            bottom = 24.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {

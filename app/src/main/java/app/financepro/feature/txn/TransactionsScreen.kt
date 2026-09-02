@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -115,11 +116,19 @@ fun TransactionsScreen(
         if (resposta == SnackbarResult.ActionPerformed) vm.desfazer()
     }
 
+    // `Scaffold` aqui é pelo `SnackbarHost`, e só por ele — o papel quem pinta é
+    // o destino, em Nav.kt. E é de lá também que vem o inset: o `Scaffold` de
+    // fora já descontou barra de status e barra de abas, e `Modifier.padding`
+    // não **consome** inset — sem zerar aqui, este recalculava `systemBars` do
+    // zero e cobrava a mesma barra duas vezes. Era a única tela com o cabeçalho
+    // uma barra de status mais baixo que o das outras.
     Scaffold(
-        containerColor = Tema.paper,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbar) { BarraDesfazer(it) } },
     ) { insets ->
-        Column(Modifier.fillMaxSize().padding(insets).padding(horizontal = 16.dp)) {
+        // O `top` que as outras telas têm e esta não tinha: o inset cobrado
+        // duas vezes fazia as vezes dele por acidente.
+        Column(Modifier.fillMaxSize().padding(insets).padding(horizontal = 16.dp).padding(top = 16.dp)) {
             Cabecalho(
                 titulo = tituloDoPeriodo(state),
                 filtrosAtivos = state.filtro.ativo,

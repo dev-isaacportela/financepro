@@ -4,8 +4,13 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -28,6 +33,7 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +46,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -103,6 +110,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import java.time.YearMonth
 import kotlin.math.abs
+import kotlin.math.sign
 import javax.inject.Inject
 
 /**
@@ -169,18 +177,69 @@ data object Importar
 @Serializable
 data class Cartao(val id: Long)
 
-/** Tempo da entrada e da saída da pílula quando nenhuma aba está selecionada. */
-private const val DURACAO_ABA = 180
-
-/** Vão entre abas. Entra na conta da pílula que desliza, por isso é constante. */
-private val ESPACO_ABA = 4.dp
-
 private val ABAS = listOf(
     Inicio to "Início",
     Transacoes() to "Transações",
     Orcamento to "Orçamento",
     Mais to "Mais",
 )
+
+/**
+ * Percurso e arremesso mínimos do deslize entre abas.
+ *
+ * São os do `SwipeToDismissBox` que exclui a linha na tela de Transações: dois
+ * números diferentes na mesma tela seriam dois gestos diferentes para o mesmo
+ * dedo. E 56dp é bem mais que o slop de toque, que é o que impede mão trêmula de
+ * trocar de aba.
+ */
+private val PERCURSO_DE_ABA = 56.dp
+private val ARREMESSO_DE_ABA = 125.dp
+
+/**
+ * As opções da troca de aba, iguais para o toque, para o deslize e para a fatia
+ * da pizza dos Relatórios.
+ *
+ * `popUpTo` na raiz mais `launchSingleTop` mantêm a pilha em uma tela por aba:
+ * sem eles, ir e voltar entre abas empilha telas que o botão de voltar teria de
+ * desfazer uma a uma.
+ *
+ * **Sem `saveState`/`restoreState`.** O par é a receita de barra do Material, e
+ * ela pressupõe uma aba por sub-grafo. Neste grafo plano ele salva `[Mais,
+ * Contas]` como um pacote só e devolve a pilha inteira — quem entrava em Contas,
+ * saía para outra aba e voltava para o "Mais" caía em Contas de novo. O preço de
+ * tirá-los é a aba abrir na própria raiz, sem lembrar mês nem rolagem.
+ */
+private fun NavHostController.irParaAba(destino: Any) = navigate(destino) {
+    popUpTo(graph.startDestinationId)
+    launchSingleTop = true
+}
+
+/**
+ * A aba que o deslize pede, ou `null` quando não há troca.
+ *
+ * Percurso **ou** arremesso: só o percurso mataria o peteleco curto, que é como
+ * se troca de aba com pressa. Quando os dois discordam — arrastar para a
+ * esquerda e devolver num peteleco para a direita — manda a velocidade, que é o
+ * último que o dedo disse.
+ *
+ * Dedo para a esquerda (negativo) leva à aba da direita, daí o sinal invertido:
+ * o conteúdo acompanha o dedo. Como [ABAS] e o `ORDEM` de Movimento.kt são a
+ * mesma ordem, o `sentido()` de lá já desliza para o lado certo sem saber que
+ * existe gesto. Nas pontas devolve `null` em vez de dar a volta — a volta
+ * deslizaria para o lado contrário do dedo.
+ */
+internal fun abaDoDeslize(
+    indice: Int,
+    arrasto: Float,
+    velocidade: Float,
+    percurso: Float,
+    arremesso: Float,
+): Int? {
+    val forte = abs(velocidade) > arremesso
+    if (indice < 0 || (!forte && abs(arrasto) < percurso)) return null
+    val alvo = indice - (if (forte) velocidade else arrasto).sign.toInt()
+    return alvo.takeIf { it in ABAS.indices }
+}
 
 /**
  * "Já passou pelo onboarding?" é uma **pergunta ao banco**, não uma flag.
@@ -253,14 +312,43 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
     var lancando by remember { mutableStateOf(false) }
     var editandoId by remember { mutableStateOf<Long?>(null) }
 
+    // O índice da aba atual sobe para cá porque agora tem dois leitores: a
+    // barra, que o pinta, e o deslize, que decide a partir dele para onde ir.
+    val atual by nav.currentBackStackEntryAsState()
+    val indice = ABAS.indexOfFirst { (rota, _) -> atual?.destination?.hasRoute(rota::class) == true }
+    var arrasto by remember { mutableFloatStateOf(0f) }
+    val (percurso, arremesso) = with(LocalDensity.current) {
+        PERCURSO_DE_ABA.toPx() to ARREMESSO_DE_ABA.toPx()
+    }
+
     Scaffold(
         containerColor = Tema.paper,
-        bottomBar = { BarraInferior(nav, onNovoLancamento = { lancando = true }) },
+        bottomBar = { BarraInferior(nav, indice, onNovoLancamento = { lancando = true }) },
     ) { insets ->
         NavHost(
             navController = nav,
             startDestination = Inicio,
-            modifier = Modifier.fillMaxSize().padding(insets),
+            // O deslize mora no `NavHost` e não no `Scaffold` porque o `NavHost`
+            // **é** a área de conteúdo: a barra continua recebendo toque.
+            //
+            // No passe `Main` o filho vê o evento antes do pai, e é isso que
+            // mantém os gestos de dentro funcionando — a linha que se exclui
+            // deslizando e a régua de chips que rola de lado consomem o próprio
+            // arrasto, e até aqui só sobe o que ninguém quis.
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(insets)
+                .draggable(
+                    orientation = Orientation.Horizontal,
+                    // Sub-tela não desliza: lá quem volta é o gesto do sistema.
+                    enabled = indice >= 0,
+                    state = rememberDraggableState { arrasto += it },
+                    onDragStarted = { arrasto = 0f },
+                    onDragStopped = { velocidade ->
+                        abaDoDeslize(indice, arrasto, velocidade, percurso, arremesso)
+                            ?.let { nav.irParaAba(ABAS[it].first) }
+                    },
+                ),
             // O movimento das telas mora em Movimento.kt. As quatro lambdas
             // apontam para as mesmas duas funções de propósito: trocar de aba é
             // um pop por dentro (`popUpTo(Inicio)`), então "entrou" e "voltou"
@@ -298,6 +386,25 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
 }
 
 /**
+ * Um destino, sobre papel próprio.
+ *
+ * O movimento entre telas é de espaço e não de opacidade (design.md §6.4): por
+ * 320ms as duas telas estão compostas ao mesmo tempo, uma deslizando por cima da
+ * outra. O `containerColor` do `Scaffold` está **atrás das duas** — e um fundo no
+ * modifier do `NavHost` também estaria, porque ele é um `AnimatedContent` e o
+ * modifier vai no pai comum. Então quem não pinta o próprio papel deixa a tela
+ * anterior aparecer através de si, e o que se lê é as duas somadas.
+ *
+ * Nenhum destino usa o `NavBackStackEntry` do lambda — quem tem argumento o lê
+ * por `toRoute` no ViewModel —, então a assinatura sem parâmetro serve aos doze.
+ */
+private inline fun <reified T : Any> NavGraphBuilder.tela(
+    noinline conteudo: @Composable () -> Unit,
+) = composable<T> {
+    Box(Modifier.fillMaxSize().background(Tema.paper)) { conteudo() }
+}
+
+/**
  * Os destinos, separados do `Scaffold` porque são coisas diferentes: ali está a
  * moldura — barra, cores, insets — e aqui, o mapa. A lista cresce a cada tela
  * nova, e a moldura não muda desde a T-011.
@@ -312,7 +419,7 @@ private fun NavGraphBuilder.rotas(
     onLancar: () -> Unit,
     onEditar: (Long) -> Unit,
 ) {
-    composable<Inicio> {
+    tela<Inicio> {
         HomeScreen(
             onNovoLancamento = onLancar,
             onVerContas = { nav.navigate(Contas) },
@@ -324,44 +431,38 @@ private fun NavGraphBuilder.rotas(
             onVerCartao = { nav.navigate(Cartao(it)) },
         )
     }
-    composable<Mais> {
+    tela<Mais> {
         MaisScreen(
             onIr = { nav.navigate(it) },
             bloqueio = bloqueio,
             onAlternarBloqueio = onAlternarBloqueio,
         )
     }
-    composable<Contas> { AccountsScreen() }
-    composable<Categorias> { CategoriesScreen() }
-    composable<Recorrencias> { RecurringScreen() }
-    composable<Investimentos> { InvestmentsScreen() }
-    composable<Exportar> { ExportScreen() }
-    composable<Importar> { ImportScreen() }
-    composable<Relatorios> {
+    tela<Contas> { AccountsScreen() }
+    tela<Categorias> { CategoriesScreen() }
+    tela<Recorrencias> { RecurringScreen() }
+    tela<Investimentos> { InvestmentsScreen() }
+    tela<Exportar> { ExportScreen() }
+    tela<Importar> { ImportScreen() }
+    tela<Relatorios> {
         ReportsScreen(
             // REQ-RPT-004 — a fatia leva à lista já filtrada por categoria **e**
             // período. Sem o mês, o toque numa fatia de março abriria a lista em
             // setembro, filtrada por uma categoria que talvez nem apareça lá.
             onVerCategoria = { categoria, mes ->
                 // As mesmas regras da barra inferior, e não um `navigate` seco:
-                // `Transacoes` **é** uma aba, e empilhá-la aqui deixaria o
-                // destino "Mais" restaurando a lista de transações — a barra
-                // apontando um lugar e a tela mostrando outro. Sem
-                // `restoreState`: o que se quer é a lista com **este** filtro,
-                // não a que ficou salva de antes.
-                nav.navigate(Transacoes(categoria, mes.toString())) {
-                    popUpTo(Inicio) { saveState = true }
-                    launchSingleTop = true
-                }
+                // `Transacoes` **é** uma aba, e empilhá-la aqui deixaria a barra
+                // apontando um lugar e a tela mostrando outro.
+                nav.irParaAba(Transacoes(categoria, mes.toString()))
             },
             onEditar = onEditar,
         )
     }
-    composable<Cartao> { CardScreen() }
-    composable<Transacoes> {
+    tela<Cartao> { CardScreen() }
+    tela<Transacoes> {
         TransactionsScreen(onNovoLancamento = onLancar, onEditar = onEditar)
     }
-    composable<Orcamento> { BudgetScreen() }
+    tela<Orcamento> { BudgetScreen() }
 }
 
 /**
@@ -447,7 +548,7 @@ private fun MaisScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
-            .padding(top = 16.dp, bottom = 96.dp),
+            .padding(top = 16.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text("Mais", style = Subheading, color = Tema.ink)
@@ -617,11 +718,7 @@ private fun contasDetalhe(state: MaisState): String {
  * mesma barra disputaria com ele.
  */
 @Composable
-private fun BarraInferior(nav: NavHostController, onNovoLancamento: () -> Unit) {
-    val atual by nav.currentBackStackEntryAsState()
-    val destino = atual?.destination
-    val indice = ABAS.indexOfFirst { (rota, _) -> destino?.hasRoute(rota::class) == true }
-
+private fun BarraInferior(nav: NavHostController, indice: Int, onNovoLancamento: () -> Unit) {
     Superficie(
         // `windowInsetsPadding` antes do padding visual: com `enableEdgeToEdge` o
         // Scaffold entrega o slot colado na borda física, e quem tem três botões
@@ -644,17 +741,7 @@ private fun BarraInferior(nav: NavHostController, onNovoLancamento: () -> Unit) 
                     rotulo = rotulo,
                     selecionada = i == indice,
                     modifier = Modifier.weight(1f),
-                    onClick = {
-                        // `launchSingleTop` e o popUpTo na raiz mantêm a pilha em
-                        // uma tela por aba: sem eles, ir e voltar entre abas
-                        // empilha telas que o botão de voltar teria de desfazer
-                        // uma a uma.
-                        nav.navigate(destino) {
-                            popUpTo(nav.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
+                    onClick = { nav.irParaAba(destino) },
                 )
             }
 

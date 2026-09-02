@@ -445,6 +445,16 @@ Alvo de toque de 48dp mantido ([REQ-A11Y-002](spec.md#req-a11y-002--alvo-de-toqu
 que é maior que o padding do desenho. **A acessibilidade vence o token**; o padding
 visual fica, o alvo é ampliado por `Modifier.minimumInteractiveComponentSize()`.
 
+Trocar de aba também por **deslize horizontal** na área de conteúdo, com os
+limiares do `SwipeToDismissBox` da lista — 56dp de percurso **ou** 125dp/s de
+arremesso. Dois números diferentes seriam dois gestos diferentes para o mesmo
+dedo, na mesma tela. Nas telas de dentro do "Mais" o deslize não vale: lá quem
+volta é o gesto do sistema.
+
+O gesto **nunca é o único caminho** — as quatro abas continuam na barra, e sob
+TalkBack, que come o arrasto de um dedo, só elas existem. É a mesma regra da
+exclusão por deslize na lista.
+
 ### 6.2 Sticker de categoria
 
 Onde a paleta de nove cores mais rende. Cada categoria já tem cor e ícone
@@ -520,6 +530,14 @@ gradiente (REQ-DS-004):
 **Não é preferência do usuário.** Um ajuste a mais numa tela de finanças é uma
 pergunta que o app faz a quem só queria lançar uma despesa. Os três existem para
 serem comparados no aparelho por quem desenha, e o escolhido fica.
+
+**Cada destino pinta o próprio papel.** É o preço de o movimento ser de espaço:
+durante os 320ms as duas telas estão desenhadas ao mesmo tempo, uma por cima da
+outra. O `containerColor` do `Scaffold` está atrás das duas e não separa nada — e
+um fundo no `NavHost` também não, porque ele é um `AnimatedContent` e o modifier
+vai no pai comum. Tela sem fundo próprio aparece somada à vizinha, e o que se lê
+é as duas. Quem fecha isso é o `tela<T>` de `Nav.kt`: o destino nasce sobre
+`paper`, e a regra não depende de alguém lembrar dela no próximo.
 
 A escala de animação do sistema continua valendo: quem desliga animações nas
 opções de acessibilidade recebe as telas sem transição, sem nada no código

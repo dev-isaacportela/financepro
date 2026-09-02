@@ -67,7 +67,7 @@ fun CardScreen(vm: CardViewModel = hiltViewModel()) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
-            .padding(top = 16.dp, bottom = 96.dp),
+            .padding(top = 16.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text(cartao?.name ?: "Cartão", style = Subheading, color = Tema.ink)
