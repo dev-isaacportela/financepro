@@ -67,5 +67,5 @@ Primeira versão pública. As fases F0, F1 e F2 do
 - Migrações de schema são explícitas e versionadas em `app/schemas/`.
   `fallbackToDestructiveMigration` não existe no projeto e não vai existir.
 
-[Não lançado]: https://github.com/dev-isaacportela/mobile-finance/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/dev-isaacportela/mobile-finance/releases/tag/v0.1.0
+[Não lançado]: https://github.com/dev-isaacportela/financepro/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/dev-isaacportela/financepro/releases/tag/v0.1.0

@@ -54,7 +54,7 @@ A tela **Mais** reúne cadastro, dados e análise:
 ## Instalar
 
 O APK assinado de cada versão está em
-[Releases](https://github.com/dev-isaacportela/mobile-finance/releases), com o
+[Releases](https://github.com/dev-isaacportela/financepro/releases), com o
 `.sha256` ao lado. Confira antes de instalar:
 
 ```bash

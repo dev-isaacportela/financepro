@@ -742,10 +742,14 @@ leitor pela `contentDescription` do sticker.
 - [x] Workflow exercido de verdade — verde na primeira execução, em
       `dev-isaacportela/mobile-finance` (privado)
 - [x] Ao fechar a F0, trocar `trace.py` por `trace.py --phase F0` no workflow.
-      Hoje `--phase F0` falha com **1** erro, e ele é legítimo: `REQ-DATA-001`
-      espera um `MigrationTest` que só faz sentido quando existir um schema v2.
-      O segundo erro era `REQ-CAT-005`, e a T-016 o fechou — esta linha ficou
-      desatualizada entre os dois commits, que é o que o Art. 3 não quer
+      Os dois erros que seguravam a troca eram legítimos e foram fechados na
+      preparação da v0.1.0: `REQ-DATA-001` esperava um `MigrationTest`, que só
+      fazia sentido com schema além da v1 — hoje são quatro, e três migrações
+      publicadas sem teste; e `REQ-DS-002` não tinha `@Req` em lugar nenhum,
+      porque o `ContrastTest` media os acentos e não o degrau que dispensa o
+      contorno do card. Antes deles, `REQ-CAT-005` foi fechado pela T-016 —
+      esta linha ficou desatualizada entre dois commits, que é o que o Art. 3
+      não quer
 
 ### T-050 — Editar transação
 **Fase** F0 · **Depende de** T-013, T-014 · **REQ** REQ-TXN-001, REQ-TXN-003, REQ-TXN-005
