@@ -91,6 +91,33 @@ class ContrastTest {
     }
 
     @Test
+    fun `entrada e saida passam sobre o canvas e sobre o card, nos dois temas`() {
+        // REQ-DS-007. Este par foi recusado duas vezes antes por medição: Teal e
+        // Danger, os candidatos óbvios da paleta de acento, dão 2.77 e 3.85 sobre
+        // a superfície clara. O par que entrou é outro, e é **por tema** — um só
+        // não existe, porque verde claro reprova sobre branco e verde escuro some
+        // sobre preto.
+        //
+        // O teste é o que autoriza a cor: sem ele, "verde para entrada" volta a
+        // ser escolha de gosto, e a metade que reprova é sempre a que avisa.
+        listOf(PaletaEscura, PaletaClara).forEach { tema ->
+            listOf(tema.positivo, tema.negativo).forEach { cor ->
+                assertTrue("$cor sobre paper", contrast(cor, tema.paper) >= TEXTO)
+                assertTrue("$cor sobre surface", contrast(cor, tema.surface) >= TEXTO)
+            }
+        }
+    }
+
+    @Test
+    fun `o par entrada-saida muda com o tema, ao contrario dos acentos`() {
+        // A distinção que o sistema faz: acento é identidade e não muda; entrada
+        // e saída são estado e mudam. Trocar um pelo outro é o erro que este
+        // teste marca.
+        assertTrue(PaletaEscura.positivo != PaletaClara.positivo)
+        assertTrue(PaletaEscura.negativo != PaletaClara.negativo)
+    }
+
+    @Test
     fun `os dois modos sao canvas opostos, e os acentos nao mudam entre eles`() {
         // REQ-DS-008: o que inverte é o canvas e a tinta. A cor de uma categoria
         // é identidade, e identidade não muda quando anoitece.

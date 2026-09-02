@@ -17,7 +17,8 @@ import androidx.compose.ui.graphics.Color
  *
  * As nove cores de acento não aparecem aqui de propósito: elas são idênticas
  * nos dois temas (REQ-DS-008) e vivem soltas em `Color.kt`. O que muda por tema
- * é o canvas, o degrau, a tinta e o fio.
+ * é o canvas, o degrau, a tinta, o fio — e o par entrada/saída, que é estado e
+ * não identidade, e por isso precisa ser legível no fundo de cada tema.
  */
 @Immutable
 data class Paleta(
@@ -26,6 +27,8 @@ data class Paleta(
     val ink: Color, // texto primário
     val inkMute: Color, // texto secundário; passa em 4.5:1 sobre paper e surface
     val hairline: Color, // fio de 1dp entre superfícies de mesmo tom
+    val positivo: Color, // valor que entrou — reforço do sinal `+`
+    val negativo: Color, // valor que saiu — reforço do sinal `−`
 )
 
 /**
@@ -41,6 +44,8 @@ val PaletaEscura = Paleta(
     ink = CanvasLight,
     inkMute = MuteDark,
     hairline = HairlineDark,
+    positivo = PositivoEscuro,
+    negativo = NegativoEscuro,
 )
 
 val PaletaClara = Paleta(
@@ -49,4 +54,6 @@ val PaletaClara = Paleta(
     ink = InkLight,
     inkMute = MuteLight,
     hairline = HairlineLight,
+    positivo = PositivoClaro,
+    negativo = NegativoClaro,
 )

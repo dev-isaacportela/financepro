@@ -358,12 +358,16 @@ equivalente no sistema novo, que só tem dois tons por modo. Os tokens foram
 apagados, e nenhuma tela os usava fora do próprio tema — o que, olhando de volta,
 já dizia que eram decoração sem função.
 
-**O que a medição obrigou a manter.** A intenção original era usar verde para
-receita e vermelho para despesa, como no protótipo. O cálculo de contraste
-sobre `surface` reprovou justamente a metade que avisa: Danger dá 4.20:1 e Pink
-3.94:1 sobre o card. Cor em só uma das polaridades é pior que cor em nenhuma, e
-por isso REQ-DS-007 continua exigindo valor em tinta neutra, distinguido pelo
-sinal e pelo rótulo. A troca de marca não comprou uma exceção de acessibilidade.
+**O que a medição obrigou a adiar.** A intenção original era usar verde para
+receita e vermelho para despesa, como no protótipo. O cálculo de contraste sobre
+`surface` reprovou justamente a metade que avisa: Danger dá 4.20:1 e Pink 3.94:1
+sobre o card. Cor em só uma das polaridades é pior que cor em nenhuma, e o valor
+ficou em tinta neutra.
+
+Não era proibição, era falta de um par medido — o que a T-054 depois resolveu com
+tokens próprios, **por tema**, os quatro passando em 4.5:1 sobre canvas e card. A
+troca de marca não comprou exceção de acessibilidade; o que entrou passou pela
+mesma régua que reprovou as duas tentativas anteriores.
 
 **Consequência.** `ContrastTest` passou a medir contra `surface` e não contra
 `paper`. Sobre preto puro os oito acentos passam de 4.5:1, e um teste que medisse

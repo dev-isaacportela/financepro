@@ -2,41 +2,62 @@ package app.financepro.feature.importer
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.financepro.R
 import app.financepro.core.money.formatBRL
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.component.CategorySticker
 import app.financepro.core.ui.component.Chips
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
+import app.financepro.core.ui.component.Icone
 import app.financepro.core.ui.component.MoneyText
 import app.financepro.core.ui.component.Rotulo
-import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.BodyStrong
+import app.financepro.core.ui.theme.CanvasDark
 import app.financepro.core.ui.theme.Caption
+import app.financepro.core.ui.theme.Etiqueta
 import app.financepro.core.ui.theme.MoneyCaption
-import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.OutlineWidth
+import app.financepro.core.ui.theme.Pill
 import app.financepro.core.ui.theme.Subheading
+import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Warning
 import app.financepro.data.ingest.MapeamentoCsv
 import app.financepro.data.ingest.Veredito
 import app.financepro.domain.model.CategoryKind
@@ -220,19 +241,126 @@ private fun Revisao(state: ImportState, vm: ImportViewModel) {
     }
 }
 
+/**
+ * O cabeçalho da revisão: onde você está, e o tamanho do que vai gravar.
+ *
+ * **Os três passos ficam visíveis.** O fluxo sempre teve três — arquivo, colunas,
+ * revisão —, e a tela não dizia em qual deles você estava nem quantos faltavam.
+ * Numa operação que grava dezenas de linhas de uma vez, "quanto falta" é a
+ * pergunta que decide entre continuar e voltar.
+ *
+ * **E os números viram blocos.** Antes eram frases soltas — "3 duplicatas exatas
+ * descartadas" —, todas com o mesmo peso do resto. Linhas, novas e duplicadas
+ * são a resposta de "o que vai entrar", e é o que se lê primeiro.
+ */
 @Composable
 private fun Resumo(state: ImportState) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Conferir antes de gravar", style = Subheading, color = Tema.ink)
-        Text(state.nomeDoArquivo, style = Caption, color = Tema.ink)
-        // As duplicatas exatas viram um número: a spec manda descartá-las
-        // sozinha, e centenas de linhas riscadas atrapalhariam quem precisa
-        // conferir as que sobraram.
-        if (state.descartadas > 0) {
-            Text(descartadasEmPalavras(state.descartadas), style = Caption, color = Tema.ink)
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(state.nomeDoArquivo, style = Caption, color = Tema.inkMute)
+            Text("Conferir antes de gravar", style = Subheading, color = Tema.ink)
         }
-        if (state.possiveis > 0) {
-            Text(possiveisEmPalavras(state.possiveis), style = Caption, color = Tema.ink)
+
+        Passos()
+
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Numero("Linhas", state.linhas.size + state.descartadas, Modifier.weight(1f))
+            Numero("Novas", state.incluidas.size, Modifier.weight(1f), Tema.positivo)
+            Numero(
+                rotulo = "Duplicadas",
+                valor = state.descartadas + state.possiveis,
+                modifier = Modifier.weight(1f),
+                tinta = if (state.descartadas + state.possiveis > 0) Warning else Tema.ink,
+            )
+        }
+    }
+}
+
+/**
+ * Os três passos, com o terceiro em curso.
+ *
+ * Só desenho: quem manda no fluxo é `state.passo`, e esta tela **é** o passo
+ * três — chegar aqui já significa que os dois primeiros terminaram. Um estado a
+ * mais para dizer o que a própria composição diz seria estado para
+ * dessincronizar.
+ */
+@Composable
+private fun Passos() {
+    Cartao(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                PassoFeito()
+                Trilho()
+                PassoFeito()
+                Trilho()
+                PassoAtual()
+            }
+            Text(
+                text = "Arquivo lido · colunas confirmadas · revisão",
+                style = Caption,
+                color = Tema.inkMute,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PassoFeito() = Box(
+    modifier = Modifier.size(PASSO).clip(Pill).background(Tema.positivo),
+    contentAlignment = Alignment.Center,
+) {
+    Icone(
+        id = R.drawable.ic_confirma,
+        descricao = null,
+        modifier = Modifier.size(PASSO_GLIFO),
+        tint = CanvasDark,
+    )
+}
+
+@Composable
+private fun PassoAtual() = Box(
+    modifier = Modifier.size(PASSO).clip(Pill).background(Tema.ink),
+    contentAlignment = Alignment.Center,
+) {
+    Text("3", style = Caption, color = Tema.paper)
+}
+
+@Composable
+private fun RowScope.Trilho() = Box(
+    Modifier.weight(1f).height(TRILHO).clip(Pill).background(Tema.hairline),
+)
+
+private val PASSO = 22.dp
+private val PASSO_GLIFO = 12.dp
+private val TRILHO = 1.dp
+
+/**
+ * Um número do lote, em bloco.
+ *
+ * [tinta] só existe para "Novas" e "Duplicadas": o primeiro é o que vai entrar e
+ * o segundo é o que pede atenção. "Linhas" fica em `ink` porque é só o tamanho
+ * do arquivo, e três números coloridos não teriam hierarquia nenhuma.
+ */
+@Composable
+private fun Numero(
+    rotulo: String,
+    valor: Int,
+    modifier: Modifier = Modifier,
+    tinta: androidx.compose.ui.graphics.Color? = null,
+) {
+    Cartao(modifier.fillMaxHeight()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(rotulo.uppercase(), style = Etiqueta, color = Tema.inkMute)
+            Text("$valor", style = Subheading, color = tinta ?: Tema.ink)
         }
     }
 }
@@ -253,33 +381,48 @@ private fun LinhaDaRevisao(
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             FlowRow(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 itemVerticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(DIA.format(candidata.date), style = Caption, color = Tema.ink)
-                Text(
-                    text = candidata.description.ifBlank { "Sem descrição" },
-                    style = BodyStrong,
-                    color = Tema.ink,
-                    modifier = Modifier.weight(1f),
-                )
-                MoneyText(cents = candidata.amountCents, style = MoneyCaption)
+                // A caixa de marcar substitui o botão de largura cheia que ficava
+                // no rodapé da linha: incluir ou tirar é o gesto mais repetido
+                // desta tela, e ele estava a uma leitura de distância do item.
+                CaixaDeMarcar(marcada = linha.incluir, onClick = onAlternar)
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = candidata.description.ifBlank { "Sem descrição" },
+                        style = BodyStrong,
+                        color = Tema.ink,
+                    )
+                    Text(
+                        text = DIA.format(candidata.date) + " · " + situacao(linha, state),
+                        style = Caption,
+                        color = Tema.inkMute,
+                    )
+                }
+                MoneyText(cents = candidata.amountCents, style = MoneyCaption, porSinal = true)
             }
 
             // REQ-IMP-009 — a parecida vai **junto**, e não só um aviso: sem a
             // outra linha à vista, "possível duplicata" é injulgável.
             if (linha.avaliada.veredito == Veredito.POSSIVEL_DUPLICATA) {
                 linha.avaliada.parecida?.let { parecida ->
-                    Text(
-                        text = "⚠ Parecida com " + parecida.description.ifBlank { "sem descrição" } +
+                    Aviso(
+                        texto = "Parecida com " + parecida.description.ifBlank { "sem descrição" } +
                             " de " + DIA.format(parecida.date) + ", " + formatBRL(parecida.amountCents),
-                        style = Caption,
-                        color = Tema.ink,
                     )
                 }
             }
 
-            if (linha.incluir) {
+            // **O seletor só aparece em quem precisa dele.** Antes vinha em toda
+            // linha incluída, e num extrato de 25 linhas isso é uma cartela de
+            // categorias por transação — a tela ficava com metros de rolagem
+            // para resolver as duas ou três que faltam.
+            //
+            // Quem já tem categoria mostra qual, em texto, e trocá-la depois é
+            // editar a transação (T-050) — o mesmo caminho de qualquer outra
+            // correção, e não um segundo lugar que faz a mesma coisa.
+            if (linha.incluir && linha.categoriaId == null) {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(state.categorias.filter { it.kind == esperado }, key = { it.id }) { c ->
                         CategorySticker(
@@ -291,13 +434,81 @@ private fun LinhaDaRevisao(
                 }
             }
 
-            GhostButton(
-                text = if (linha.incluir) "Incluir · tocar para tirar" else "Fora do lote",
-                onClick = onAlternar,
-                modifier = Modifier.fillMaxWidth(),
+        }
+    }
+}
+
+/**
+ * A caixa de marcar da revisão. REQ-A11Y-002 · REQ-A11Y-003
+ *
+ * Marcada é **preenchimento com visto**; desmarcada é o contorno vazio. Duas
+ * formas diferentes, e não duas cores — quem não distingue as tintas ainda vê o
+ * visto aparecer.
+ *
+ * `Role.Checkbox` e `toggleable` no lugar de `clickable`: é o que faz o leitor de
+ * tela anunciar "caixa de seleção, marcada" e oferecer o gesto certo. Com um
+ * `clickable` genérico ele diria só "botão", e a linha ficaria sem estado.
+ */
+@Composable
+private fun CaixaDeMarcar(marcada: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .minimumInteractiveComponentSize()
+            .size(CAIXA)
+            .clip(Pill)
+            .background(if (marcada) Tema.ink else Tema.paper)
+            .border(OutlineWidth, if (marcada) Tema.ink else Tema.inkMute, Pill)
+            .toggleable(
+                value = marcada,
+                role = Role.Checkbox,
+                onValueChange = { onClick() },
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (marcada) {
+            Icone(
+                id = R.drawable.ic_confirma,
+                descricao = null,
+                modifier = Modifier.size(CAIXA_GLIFO),
+                tint = Tema.paper,
             )
         }
     }
+}
+
+private val CAIXA = 24.dp
+private val CAIXA_GLIFO = 13.dp
+
+/**
+ * O aviso de possível duplicata, em faixa.
+ *
+ * Era uma linha de `Caption` começando com "⚠", do mesmo tamanho e da mesma
+ * tinta que a descrição logo acima — lia como continuação da transação, não como
+ * alerta. A barra à esquerda separa sem usar preenchimento saturado, que
+ * REQ-DS-006 não autoriza com texto por cima.
+ *
+ * Laranja passa em 6.40:1 sobre o card escuro; no claro dá 2.53:1 e serve só à
+ * barra, então o texto fica em `ink` (REQ-DS-007).
+ */
+@Composable
+private fun Aviso(texto: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(Modifier.width(BARRA_AVISO).fillMaxHeight().clip(Pill).background(Warning))
+        Text(texto, style = Caption, color = Tema.ink)
+    }
+}
+
+private val BARRA_AVISO = 3.dp
+
+/** O que a linha diz de si abaixo da data: a sugestão, ou o que falta. */
+@Composable
+private fun situacao(linha: LinhaEmRevisao, state: ImportState): String = when {
+    !linha.incluir -> "fora do lote"
+    linha.categoriaId == null -> "sem categoria"
+    else -> "sugerido: " + state.categorias.firstOrNull { it.id == linha.categoriaId }?.name.orEmpty()
 }
 
 @Composable

@@ -299,15 +299,19 @@ fun Fab(
  * `tnum` os valores não alinham na vertical, e uma coluna de dinheiro
  * desalinhada é mais difícil de conferir contra o extrato.
  *
- * **Não há parâmetro de cor**, e a ausência é a regra: todo valor sai em `ink`.
- * Receita e despesa se distinguem pelo **sinal** e pelo rótulo da categoria,
- * nunca por cor (REQ-DS-007, REQ-A11Y-003).
+ * [porSinal] tinge o valor de verde ou vermelho. **Não é o padrão**, e a
+ * distinção importa: saldo, teto e total continuam em `ink`, porque ali o sinal
+ * não separa duas naturezas — separa "sobrou" de "faltou", que é outra coisa.
+ * Quem liga é a linha de transação e a revisão da importação.
  *
- * E a medição diz que não é preciosismo. Sobre o card `surface`, Pink dá 3.94:1
- * e Danger 4.20:1 — um par verde/vermelho de valores reprovaria justamente na
- * metade vermelha, que é a que avisa. Existiu aqui um parâmetro `cor`, para o
- * saldo sobre preenchimento saturado; o preenchimento saiu, e o parâmetro com
- * ele, antes de virar a porta por onde o verde entra.
+ * A cor é **reforço, nunca o sinal**. O `+`/`−` de REQ-CORE-005 e o rótulo da
+ * categoria continuam sozinhos suficientes (REQ-A11Y-003) — desligar as cores no
+ * sistema não tira informação nenhuma da tela.
+ *
+ * O par vem de `Paleta` e **muda com o tema**, ao contrário dos acentos: um par
+ * único não existe, porque verde claro reprova sobre branco e verde escuro some
+ * sobre preto. Os quatro passam em 4.5:1 sobre canvas e card, e `ContrastTest`
+ * guarda isso.
  *
  * E é aqui que REQ-A11Y-006 se resolve de uma vez: a `contentDescription` traz
  * o valor por extenso, de [spokenBRL]. O texto na tela continua `−R$ 18,50`,
@@ -322,12 +326,20 @@ fun MoneyText(
     cents: Long,
     modifier: Modifier = Modifier,
     style: TextStyle = MoneyBody,
+    porSinal: Boolean = false,
 ) {
     val falado = spokenBRL(cents)
+    // Zero fica em `ink`: não entrou nem saiu, e pintá-lo de qualquer uma das
+    // duas seria afirmar algo que o número não diz.
+    val cor = when {
+        !porSinal || cents == 0L -> Tema.ink
+        cents > 0 -> Tema.positivo
+        else -> Tema.negativo
+    }
     Text(
         text = formatBRL(cents),
         modifier = modifier.semantics { contentDescription = falado },
-        color = Tema.ink,
+        color = cor,
         style = style,
     )
 }

@@ -1128,15 +1128,28 @@ O SISTEMA DEVE exibir todo valor monetário na cor `ink`, com algarismos tabular
 (`tnum`), distinguindo receita de despesa pelo sinal `+`/`−` de
 [REQ-CORE-005](#req-core-005--formatação-pt-br) e pelo rótulo da categoria.
 
-O SISTEMA NÃO DEVE usar verde ou vermelho como portadores de significado — nem
-para receita e despesa, nem para sucesso e erro.
+O SISTEMA PODE tingir de verde e vermelho o valor de **transação**, como reforço
+do sinal, DESDE QUE o par escolhido passe em 4.5:1 sobre o canvas **e** sobre o
+card, nos dois temas.
 
-A regra sobreviveu à troca de sistema visual por medição, e não por herança:
-sobre o card, um par verde/vermelho de valores reprovaria justamente na metade
-vermelha, que é a que avisa (Vermelho 4.20:1, Rosa 3.94:1). Cor em só uma das
-polaridades é pior que cor em nenhuma, e
-[REQ-A11Y-003](#req-a11y-003--cor-não-é-sinal-único) proíbe cor como sinal único
-de qualquer forma.
+O SISTEMA NÃO DEVE tingir saldo, teto ou total: ali o sinal separa "sobrou" de
+"faltou", que é outra coisa, e a tela ficaria com cor em toda parte.
+
+A condição de contraste é o requisito, não a cor. As duas primeiras tentativas
+usaram a paleta de acento e reprovaram justamente na metade que avisa — Vermelho
+4.20:1 sobre o card escuro, Verde-azulado 2.77:1 sobre o claro. O par que passou
+é **por tema**, ao contrário dos acentos, porque um único não existe: verde claro
+reprova sobre branco e verde escuro some sobre preto.
+
+| | sobre canvas | sobre card |
+|---|---|---|
+| Escuro `#34e3a8` / `#f87171` | 12.70 / 7.59 | 10.76 / 6.44 |
+| Claro `#067647` / `#be123c` | 5.69 / 6.29 | 5.17 / 5.71 |
+
+A cor é **reforço, nunca o sinal**: o `+`/`−` e o rótulo da categoria continuam
+sozinhos suficientes, e
+[REQ-A11Y-003](#req-a11y-003--cor-não-é-sinal-único) segue valendo — desligar as
+cores não tira informação nenhuma da tela.
 
 Estados de orçamento de [REQ-BUD-003](#req-bud-003--progresso-e-alerta) usam
 preenchimento **com ícone**: sem preenchimento dentro do teto, Laranja com ícone

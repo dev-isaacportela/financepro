@@ -90,7 +90,7 @@ fun LinhaDeTransacao(
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
-                MoneyText(cents = txn.amountCents)
+                MoneyText(cents = txn.amountCents, porSinal = true)
                 if (saldoCents != null) MoneyText(cents = saldoCents, style = MoneyCaption)
             }
         }

@@ -55,6 +55,35 @@ val HairlineLight = Color(0xFFE2E2E7)
 val HairlineDark = Color(0x1FFFFFFF)
 
 /**
+ * Entrada e saída. REQ-DS-007
+ *
+ * **Estes quatro mudam com o tema, e os acentos não** — a diferença é o que cada
+ * um é. A cor de uma categoria é identidade, e identidade não muda quando
+ * anoitece; "isto entrou" é **estado**, e estado tem de ser legível no fundo em
+ * que aparece. Um par único para os dois temas não existe: verde claro reprova
+ * sobre branco, verde escuro some sobre preto.
+ *
+ * Escolhidos por medição, não por gosto — cada um passa em 4.5:1 sobre o canvas
+ * **e** sobre o card do seu tema, que foi exatamente o teste que reprovou o par
+ * óbvio (Verde-azulado e Vermelho da paleta de acento dão 2.77 e 3.85 no claro).
+ *
+ * | | sobre canvas | sobre card |
+ * |---|---|---|
+ * | `PositivoEscuro` | 12.70 | 10.76 |
+ * | `NegativoEscuro` | 7.59 | 6.44 |
+ * | `PositivoClaro` | 5.69 | 5.17 |
+ * | `NegativoClaro` | 6.29 | 5.71 |
+ *
+ * A cor é **reforço, nunca o sinal**: o `+`/`−` de REQ-CORE-005 e o rótulo da
+ * categoria continuam carregando o significado sozinhos (REQ-A11Y-003). Quem não
+ * distingue as duas lê a mesma informação que sempre leu.
+ */
+val PositivoEscuro = Color(0xFF34E3A8)
+val NegativoEscuro = Color(0xFFF87171)
+val PositivoClaro = Color(0xFF067647)
+val NegativoClaro = Color(0xFFBE123C)
+
+/**
  * Cobalto, o carimbo da marca — e no app ele quase não aparece.
  *
  * O sistema de origem gasta cobalto num card em destaque por página, e o app não

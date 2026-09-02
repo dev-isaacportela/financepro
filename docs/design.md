@@ -108,19 +108,33 @@ Laranja (2.53:1), Verde-azulado (2.77) e Amarelo (2.79); no escuro some Cobalto
 (2.94). Vale para o ponto da linha de transação e para a amostra do seletor de
 cores — os dois lugares onde a cor aparece pequena.
 
-### 2.3 O app de finanças quer verde e vermelho; a medição não deixa
+### 2.3 O app de finanças quer verde e vermelho, e a medição diz como
 
-A intenção era usar verde para receita e vermelho para despesa, como no
-protótipo. E [REQ-A11Y-003](spec.md#req-a11y-003--cor-não-é-sinal-único) proíbe
-cor como sinal único de qualquer forma.
+O protótipo tinge de verde o que entrou. [REQ-A11Y-003](spec.md#req-a11y-003--cor-não-é-sinal-único)
+proíbe cor como sinal único de qualquer forma, e a paleta de acento reprova em
+contraste.
 
-**Resolução.** Valor monetário é **sempre `ink`**. O significado vem do **sinal**
-`+` / `−`, que [REQ-CORE-005](spec.md#req-core-005--formatação-pt-br) já exige,
-mais o rótulo da categoria.
+**Resolução, na terceira tentativa.** O valor de transação é tingido, e o par vem
+de um token próprio — não da paleta de acento.
 
-O argumento decisivo é numérico, não doutrinário: sobre o card, um par
-verde/vermelho reprovaria justamente na metade vermelha — a que avisa. Cor em só
-uma das polaridades é pior que cor em nenhuma.
+As duas primeiras tentativas falharam pelo mesmo motivo, e vale registrar: usar
+Verde-azulado e Vermelho da paleta parece óbvio e reprova justamente na metade
+que avisa (Vermelho 4.20:1 sobre o card escuro, Verde-azulado 2.77:1 sobre o
+claro). Cor em só uma das polaridades é pior que cor em nenhuma, e por isso o
+valor ficou em `ink` até existir um par medido.
+
+O par que entrou é **por tema**, ao contrário dos acentos, porque um único não
+existe: verde claro reprova sobre branco, verde escuro some sobre preto. Acento é
+identidade e não muda ao anoitecer; entrada e saída são estado, e estado tem de
+ser legível no fundo em que aparece.
+
+A cor é **reforço, nunca o sinal**. O `+` / `−` de
+[REQ-CORE-005](spec.md#req-core-005--formatação-pt-br) e o rótulo da categoria
+continuam sozinhos suficientes — desligar as cores não tira informação da tela.
+
+**O que não é tingido:** saldo, teto e total. Ali o sinal separa "sobrou" de
+"faltou", que é outra coisa, e tingir tudo devolveria a tela ao ruído que a regra
+original evitava.
 
 Estados do orçamento usam preenchimento **com ícone**, nunca cor sozinha:
 
