@@ -3,9 +3,12 @@ package app.financepro.feature.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -73,7 +76,7 @@ fun HomeScreen(
                 .padding(top = 24.dp, bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Saldo(state.saldoCents)
+            Saldo(state)
             Cartoes(state, onVerContas, onVerCartao)
 
             if (state.vazio) {
@@ -114,15 +117,58 @@ fun HomeScreen(
  *
  * Sem padding horizontal próprio: o alinhamento é o da coluna, o mesmo dos
  * títulos "Cartões" e "Este mês" logo abaixo.
+ *
+ * Abaixo do número vêm **duas coisas que o saldo não responde**: quanto do que
+ * está ali já tem dono (a fatura do cartão) e quanto sobrou no mês. São os dois
+ * atalhos que evitam rolar a tela para decidir se dá para gastar hoje.
  */
 @Composable
-private fun Saldo(cents: Long) {
+private fun Saldo(state: HomeState) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text("SALDO TOTAL", style = Caption, color = Tema.inkMute)
-        MoneyText(cents = cents, style = MoneyLg)
+        MoneyText(cents = state.saldoCents, style = MoneyLg)
+        Text(text = contexto(state), style = Caption, color = Tema.inkMute)
+
+        if (!state.vazio) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Metrica("A pagar no cartão", state.dividaCents, Modifier.weight(1f))
+                Metrica("Sobrou no mês", state.comparativo.liquidoCents, Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+/** "3 contas · 1 cartão" — o que o número grande não diz sozinho. */
+private fun contexto(state: HomeState): String {
+    val comuns = state.contas.count { !it.isCard && !it.archived }
+    val cartoes = state.cartoes.size
+    val a = if (comuns == 1) "1 conta" else "$comuns contas"
+    return if (cartoes == 0) a else a + " · " + if (cartoes == 1) "1 cartão" else "$cartoes cartões"
+}
+
+/**
+ * Um número com rótulo, em bloco próprio.
+ *
+ * Substitui a linha "rótulo à esquerda, valor à direita" onde o valor é para ser
+ * **lido de relance**, e não conferido contra o extrato: quatro dessas linhas
+ * empilhadas têm todas o mesmo peso, e nenhuma vence. Em bloco, o olho separa.
+ */
+@Composable
+private fun Metrica(rotulo: String, cents: Long, modifier: Modifier = Modifier) {
+    Cartao(modifier.fillMaxHeight()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(rotulo, style = Caption, color = Tema.inkMute)
+            MoneyText(cents = cents)
+        }
     }
 }
 
@@ -140,7 +186,8 @@ private fun Cartoes(state: HomeState, onVerContas: () -> Unit, onVerCartao: (Lon
             Text("Nenhum cartão cadastrado.", style = Body, color = Tema.ink)
             GhostButton(text = "Adicionar cartão", onClick = onVerContas)
         } else {
-            Valor(rotulo = "A pagar", cents = state.dividaCents)
+            // Sem "A pagar" aqui: ele subiu para o par de atalhos do saldo, e o
+            // que sobra para este bloco é a navegação por cartão.
             // Um botão por cartão, e não os nomes numa linha só: é daqui que se
             // chega à fatura (T-025), e texto corrido não diz que é tocável.
             state.cartoes.forEach { cartao ->
@@ -163,16 +210,26 @@ private fun Cartoes(state: HomeState, onVerContas: () -> Unit, onVerCartao: (Lon
  */
 @Composable
 private fun ComparativoDoPeriodo(c: Comparativo) {
-    Bloco(titulo = "Este mês") {
-        Valor(rotulo = "Receitas", cents = c.receitasCents)
-        Valor(rotulo = "Despesas", cents = c.despesasCents)
-        Valor(rotulo = "Sobrou", cents = c.liquidoCents)
-        Valor(rotulo = "Ante o mês anterior", cents = c.deltaCents)
-        Text(
-            text = variacaoEmPalavras(c.deltaCents),
-            style = Caption,
-            color = Tema.ink.copy(alpha = SECUNDARIO_ALPHA),
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Este mês", style = Subheading, color = Tema.ink)
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Metrica("Receitas", c.receitasCents, Modifier.weight(1f))
+            Metrica("Despesas", c.despesasCents, Modifier.weight(1f))
+        }
+        // "Sobrou" subiu para o par de atalhos do saldo; aqui fica a comparação,
+        // que é a única das quatro que não é um saldo do mês e sim um delta.
+        Cartao(Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Valor(rotulo = "Ante o mês anterior", cents = c.deltaCents)
+                Text(text = variacaoEmPalavras(c.deltaCents), style = Caption, color = Tema.inkMute)
+            }
+        }
     }
 }
 
@@ -285,6 +342,3 @@ private fun variacaoEmPalavras(deltaCents: Long): String = when {
     deltaCents < 0 -> "Sobrou menos que no mês anterior"
     else -> "Igual ao mês anterior"
 }
-
-/** Mesmo recuo do subtítulo da linha de transação (design.md §6.3). */
-private const val SECUNDARIO_ALPHA = 0.62f

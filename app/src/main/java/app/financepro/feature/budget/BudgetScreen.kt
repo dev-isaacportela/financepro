@@ -5,6 +5,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -31,6 +33,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
@@ -49,6 +55,7 @@ import app.financepro.core.ui.component.Rotulo
 import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
+import app.financepro.core.ui.theme.DisplaySm
 import app.financepro.core.ui.theme.Danger
 import app.financepro.core.ui.theme.Teal
 import app.financepro.core.ui.theme.MoneyCaption
@@ -87,7 +94,11 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
     ) {
         Cabecalho(mes = state.mes, onAnterior = vm::mesAnterior, onSeguinte = vm::mesSeguinte)
 
-        val progresso = state.progresso
+        // **Ordenado por urgência, não por cadastro.** Quem estourou primeiro,
+        // depois quem está perto do teto. A rolagem vira prioridade: o que exige
+        // decisão está no alto, e o que está folgado não disputa a primeira tela.
+        val progresso = state.progresso.sortedByDescending { it.percent }
+        if (progresso.isNotEmpty()) TetoTotal(progresso)
         if (progresso.isEmpty() && state.carregado) {
             // REQ-UI-006 — o vazio traz a ação que o preenche, e aqui são duas:
             // começar do zero, ou repetir o que o mês passado já dizia.
@@ -129,6 +140,90 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
         )
     }
 }
+
+/**
+ * Quanto do teto do mês já foi gasto. REQ-BUD-003 · REQ-DS-009
+ *
+ * É o **número herói** da tela, e ele faltava: antes de olhar categoria por
+ * categoria, "estou bem ou não" já tem resposta. A tabela de intensidade dá
+ * `DisplaySm` ao orçamento, e até agora nenhuma linha o usava — a tela inteira
+ * era feita de corpo de texto do mesmo peso.
+ *
+ * O anel é `Canvas`, não biblioteca: dois arcos e um traço arredondado. Sem
+ * gradiente e sem sombra (REQ-DS-004), e a cor é `ink` — o estado de estouro
+ * pertence às linhas de categoria, e um segundo vermelho aqui seria a mesma
+ * informação dita duas vezes.
+ *
+ * O arco para em 360°. Um anel que dá mais de uma volta não comunica "passei
+ * do teto", comunica um bug de desenho; quem diz o excesso é o texto ao lado,
+ * que continua exibindo o percentual real.
+ */
+@Composable
+private fun TetoTotal(progresso: List<BudgetProgress>) {
+    val limite = progresso.sumOf { it.limitCents }
+    val gasto = progresso.sumOf { it.spentCents }
+    val percent = if (limite <= 0) 0 else ((gasto * CEM) / limite).toInt().coerceAtLeast(0)
+    val dias = progresso.first().diasRestantes
+    val tinta = Tema.ink
+    val trilho = Tema.hairline
+
+    Cartao(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .semantics(mergeDescendants = true) {
+                    contentDescription = "Gasto $percent por cento do teto do mês. " +
+                        reais(gasto) + " de " + reais(limite) + ". " +
+                        if (dias == 1) "Falta 1 dia." else "Faltam $dias dias."
+                },
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Canvas(Modifier.size(ANEL)) {
+                val traco = ANEL_TRACO.toPx()
+                val canto = Offset(traco / 2, traco / 2)
+                val lado = Size(size.width - traco, size.height - traco)
+                drawArc(
+                    color = trilho,
+                    startAngle = 0f,
+                    sweepAngle = VOLTA,
+                    useCenter = false,
+                    topLeft = canto,
+                    size = lado,
+                    style = Stroke(traco),
+                )
+                drawArc(
+                    color = tinta,
+                    startAngle = -QUARTO,
+                    sweepAngle = VOLTA * (percent / CEM.toFloat()).coerceIn(0f, 1f),
+                    useCenter = false,
+                    topLeft = canto,
+                    size = lado,
+                    style = Stroke(traco, cap = StrokeCap.Round),
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("GASTO DO TETO", style = Caption, color = Tema.inkMute)
+                Text("$percent%", style = DisplaySm, color = Tema.ink)
+                Text(
+                    text = reais(gasto) + " de " + reais(limite) + " · " +
+                        if (dias == 1) "falta 1 dia" else "faltam $dias dias",
+                    style = Caption,
+                    color = Tema.inkMute,
+                )
+            }
+        }
+    }
+}
+
+/** Tamanho do anel e do traço. Juntos porque um sem o outro não quer dizer nada. */
+private val ANEL = 96.dp
+private val ANEL_TRACO = 10.dp
+private const val VOLTA = 360f
+private const val QUARTO = 90f
+private const val CEM = 100L
 
 /** Mesma gramática do cabeçalho da lista (T-014): o mês em linha própria. */
 @Composable

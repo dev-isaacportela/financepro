@@ -3,15 +3,23 @@ package app.financepro.feature
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -47,7 +55,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.financepro.core.ui.component.GhostButton
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.component.Superficie
+import app.financepro.core.ui.theme.BodyStrong
+import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.Label
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
@@ -55,6 +66,8 @@ import app.financepro.core.ui.theme.Tema
 import app.financepro.core.ui.theme.Subheading
 import app.financepro.data.prefs.SecurityPrefs
 import app.financepro.data.repo.AccountRepository
+import app.financepro.data.repo.CategoryRepository
+import app.financepro.data.repo.RecurringRepository
 import app.financepro.feature.accounts.AccountsScreen
 import app.financepro.feature.budget.BudgetScreen
 import app.financepro.feature.card.CardScreen
@@ -72,6 +85,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -344,48 +358,212 @@ private fun NavGraphBuilder.rotas(
  * gasto com algo que se mexe uma vez por mês. O que a recorrência produz
  * aparece onde importa: o bloco "Próximas contas" do dashboard.
  */
+/**
+ * As contagens dos blocos do hub. REQ-UI-001
+ *
+ * Existe para o "Mais" poder dizer o **estado** de cada destino sem que ninguém
+ * entre nele: "3 ativas · 1 arquivada" responde a pergunta que faria alguém
+ * abrir a tela de contas só para conferir.
+ *
+ * Fica aqui, e não no `RaizViewModel`, porque aquele responde por bloqueio e
+ * onboarding — coisas que existem antes de qualquer tela. Este só é observado
+ * enquanto o hub está na frente.
+ */
+@HiltViewModel
+class MaisViewModel @Inject constructor(
+    contas: AccountRepository,
+    categorias: CategoryRepository,
+    recorrencias: RecurringRepository,
+) : ViewModel() {
+    val state = combine(
+        contas.observeAll(),
+        categorias.observeActive(),
+        recorrencias.observeAll(),
+    ) { cs, cats, rs ->
+        MaisState(
+            contasAtivas = cs.count { !it.archived },
+            contasArquivadas = cs.count { it.archived },
+            categorias = cats.size,
+            recorrencias = rs.size,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(PARADA_MS), MaisState())
+
+    private companion object {
+        const val PARADA_MS = 5_000L
+    }
+}
+
+data class MaisState(
+    val contasAtivas: Int = 0,
+    val contasArquivadas: Int = 0,
+    val categorias: Int = 0,
+    val recorrencias: Int = 0,
+)
+
+/**
+ * O "Mais" da barra: um índice, não uma tela.
+ *
+ * Contas, Categorias, Recorrências e Relatórios são destinos próprios em vez de
+ * abas porque a barra tem quatro lugares (REQ-UI-001) e nenhum deles deve ser
+ * gasto com algo que se mexe uma vez por mês. O que a recorrência produz
+ * aparece onde importa: o bloco "Próximas contas" do dashboard.
+ *
+ * **Três grupos nomeados, não sete botões iguais.** Sete pílulas de largura
+ * cheia empilhadas não têm hierarquia nenhuma: quem procura "Importar" lê as
+ * sete. O nome do grupo já responde "onde fica isso", e a grade de dois deixa a
+ * tela caber sem rolagem.
+ *
+ * Cada bloco carrega a própria contagem. É o que transforma o índice em
+ * resposta — dá para decidir se vale entrar sem entrar.
+ *
+ * Relatórios sai da grade e vira linha larga: é consulta, não cadastro, e é o
+ * item que se abre com mais frequência.
+ */
 @Composable
-private fun MaisScreen(onIr: (Any) -> Unit, bloqueio: Boolean, onAlternarBloqueio: () -> Unit) {
+private fun MaisScreen(
+    onIr: (Any) -> Unit,
+    bloqueio: Boolean,
+    onAlternarBloqueio: () -> Unit,
+    vm: MaisViewModel = hiltViewModel(),
+) {
+    val state by vm.state.collectAsStateWithLifecycle()
+
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp, bottom = 96.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text("Mais", style = Subheading, color = Tema.ink)
-        GhostButton(text = "Contas", onClick = { onIr(Contas) }, modifier = Modifier.fillMaxWidth())
-        GhostButton(
-            text = "Categorias",
-            onClick = { onIr(Categorias) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        GhostButton(
-            text = "Recorrências",
-            onClick = { onIr(Recorrencias) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        GhostButton(
-            text = "Relatórios",
-            onClick = { onIr(Relatorios) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        GhostButton(
-            text = "Importar extrato",
-            onClick = { onIr(Importar) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        GhostButton(
-            text = "Backup e dados",
-            onClick = { onIr(Exportar) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        // Uma preferência não é uma tela de ajustes. O estado vai **escrito** no
-        // rótulo, não sinalizado por cor (REQ-A11Y-003) — e é o mesmo botão,
-        // que também é o que o leitor de tela anuncia por inteiro.
-        GhostButton(
-            text = if (bloqueio) "Bloqueio do app: ligado" else "Bloqueio do app: desligado",
-            onClick = onAlternarBloqueio,
-            modifier = Modifier.fillMaxWidth(),
-        )
 
+        Grupo("Cadastro") {
+            LinhaDeBlocos {
+                Bloco(
+                    titulo = "Contas",
+                    detalhe = contasDetalhe(state),
+                    onClick = { onIr(Contas) },
+                    modifier = Modifier.weight(1f),
+                )
+                Bloco(
+                    titulo = "Categorias",
+                    detalhe = plural(state.categorias, "categoria", "categorias"),
+                    onClick = { onIr(Categorias) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            LinhaDeBlocos {
+                Bloco(
+                    titulo = "Recorrências",
+                    detalhe = plural(state.recorrencias, "regra", "regras"),
+                    onClick = { onIr(Recorrencias) },
+                    modifier = Modifier.weight(1f),
+                )
+                // Uma preferência não é uma tela de ajustes. O estado vai
+                // **escrito** no detalhe, não sinalizado por cor (REQ-A11Y-003),
+                // e é o mesmo bloco — que também é o que o leitor anuncia.
+                Bloco(
+                    titulo = "Bloqueio do app",
+                    detalhe = if (bloqueio) "Ligado" else "Desligado",
+                    onClick = onAlternarBloqueio,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+
+        Grupo("Dados") {
+            LinhaDeBlocos {
+                Bloco(
+                    titulo = "Importar",
+                    detalhe = "OFX ou CSV do banco",
+                    onClick = { onIr(Importar) },
+                    modifier = Modifier.weight(1f),
+                )
+                Bloco(
+                    titulo = "Backup",
+                    detalhe = "Cifrado, e exportação CSV",
+                    onClick = { onIr(Exportar) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+
+        Grupo("Análise") {
+            Cartao(Modifier.fillMaxWidth().clickable(onClickLabel = "Abrir") { onIr(Relatorios) }) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Relatórios", style = BodyStrong, color = Tema.ink)
+                        Text(
+                            text = "Gastos por categoria, evolução do mês",
+                            style = Caption,
+                            color = Tema.inkMute,
+                        )
+                    }
+                    Text("›", style = Subheading, color = Tema.inkMute)
+                }
+            }
+        }
+    }
+}
+
+/** Um grupo do hub: o rótulo em caixa alta e o que vem embaixo dele. */
+@Composable
+private fun Grupo(titulo: String, conteudo: @Composable ColumnScope.() -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(titulo.uppercase(), style = Caption, color = Tema.inkMute)
+        conteudo()
+    }
+}
+
+/** Dois blocos lado a lado, de altura igual — senão a grade fica dentada. */
+@Composable
+private fun LinhaDeBlocos(conteudo: @Composable RowScope.() -> Unit) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.height(IntrinsicSize.Min),
+        content = conteudo,
+    )
+}
+
+/**
+ * Um destino do hub.
+ *
+ * [detalhe] não é legenda: é o estado que dispensa a visita. Por isso ele nunca
+ * é opcional — um bloco sem nada a dizer sobre si já é sinal de que o destino
+ * não merecia um bloco.
+ */
+@Composable
+private fun Bloco(titulo: String, detalhe: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Cartao(
+        modifier
+            .fillMaxHeight()
+            .clickable(onClickLabel = "Abrir", onClick = onClick),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(titulo, style = BodyStrong, color = Tema.ink)
+            Text(detalhe, style = Caption, color = Tema.inkMute)
+        }
+    }
+}
+
+/** "1 arquivada" e "2 arquivadas" — o plural sai daqui, não de um `+ "s"`. */
+private fun plural(n: Int, singular: String, plural: String) =
+    if (n == 1) "1 $singular" else "$n $plural"
+
+private fun contasDetalhe(state: MaisState): String {
+    val ativas = plural(state.contasAtivas, "ativa", "ativas")
+    return if (state.contasArquivadas == 0) {
+        ativas
+    } else {
+        ativas + " · " + plural(state.contasArquivadas, "arquivada", "arquivadas")
     }
 }
 
