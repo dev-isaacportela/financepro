@@ -3,6 +3,7 @@ package app.financepro.feature
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,12 +34,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -55,10 +59,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.financepro.core.ui.component.GhostButton
+import app.financepro.R
 import app.financepro.core.ui.component.Cartao
+import app.financepro.core.ui.component.Fab
+import app.financepro.core.ui.component.Icone
 import app.financepro.core.ui.component.Superficie
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
+import app.financepro.core.ui.theme.NavRotulo
+import app.financepro.core.ui.theme.NavRotuloForte
 import app.financepro.core.ui.theme.Label
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
@@ -242,7 +251,7 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
 
     Scaffold(
         containerColor = Tema.paper,
-        bottomBar = { BarraInferior(nav) },
+        bottomBar = { BarraInferior(nav, onNovoLancamento = { lancando = true }) },
     ) { insets ->
         NavHost(
             navController = nav,
@@ -567,9 +576,31 @@ private fun contasDetalhe(state: MaisState): String {
     }
 }
 
+/**
+ * A barra de abas. REQ-UI-001 · REQ-A11Y-002 · REQ-A11Y-003 ·
+ * [design.md](../../../../../../../../docs/design.md) §6.1
+ *
+ * Quatro abas com **ícone e rótulo**, e o botão de novo lançamento no fim da
+ * mesma barra. É o desenho do protótipo, e ele resolve uma coisa que a versão
+ * anterior não resolvia: com quatro pílulas contornadas lado a lado, a barra
+ * tinha mais traço branco que conteúdo, e o botão flutuante cobria a última
+ * linha da lista.
+ *
+ * **Seleção não é só cor** (REQ-A11Y-003). São três canais ao mesmo tempo: a
+ * tinta sobe de `inkMute` para `ink`, o rótulo engorda de 400 para 600, e a
+ * semântica marca `selected` — que é o que o leitor de tela anuncia, e o único
+ * que funciona para quem não distingue os dois cinzas.
+ *
+ * A pílula que deslizava saiu com o sistema visual anterior. Ela era bonita e
+ * era a gramática de lá: seleção por preenchimento, sobre papel branco. Aqui a
+ * ação preenchida é o botão de lançar, e uma segunda superfície preenchida na
+ * mesma barra disputaria com ele.
+ */
 @Composable
-private fun BarraInferior(nav: NavHostController) {
+private fun BarraInferior(nav: NavHostController, onNovoLancamento: () -> Unit) {
     val atual by nav.currentBackStackEntryAsState()
+    val destino = atual?.destination
+    val indice = ABAS.indexOfFirst { (rota, _) -> destino?.hasRoute(rota::class) == true }
 
     Superficie(
         // `windowInsetsPadding` antes do padding visual: com `enableEdgeToEdge` o
@@ -582,121 +613,101 @@ private fun BarraInferior(nav: NavHostController) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         shape = Pill,
     ) {
-        // A pílula de seleção é **uma só**, e ela desliza. Quatro pílulas
-        // acendendo e apagando é o que sai quando ninguém pensou no movimento;
-        // uma que anda conta de onde para onde a tela foi — a mesma frase que o
-        // NavHost está dizendo no mesmo instante, e as duas em concordância.
-        val destino = atual?.destination
-        val indice = ABAS.indexOfFirst { (rota, _) -> destino?.hasRoute(rota::class) == true }
-        var ultima by remember { mutableIntStateOf(0) }
-        if (indice >= 0) ultima = indice
-        val posicao by animateFloatAsState(ultima.toFloat(), MolaPilula)
-        // Destino de dentro do "Mais" não é aba nenhuma: a pílula sai de cena em
-        // vez de mentir que "Mais" está selecionado (REQ-A11Y-003).
-        //
-        // Mas só quando o Navigation **diz** onde estamos: no primeiro quadro
-        // `atual` é nulo, e "ainda não sei" não é "nenhuma aba". Lendo o nulo como
-        // ausência, a pílula nascia transparente e clareava na cara de quem abriu
-        // o app — visível no aparelho, invisível no código.
-        var emAba by remember { mutableStateOf(true) }
-        if (destino != null) emAba = indice >= 0
-        val presenca by animateFloatAsState(if (emAba) 1f else 0f, tween(DURACAO_ABA))
-        val tinta = Tema.ink
-
         Row(
-            modifier = Modifier
-                .padding(horizontal = 6.dp, vertical = 6.dp)
-                // Desenhada aqui, e não como Box posicionado: o Row já sabe a
-                // largura e a altura finais, então a pílula acompanha fonte a
-                // 200% e tela larga sem nenhuma medida repetida em outro lugar.
-                .drawBehind {
-                    val vao = ESPACO_ABA.toPx()
-                    val largura = (size.width - vao * (ABAS.size - 1)) / ABAS.size
-                    drawRoundRect(
-                        color = tinta,
-                        topLeft = Offset(posicao * (largura + vao), 0f),
-                        size = Size(largura, size.height),
-                        cornerRadius = CornerRadius(size.height / 2),
-                        alpha = presenca,
-                    )
-                },
-            horizontalArrangement = Arrangement.spacedBy(ESPACO_ABA),
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ABAS.forEachIndexed { i, (destino, rotulo) ->
                 Aba(
+                    icone = ICONES_DAS_ABAS[i],
                     rotulo = rotulo,
                     selecionada = i == indice,
-                    // Quanto desta aba a pílula está cobrindo agora, de 0 a 1.
-                    // A tinta do rótulo sai daqui, e não de uma animação própria:
-                    // com duas animações separadas a pílula passa por cima da aba
-                    // do meio antes de o rótulo clarear, e a palavra some por um
-                    // instante — tinta sobre tinta. Assim ela clareia **porque**
-                    // a pílula chegou, no compasso exato.
-                    cobertura = (1f - abs(posicao - i)).coerceIn(0f, 1f) * presenca,
                     modifier = Modifier.weight(1f),
                     onClick = {
                         // `launchSingleTop` e o popUpTo na raiz mantêm a pilha em
                         // uma tela por aba: sem eles, ir e voltar entre abas
-                        // empilha destinos e o botão voltar vira um labirinto.
+                        // empilha telas que o botão de voltar teria de desfazer
+                        // uma a uma.
                         nav.navigate(destino) {
-                            popUpTo(Inicio) { saveState = true }
+                            popUpTo(nav.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
                     },
                 )
             }
+
+            // O botão de lançar mora **dentro** da barra, e não flutuando sobre a
+            // lista. Flutuando ele cobria a última linha de toda tela rolável —
+            // dava para rolar além, mas o app parecia ter um dedo em cima do
+            // conteúdo o tempo todo.
+            Fab(
+                onClick = onNovoLancamento,
+                rotulo = "Novo lançamento",
+                modifier = Modifier.size(BOTAO_NOVO),
+            ) {
+                Icone(id = R.drawable.ic_novo, descricao = null, modifier = Modifier.size(GLIFO_NOVO))
+            }
         }
     }
 }
 
+/** Na ordem de [ABAS]. Duas listas seriam duas coisas para desalinhar. */
+private val ICONES_DAS_ABAS = listOf(
+    R.drawable.ic_inicio,
+    R.drawable.ic_transacoes,
+    R.drawable.ic_orcamento,
+    R.drawable.ic_mais,
+)
+
+private val BOTAO_NOVO = 48.dp
+private val GLIFO_NOVO = 20.dp
+
+/**
+ * Uma aba: ícone em cima, rótulo embaixo.
+ *
+ * O rótulo fica em `Caption` e não em `Label` porque quatro palavras em 360dp
+ * precisam caber sem reticências — "Transações" é a mais longa, e é a que manda
+ * no tamanho.
+ *
+ * `clearAndSetSemantics` junta ícone e rótulo numa coisa só: sem ele o leitor
+ * anuncia o desenho e o texto em sequência, e "Transações Transações" é o que
+ * sai.
+ */
 @Composable
 private fun Aba(
+    @DrawableRes icone: Int,
     rotulo: String,
     selecionada: Boolean,
-    cobertura: Float,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Sem fundo próprio: quem preenche é a pílula que desliza atrás. REQ-A11Y-003
-    // continua valendo — o sinal é preenchimento, e `selected` na semântica.
-    val tinta = lerp(Tema.ink, Tema.paper, cobertura)
+    val tinta = if (selecionada) Tema.ink else Tema.inkMute
 
-    Surface(
-        onClick = onClick,
-        // 14dp de padding e um Label de 13sp dão ~46dp de alvo — dois a menos
-        // que REQ-A11Y-002 exige, e design.md §6.1 já mandava ampliar por aqui.
-        // A acessibilidade vence o token: o desenho não muda, o alvo cresce.
+    Column(
         modifier = modifier
             .minimumInteractiveComponentSize()
-            .semantics { selected = selecionada },
-        shape = Pill,
-        color = Color.Transparent,
-        contentColor = tinta,
-        // Sempre presente: com a pilula preenchida o contorno e `ink` sobre
-        // `ink` e some sozinho, sem o pulo de um `null` no meio da animacao.
-        border = BorderStroke(OutlineWidth, Tema.ink),
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
+            .clip(Pill)
+            .clickable(onClickLabel = rotulo, onClick = onClick)
+            .padding(vertical = 6.dp)
+            .clearAndSetSemantics {
+                contentDescription = rotulo
+                selected = selecionada
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        Icone(id = icone, descricao = null, modifier = Modifier.size(GLIFO_ABA), tint = tinta)
         Text(
             text = rotulo,
-            style = Label,
-            textAlign = TextAlign.Center,
-            // Duas linhas, não uma: a 200% "Transações" e "Orçamento" saíam
-            // cortados como "Trans" e "Orça" — sem reticências, o que lê como
-            // outra palavra em vez de texto truncado.
-            //
-            // Em duas linhas "Transações" cabe inteira; "Orçamento" ainda não,
-            // e aí a reticência é o que importa: a palavra fica visivelmente
-            // cortada em vez de virar "Orçament". Quatro abas em 360dp com a
-            // fonte dobrada não cabem por extenso, e é o que a própria
-            // NavigationBar do Material faz. O leitor de tela continua
-            // recebendo o rótulo inteiro, que é o que REQ-A11Y-001 pede.
-            maxLines = 2,
+            style = if (selecionada) NavRotuloForte else NavRotulo,
+            color = tinta,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 14.dp),
+            textAlign = TextAlign.Center,
         )
     }
 }
+
+private val GLIFO_ABA = 20.dp

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Saude — traco de 1.8, cantos e pontas arredondadas. Tingido em tempo de
+     composicao por `Icon(tint = ...)`; a cor aqui e so o valor de partida. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M10,3 h4 v7 h7 v4 h-7 v7 h-4 v-7 H3 v-4 h7 z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Compras — traco de 1.8, cantos e pontas arredondadas. Tingido em tempo de
+     composicao por `Icon(tint = ...)`; a cor aqui e so o valor de partida. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M6,8 h12 l-1,12 H7 z M9,8 V6 a3,3 0 0 1 6,0 v2"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

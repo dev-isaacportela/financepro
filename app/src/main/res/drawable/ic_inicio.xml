@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Casa da barra de navegacao — traco de 1.8, cantos e pontas arredondadas. Tingido em tempo de
+     composicao por `Icon(tint = ...)`; a cor aqui e so o valor de partida. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M3,10.2 L12,3 L21,10.2 V20 a1,1 0 0 1 -1,1 h-5 v-6 H9 v6 H4 a1,1 0 0 1 -1,-1 z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

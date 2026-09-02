@@ -90,15 +90,6 @@ fun HomeScreen(
             }
         }
 
-        Fab(
-            onClick = onNovoLancamento,
-            rotulo = "Novo lançamento",
-            modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp),
-        ) {
-            // Sem biblioteca de ícones: um "+" em Label diz a mesma coisa e não
-            // acrescenta dependência para desenhar um sinal de mais.
-            Text("+", style = Label)
-        }
     }
 }
 

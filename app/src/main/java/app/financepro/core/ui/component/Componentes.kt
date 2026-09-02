@@ -4,7 +4,10 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +28,7 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
@@ -97,9 +101,18 @@ fun FilledCta(
 }
 
 /**
- * Ação secundária e chip não selecionado: pílula contornada em `ink` sobre o
- * canvas. O contorno aqui não é a moldura que sumiu das superfícies — é o que
- * distingue a ação secundária da primária **sem** usar uma segunda cor.
+ * Ação secundária e chip não selecionado: pílula de `surface` com fio de
+ * `hairline`.
+ *
+ * Já foi contornada em `ink`. Um traço branco de 1dp ao redor de cada botão era
+ * a gramática do sistema anterior, e sobreviveu à troca por inércia — sobre
+ * preto ele grita mais que o próprio rótulo, e numa tela com quatro botões a
+ * atenção vai para os contornos.
+ *
+ * O que distingue a ação secundária da primária continua sendo o **preenchimento**
+ * e não uma segunda cor: a primária é pílula branca, esta é pílula do tom do
+ * card. O fio de 12% existe só para o caso de ela estar dentro de um card, onde
+ * os dois tons são o mesmo.
  */
 @Composable
 fun GhostButton(
@@ -113,9 +126,9 @@ fun GhostButton(
         modifier = modifier.minimumInteractiveComponentSize(),
         enabled = enabled,
         shape = Pill,
-        border = BorderStroke(OutlineWidth, Tema.ink),
+        border = BorderStroke(OutlineWidth, Tema.hairline),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Tema.paper,
+            containerColor = Tema.surface,
             contentColor = Tema.ink,
         ),
         contentPadding = PaddingValues(horizontal = 27.dp, vertical = 13.dp),
@@ -131,6 +144,41 @@ fun GhostButton(
  * com o degrau, contorná-lo também seria dizer a mesma coisa duas vezes — e o
  * fio ao redor de um card de 20dp sobre preto lê como caixa de diálogo.
  */
+/**
+ * Ação de ícone, redonda. Cabeçalho de tela e navegação de mês.
+ *
+ * [descricao] é obrigatória e não tem valor padrão: o conteúdo é um glifo, e
+ * "seta para a esquerda" não diz a ninguém o que o botão faz (REQ-A11Y-001).
+ * Sendo parâmetro exigido, não há como esquecê-la no próximo chamador — a mesma
+ * régua do [Fab].
+ *
+ * 40dp de caixa com o alvo ampliado para 48dp: o desenho do protótipo é miúdo,
+ * e a acessibilidade vence o token visual (REQ-A11Y-002).
+ */
+@Composable
+fun BotaoCircular(
+    @DrawableRes icone: Int,
+    descricao: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .minimumInteractiveComponentSize()
+            .size(BOTAO_CIRCULAR)
+            .clip(Pill)
+            .background(Tema.surface)
+            .border(OutlineWidth, Tema.hairline, Pill)
+            .clickable(onClickLabel = descricao, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icone(id = icone, descricao = null, modifier = Modifier.size(GLIFO_CIRCULAR))
+    }
+}
+
+private val BOTAO_CIRCULAR = 40.dp
+private val GLIFO_CIRCULAR = 18.dp
+
 @Composable
 fun Cartao(
     modifier: Modifier = Modifier,

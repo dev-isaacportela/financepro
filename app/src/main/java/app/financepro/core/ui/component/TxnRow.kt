@@ -1,28 +1,20 @@
 package app.financepro.core.ui.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.MoneyCaption
-import app.financepro.core.ui.theme.OutlineWidth
-import app.financepro.core.ui.theme.Pill
 import app.financepro.core.ui.theme.Tema
 import app.financepro.domain.model.Account
 import app.financepro.domain.model.Category
@@ -72,9 +64,9 @@ fun LinhaDeTransacao(
         Row(
             Modifier.padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            PontoDeCategoria(categoria?.colorArgb)
+            AvatarDeCategoria(colorArgb = categoria?.colorArgb, iconKey = categoria?.iconKey)
             Column(Modifier.weight(1f)) {
                 Text(
                     text = descricaoDe(txn, categoria),
@@ -98,30 +90,6 @@ fun LinhaDeTransacao(
         }
     }
 }
-
-/**
- * Ponto de 10dp, não adesivo, e **com anel de `ink`**.
- *
- * O anel parecia dispensável — o nome da categoria vem escrito no subtítulo, a
- * uma linha de distância, então o ponto nunca carrega significado sozinho. A
- * medição desfez o argumento: sobre a superfície clara, Verde-azulado dá 2.77:1
- * e Laranja 2.53:1, abaixo dos 3:1 de elemento não textual da WCAG. A isenção
- * por redundância existe na letra da norma e custa mais para defender do que
- * 1dp custa para desenhar (design.md §6.3).
- *
- * Categoria ausente vira `inkMute`, e não `hairline`: o fio existe para separar
- * dois tons iguais e some sobre o card, enquanto "sem categoria" precisa ocupar
- * o mesmo lugar visual que as outras — 6.40:1 no claro, 8.97:1 no escuro.
- */
-@Composable
-private fun PontoDeCategoria(colorArgb: Int?) = Box(
-    Modifier
-        .padding(top = 5.dp)
-        .size(10.dp)
-        .clip(Pill)
-        .background(colorArgb?.let { Color(it) } ?: Tema.inkMute)
-        .border(OutlineWidth, Tema.ink, Pill),
-)
 
 /** Descrição vazia é comum no lançamento de 3 toques: a categoria dá o nome. */
 private fun descricaoDe(txn: Txn, categoria: Category?): String =

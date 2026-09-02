@@ -144,6 +144,25 @@ val Caption = TextStyle(
 /** A descrição da linha de transação, que design.md §6.3 pede em peso 500. */
 val BodyStrong = Body.copy(fontWeight = FontWeight.W500)
 
+/**
+ * O rótulo da barra de navegação, e o mesmo em peso 600.
+ *
+ * 11sp, e não `Caption`: "Transações" é a mais longa das quatro e, a 13sp, não
+ * cabe na quarta parte de 360dp — saía com reticências. Diminuir a fonte é
+ * melhor que abreviar a palavra, que é o que o usuário lê para saber onde está.
+ */
+val NavRotulo = Caption.copy(fontSize = 11.sp)
+val NavRotuloForte = NavRotulo.copy(fontWeight = FontWeight.W600)
+
+/**
+ * A legenda em peso 600.
+ *
+ * Existe por acessibilidade, não por estética: é o segundo canal da aba
+ * selecionada na barra de navegação, ao lado da tinta. Peso não é cor, e é o que
+ * sobra para quem não distingue `ink` de `inkMute` (REQ-A11Y-003).
+ */
+val CaptionForte = Caption.copy(fontWeight = FontWeight.W600)
+
 /** Nav, botões e rótulos. Peso 600 — o sistema não usa o 500 aqui, e nem o 700. */
 val Label = TextStyle(
     fontFamily = Inter,

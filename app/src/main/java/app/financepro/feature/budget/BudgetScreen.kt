@@ -5,7 +5,6 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -33,10 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
@@ -45,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.financepro.core.money.formatBRL
+import app.financepro.core.ui.component.AvatarDeCategoria
 import app.financepro.core.ui.component.CategorySticker
 import app.financepro.core.ui.component.EstadoVazio
 import app.financepro.core.ui.component.FilledCta
@@ -144,19 +139,17 @@ fun BudgetScreen(vm: BudgetViewModel = hiltViewModel()) {
 /**
  * Quanto do teto do mês já foi gasto. REQ-BUD-003 · REQ-DS-009
  *
- * É o **número herói** da tela, e ele faltava: antes de olhar categoria por
- * categoria, "estou bem ou não" já tem resposta. A tabela de intensidade dá
- * `DisplaySm` ao orçamento, e até agora nenhuma linha o usava — a tela inteira
- * era feita de corpo de texto do mesmo peso.
+ * É o **número herói** da tela: antes de olhar categoria por categoria, "estou
+ * bem ou não" já tem resposta. A tabela de intensidade dá `DisplaySm` ao
+ * orçamento, e até a T-053 nenhuma linha o usava — a tela inteira era feita de
+ * corpo de texto do mesmo peso.
  *
- * O anel é `Canvas`, não biblioteca: dois arcos e um traço arredondado. Sem
- * gradiente e sem sombra (REQ-DS-004), e a cor é `ink` — o estado de estouro
- * pertence às linhas de categoria, e um segundo vermelho aqui seria a mesma
- * informação dita duas vezes.
+ * **Barra, e não anel.** O anel foi a primeira tentativa e estava errado por
+ * dois motivos: não é o desenho do protótipo, e um anel que passa de 100% ou dá
+ * a volta ou para — nas duas leituras ele mente sobre o estouro. A barra deixa o
+ * excesso onde ele se lê, no texto ao lado.
  *
- * O arco para em 360°. Um anel que dá mais de uma volta não comunica "passei
- * do teto", comunica um bug de desenho; quem diz o excesso é o texto ao lado,
- * que continua exibindo o percentual real.
+ * Fica sobre o canvas, sem card. O número herói é tipo, não bloco (design.md §1).
  */
 @Composable
 private fun TetoTotal(progresso: List<BudgetProgress>) {
@@ -164,66 +157,52 @@ private fun TetoTotal(progresso: List<BudgetProgress>) {
     val gasto = progresso.sumOf { it.spentCents }
     val percent = if (limite <= 0) 0 else ((gasto * CEM) / limite).toInt().coerceAtLeast(0)
     val dias = progresso.first().diasRestantes
-    val tinta = Tema.ink
-    val trilho = Tema.hairline
+    val faltam = if (dias == 1) "falta 1 dia" else "faltam $dias dias"
 
-    Cartao(Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {
+                contentDescription = "Gasto $percent por cento do teto do mês. " +
+                    reais(gasto) + " de " + reais(limite) + ". " + faltam + "."
+            },
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text("GASTO DO TETO", style = Caption, color = Tema.inkMute)
+        Text("$percent%", style = DisplaySm, color = Tema.ink)
+        Text(
+            text = reais(gasto) + " de " + reais(limite) + " · " + faltam,
+            style = Caption,
+            color = Tema.inkMute,
+        )
+        Box(
+            Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
-                .semantics(mergeDescendants = true) {
-                    contentDescription = "Gasto $percent por cento do teto do mês. " +
-                        reais(gasto) + " de " + reais(limite) + ". " +
-                        if (dias == 1) "Falta 1 dia." else "Faltam $dias dias."
-                },
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(top = 8.dp)
+                .height(ALTURA_BARRA)
+                .clip(Pill)
+                .background(Tema.hairline),
         ) {
-            Canvas(Modifier.size(ANEL)) {
-                val traco = ANEL_TRACO.toPx()
-                val canto = Offset(traco / 2, traco / 2)
-                val lado = Size(size.width - traco, size.height - traco)
-                drawArc(
-                    color = trilho,
-                    startAngle = 0f,
-                    sweepAngle = VOLTA,
-                    useCenter = false,
-                    topLeft = canto,
-                    size = lado,
-                    style = Stroke(traco),
-                )
-                drawArc(
-                    color = tinta,
-                    startAngle = -QUARTO,
-                    sweepAngle = VOLTA * (percent / CEM.toFloat()).coerceIn(0f, 1f),
-                    useCenter = false,
-                    topLeft = canto,
-                    size = lado,
-                    style = Stroke(traco, cap = StrokeCap.Round),
-                )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("GASTO DO TETO", style = Caption, color = Tema.inkMute)
-                Text("$percent%", style = DisplaySm, color = Tema.ink)
-                Text(
-                    text = reais(gasto) + " de " + reais(limite) + " · " +
-                        if (dias == 1) "falta 1 dia" else "faltam $dias dias",
-                    style = Caption,
-                    color = Tema.inkMute,
-                )
-            }
+            Box(
+                Modifier
+                    .fillMaxWidth(fraction = (percent / CEM.toFloat()).coerceIn(0f, 1f))
+                    .fillMaxSize()
+                    .clip(Pill)
+                    .background(Tema.ink),
+            )
         }
     }
 }
 
-/** Tamanho do anel e do traço. Juntos porque um sem o outro não quer dizer nada. */
-private val ANEL = 96.dp
-private val ANEL_TRACO = 10.dp
-private const val VOLTA = 360f
-private const val QUARTO = 90f
 private const val CEM = 100L
+
+/**
+ * O adesivo da categoria na linha de teto.
+ *
+ * 28dp: menor que o da lista de transações, porque aqui acompanha uma linha de
+ * texto e não duas. Continua acima dos 24dp de REQ-DS-006, então dispensa anel.
+ */
+private val AVATAR_TETO = 28.dp
 
 /** Mesma gramática do cabeçalho da lista (T-014): o mês em linha própria. */
 @Composable
@@ -261,6 +240,14 @@ private fun Linha(progresso: BudgetProgress, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 itemVerticalAlignment = Alignment.CenterVertically,
             ) {
+                // A cor da categoria é a identidade dela, e faltava aqui: a
+                // linha dizia o nome e o estado, mas não *qual* categoria era —
+                // quem varre a tela procurando "Mercado" procurava por texto.
+                AvatarDeCategoria(
+                    colorArgb = progresso.categoria.colorArgb,
+                    iconKey = progresso.categoria.iconKey,
+                    tamanho = AVATAR_TETO,
+                )
                 Text(
                     text = progresso.categoria.name,
                     style = BodyStrong,
@@ -320,13 +307,14 @@ private fun Barra(percent: Int) {
             .fillMaxWidth()
             .height(ALTURA_BARRA)
             .clip(Pill)
-            .border(OutlineWidth, Tema.ink, Pill),
+            .background(Tema.hairline),
     ) {
         Box(
             Modifier
                 .fillMaxWidth(fraction = fracao.value)
                 .fillMaxSize()
-                .background(if (percent >= ALERTA_PERCENT) preenchimento else Color.Transparent),
+                .clip(Pill)
+                .background(preenchimento),
         )
     }
 }

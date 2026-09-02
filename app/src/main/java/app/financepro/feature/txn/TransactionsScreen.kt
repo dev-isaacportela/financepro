@@ -363,7 +363,11 @@ private fun rotuloDoEscopo(escopo: EscopoDeParcela) = when (escopo) {
 private fun FundoExcluir() = Box(
     modifier = Modifier
         .fillMaxSize()
-        .clip(Formas.small)
+        // **O mesmo raio do card da linha.** Com 12dp atrás de um card de 20dp,
+        // o fundo aparecia pelos quatro cantos mesmo em repouso — e como `ink` é
+        // branco no tema escuro, cada linha da lista ganhava um contorno que
+        // ninguém desenhou. Parecia moldura; era o fundo de "Excluir" vazando.
+        .clip(Formas.medium)
         .background(Tema.ink)
         .padding(horizontal = 16.dp),
     contentAlignment = Alignment.CenterEnd,
