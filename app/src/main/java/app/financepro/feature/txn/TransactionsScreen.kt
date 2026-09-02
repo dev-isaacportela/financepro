@@ -263,7 +263,10 @@ private fun Lista(
                     // O fundo opaco é da caixa de deslize, não da linha: sem ele
                     // o vermelho de "Excluir" apareceria através dela em repouso.
                     LinhaDeTransacao(
-                        modifier = Modifier.fillMaxWidth().background(Tema.paper),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Tema.paper)
+                            .padding(horizontal = 12.dp),
                         txn = txn,
                         categoria = state.categoriaDe(txn.categoryId),
                         conta = state.contaDe(txn.accountId),

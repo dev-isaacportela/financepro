@@ -1,40 +1,46 @@
 package app.financepro.feature.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.financepro.core.ui.component.Cartao
+import app.financepro.core.ui.component.Fab
 import app.financepro.core.ui.component.FilledCta
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.LinhaDeTransacao
 import app.financepro.core.ui.component.MoneyText
-import app.financepro.core.ui.component.Cartao
-import app.financepro.core.ui.component.Fab
 import app.financepro.core.ui.theme.Body
+import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.Label
 import app.financepro.core.ui.theme.MoneyBody
 import app.financepro.core.ui.theme.MoneyLg
-import app.financepro.core.ui.theme.Tema
+import app.financepro.core.ui.theme.Pill
 import app.financepro.core.ui.theme.Subheading
+import app.financepro.core.ui.theme.Tema
 import app.financepro.domain.model.Txn
 import app.financepro.domain.usecase.Comparativo
 
@@ -201,26 +207,15 @@ private fun Cartoes(state: HomeState, onVerContas: () -> Unit, onVerCartao: (Lon
  */
 @Composable
 private fun ComparativoDoPeriodo(c: Comparativo) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Este mês", style = Subheading, color = Tema.ink)
-        Row(
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Metrica("Receitas", c.receitasCents, Modifier.weight(1f))
-            Metrica("Despesas", c.despesasCents, Modifier.weight(1f))
-        }
-        // "Sobrou" subiu para o par de atalhos do saldo; aqui fica a comparação,
-        // que é a única das quatro que não é um saldo do mês e sim um delta.
-        Cartao(Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Valor(rotulo = "Ante o mês anterior", cents = c.deltaCents)
-                Text(text = variacaoEmPalavras(c.deltaCents), style = Caption, color = Tema.inkMute)
-            }
-        }
+    // Um bloco só, e não três cards soltos com um título flutuando por cima.
+    // Dentro dele as linhas voltam a ser "rótulo à esquerda, valor à direita":
+    // aqui elas não competem com nada, porque os dois números que se lê de
+    // relance — saldo e o que sobrou — já estão acima, em tamanho maior.
+    Bloco(titulo = "Este mês") {
+        Valor(rotulo = "Receitas", cents = c.receitasCents)
+        Valor(rotulo = "Despesas", cents = c.despesasCents)
+        Valor(rotulo = "Ante o mês anterior", cents = c.deltaCents)
+        Text(text = variacaoEmPalavras(c.deltaCents), style = Caption, color = Tema.inkMute)
     }
 }
 
@@ -238,8 +233,10 @@ private fun ComparativoDoPeriodo(c: Comparativo) {
  */
 @Composable
 private fun ProximasContas(state: HomeState, onEfetivar: (Txn) -> Unit, onEditar: (Long) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Próximas contas", style = Subheading, color = Tema.ink)
+    Bloco(
+        titulo = "Próximas contas",
+        aParte = { Resumo(emSeteDias(state.proximas.size)) },
+    ) {
         state.proximas.forEach { txn ->
             val categoria = state.categoriaDe(txn.categoryId)
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -265,29 +262,30 @@ private fun ProximasContas(state: HomeState, onEfetivar: (Txn) -> Unit, onEditar
 
 @Composable
 private fun Ultimas(state: HomeState, onVerTransacoes: () -> Unit, onEditar: (Long) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Últimas transações", style = Subheading, color = Tema.ink)
-        // Um card com as linhas dentro, e não um card por linha: cinco
-        // retângulos empilhados davam a cada transação o peso de uma seção.
-        Cartao(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(vertical = 4.dp)) {
-                state.ultimas.forEach { txn ->
-                    LinhaDeTransacao(
-                        txn = txn,
-                        categoria = state.categoriaDe(txn.categoryId),
-                        conta = state.contaDe(txn.accountId),
-                        destino = state.contaDe(txn.counterAccountId),
-                        // A mesma linha da lista, o mesmo toque: comportamento
-                        // que muda de tela para tela faz o usuário parar de
-                        // tentar.
-                        onClick = { onEditar(txn.id) },
-                    )
-                }
-            }
+    Bloco(
+        titulo = "Últimas transações",
+        // "Ver todas" sai do rodapé e vira a ação do cabeçalho, como no
+        // protótipo: um botão de largura cheia embaixo de cinco linhas pesava
+        // mais que a lista que ele acompanha.
+        aParte = { Acao("Ver todas", onVerTransacoes) },
+    ) {
+        state.ultimas.forEach { txn ->
+            LinhaDeTransacao(
+                txn = txn,
+                categoria = state.categoriaDe(txn.categoryId),
+                conta = state.contaDe(txn.accountId),
+                destino = state.contaDe(txn.counterAccountId),
+                // A mesma linha da lista, o mesmo toque: comportamento que muda
+                // de tela para tela faz o usuário parar de tentar.
+                onClick = { onEditar(txn.id) },
+            )
         }
-        GhostButton(text = "Ver todas", onClick = onVerTransacoes)
     }
 }
+
+/** "3 em 7 dias" — o horizonte de REQ-REC-005, dito em uma linha. */
+private fun emSeteDias(quantas: Int) =
+    if (quantas == 1) "1 em 7 dias" else "$quantas em 7 dias"
 
 /** REQ-UI-006 — a tela inteira sem dados traz a ação que a preenche. */
 @Composable
@@ -306,17 +304,52 @@ private fun Comeco(onNovoLancamento: () -> Unit) {
  * sotaque, e no claro competiam com o adesivo logo acima.
  */
 @Composable
-private fun Bloco(titulo: String, conteudo: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(titulo, style = Subheading, color = Tema.ink)
-        Cartao(Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) { conteudo() }
+private fun Bloco(
+    titulo: String,
+    modifier: Modifier = Modifier,
+    aParte: (@Composable () -> Unit)? = null,
+    conteudo: @Composable ColumnScope.() -> Unit,
+) {
+    Cartao(modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(titulo, style = BodyStrong, color = Tema.ink, modifier = Modifier.weight(1f))
+                aParte?.invoke()
+            }
+            conteudo()
         }
     }
 }
+
+/**
+ * A informação que acompanha o título do bloco, à direita.
+ *
+ * Existe para separar dois papéis que o protótipo distingue e que é fácil
+ * misturar: "3 em 7 dias" é **resumo** e não é tocável; "Ver todas" é **ação**.
+ * Um `Text` cinza para o primeiro e um clicável em `ink` para o segundo, e não o
+ * contrário — cinza que responde ao toque é o botão que ninguém encontra.
+ */
+@Composable
+private fun Resumo(texto: String) = Text(texto, style = Caption, color = Tema.inkMute)
+
+@Composable
+private fun Acao(texto: String, onClick: () -> Unit) = Text(
+    text = texto,
+    style = Caption,
+    color = Tema.ink,
+    modifier = Modifier
+        .minimumInteractiveComponentSize()
+        .clip(Pill)
+        .clickable(onClickLabel = texto, onClick = onClick)
+        .padding(horizontal = 8.dp, vertical = 4.dp),
+)
 
 /**
  * Rótulo e valor lado a lado, com o rótulo em `weight` — assim ele **quebra**

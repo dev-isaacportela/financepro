@@ -30,7 +30,13 @@ import app.financepro.domain.model.TxnType
  * `Rotulo`. Duas cópias divergiriam, e a que ficaria errada é a que ninguém
  * abre.
  *
- * **Ela não traz o próprio fundo.** Quem a coloca decide: na lista de
+ * **Ela não traz o próprio fundo nem o recuo lateral.** Quem a coloca decide,
+ * e é o que faz a mesma linha caber nos dois lugares: dentro de um bloco ela
+ * herda o recuo do card e alinha com o título; na lista ela recebe os 12dp que
+ * a alinham com o total do dia. Trazendo os dois de casa, o recuo dobrava dentro
+ * do card e a descrição truncava.
+ *
+ * Quem a coloca decide também o fundo: na lista de
  * transações são linhas planas sobre o canvas, agrupadas por dia; no dashboard
  * são um bloco só dentro de um `Cartao`. Um card por linha, que era o desenho
  * anterior, transformava dez transações em dez retângulos e dava a cada uma o
@@ -68,7 +74,7 @@ fun LinhaDeTransacao(
 
     Box(modifier.fillMaxWidth().then(toque)) {
         Row(
-            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            Modifier.padding(vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
