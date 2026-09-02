@@ -17,19 +17,55 @@ verdade, não a documentação do que já foi feito. Código sem requisito não 
 
 ## Telas
 
-Capturas do app rodando, com dados de demonstração — não são mockups.
+Capturas do app rodando num aparelho, com dados de demonstração — não são
+mockups. O modo escuro é o principal, e o claro não é uma variação dele: o que
+inverte é o canvas e a tinta, e a cor de cada categoria **não muda**
+([REQ-DS-008](docs/spec.md)).
 
 | Início | Transações | Orçamento |
 |---|---|---|
-| ![Dashboard com saldo total, fatura do cartão e últimas transações](docs/img/inicio.png) | ![Lista do mês agrupada por dia, com filtros de entrada e saída](docs/img/transacoes.png) | ![Tetos por categoria, com barra de progresso e aviso de estouro](docs/img/orcamento.png) |
+| ![Dashboard com saldo total, fatura do cartão e últimas transações](docs/img/escuro-inicio.png) | ![Lista do mês agrupada por dia, com filtros de entrada e saída](docs/img/escuro-transacoes.png) | ![Tetos por categoria, com barra de progresso e aviso de estouro](docs/img/escuro-orcamento.png) |
 
 | Relatórios | Fatura do cartão | Investimentos |
 |---|---|---|
-| ![Pizza de despesas por categoria, com legenda e percentuais](docs/img/relatorios.png) | ![Fatura agrupada por categoria, com vencimento e limite disponível](docs/img/fatura.png) | ![Rendimento mês a mês, com o CDI do Banco Central](docs/img/investimentos.png) |
+| ![Pizza de despesas por categoria, com legenda e percentuais](docs/img/escuro-relatorios.png) | ![Fatura agrupada por categoria, com vencimento e limite disponível](docs/img/escuro-fatura.png) | ![Rendimento mês a mês, com o CDI do Banco Central](docs/img/escuro-investimentos.png) |
 
 A tela **Mais** reúne cadastro, dados e análise:
 
-<img src="docs/img/mais.png" alt="Menu com contas, categorias, recorrências, bloqueio, importação, backup, relatórios e investimentos" width="320">
+<img src="docs/img/escuro-mais.png" alt="Menu com contas, categorias, recorrências, bloqueio, importação, backup, relatórios e investimentos" width="300">
+
+<details>
+<summary><b>As mesmas telas no modo claro</b></summary>
+
+<br>
+
+| Início | Transações | Orçamento |
+|---|---|---|
+| ![Dashboard no modo claro](docs/img/claro-inicio.png) | ![Lista de transações no modo claro](docs/img/claro-transacoes.png) | ![Orçamento no modo claro](docs/img/claro-orcamento.png) |
+
+| Relatórios | Fatura do cartão | Investimentos |
+|---|---|---|
+| ![Relatórios no modo claro](docs/img/claro-relatorios.png) | ![Fatura do cartão no modo claro](docs/img/claro-fatura.png) | ![Investimentos no modo claro](docs/img/claro-investimentos.png) |
+
+<img src="docs/img/claro-mais.png" alt="Tela Mais no modo claro" width="300">
+
+</details>
+
+## Instalar
+
+O APK assinado de cada versão está em
+[Releases](https://github.com/dev-isaacportela/financepro/releases), com o
+`.sha256` ao lado. Confira antes de instalar:
+
+```bash
+sha256sum -c financepro-v0.1.0.apk.sha256
+```
+
+Android 8.0 (API 26) ou mais novo. Não está na Play Store, então o aparelho vai
+pedir permissão para instalar de fonte desconhecida.
+
+Para compilar da fonte, `./gradlew assembleDebug` basta — o release sem keystore
+sai não assinado, de propósito ([CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## Documentos
 

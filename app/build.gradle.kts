@@ -1,3 +1,18 @@
+import java.util.Properties
+
+/**
+ * A assinatura de release, quando existe.
+ *
+ * O keystore nunca entra no repositório (`.gitignore` barra `*.jks` e
+ * `keystore.properties`). Localmente o arquivo é seu; no CI ele é escrito a
+ * partir dos secrets, logo antes do build. Sem ele o `assembleRelease` sai
+ * **sem assinar** em vez de falhar — um clone qualquer precisa conseguir
+ * compilar o release para revisar o que o R8 faz com o código.
+ */
+val chaveDeRelease = Properties().apply {
+    rootProject.file("keystore.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -22,8 +37,22 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (chaveDeRelease.isNotEmpty()) {
+            create("release") {
+                storeFile = rootProject.file(chaveDeRelease.getProperty("storeFile"))
+                storePassword = chaveDeRelease.getProperty("storePassword")
+                keyAlias = chaveDeRelease.getProperty("keyAlias")
+                keyPassword = chaveDeRelease.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // Nulo quando não há keystore: o APK sai não assinado, e o
+            // `packageRelease` continua rodando.
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -39,6 +68,19 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    // `MigrationTestHelper` procura o schema exportado nos assets, por
+    // `<classe do banco>/<versão>.json`. Apontar o diretório aqui evita a cópia
+    // que envelheceria: o teste lê o mesmo arquivo que o KSP escreve.
+    //
+    // Vai no `debug`, e não no `test`: o AGP não empacota assets de teste de
+    // unidade, e o Robolectric serve os assets da variante. Como consequência
+    // os JSONs entram no APK de debug — 50 KB que nunca chegam ao release.
+    sourceSets {
+        getByName("debug") {
+            assets.srcDir("$projectDir/schemas")
+        }
     }
 
     testOptions {
@@ -101,6 +143,11 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
+
+    // REQ-DATA-001 — `MigrationTestHelper` cria o banco na versão antiga a
+    // partir do schema exportado em `app/schemas/`, o que é o ponto: o teste
+    // roda contra o DDL que está no repositório, não contra o de agora.
+    testImplementation(libs.androidx.room.testing)
 
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)
