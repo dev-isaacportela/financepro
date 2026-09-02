@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -40,18 +41,19 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.financepro.core.money.formatBRL
+import app.financepro.core.ui.component.AvatarDeCategoria
+import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.component.GhostButton
 import app.financepro.core.ui.component.LinhaDeTransacao
 import app.financepro.core.ui.component.MoneyText
-import app.financepro.core.ui.component.Cartao
 import app.financepro.core.ui.theme.Body
 import app.financepro.core.ui.theme.BodyStrong
 import app.financepro.core.ui.theme.Caption
 import app.financepro.core.ui.theme.MoneyCaption
 import app.financepro.core.ui.theme.OutlineWidth
 import app.financepro.core.ui.theme.Pill
-import app.financepro.core.ui.theme.Tema
 import app.financepro.core.ui.theme.Subheading
+import app.financepro.core.ui.theme.Tema
 import app.financepro.domain.usecase.GrupoDeCategoria
 import app.financepro.domain.usecase.PontoMensal
 import java.time.YearMonth
@@ -158,7 +160,7 @@ private fun Pizza(state: ReportsState, onVerCategoria: (Long, YearMonth) -> Unit
                     }
                 },
         ) {
-            desenharPizza(varreduras, fatias.map { corDe(state, it, papel) }, tinta)
+            desenharPizza(varreduras, fatias.map { corDe(state, it, papel) }, papel)
         }
 
         fatias.forEach { fatia ->
@@ -166,6 +168,7 @@ private fun Pizza(state: ReportsState, onVerCategoria: (Long, YearMonth) -> Unit
                 fatia = fatia,
                 nome = state.categoriaDe(fatia.categoriaId)?.name ?: "Sem categoria",
                 cor = corDe(state, fatia, papel),
+                iconKey = state.categoriaDe(fatia.categoriaId)?.iconKey,
                 percentual = percentual(fatia.totalCents, total),
                 onClick = fatia.categoriaId?.let { { onVerCategoria(it, state.mes) } },
             )
@@ -174,8 +177,16 @@ private fun Pizza(state: ReportsState, onVerCategoria: (Long, YearMonth) -> Unit
 }
 
 /**
- * Uma linha da legenda. O ponto de cor é o mesmo da lista de transações, com
- * anel pela mesma razão: um Laranja sobre a superfície clara dá 2.53:1 e some.
+ * Uma linha da legenda. **O mesmo adesivo da lista de transações**, e não um
+ * ponto com anel.
+ *
+ * O ponto de 18dp precisava do anel de `ink` por contraste (REQ-DS-006), e o
+ * resultado era uma legenda de argolas brancas logo abaixo de um gráfico e logo
+ * acima de "Maiores despesas", que já usava o adesivo. Três desenhos para a mesma
+ * ideia na mesma tela.
+ *
+ * O adesivo de 28dp dispensa o anel e ainda traz o ícone, então a linha da
+ * legenda passa a ser reconhecível pelo mesmo par cor-e-desenho do resto do app.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -183,6 +194,7 @@ private fun LinhaDaLegenda(
     fatia: GrupoDeCategoria,
     nome: String,
     cor: Color,
+    iconKey: String?,
     percentual: Int,
     onClick: (() -> Unit)?,
 ) {
@@ -202,12 +214,10 @@ private fun LinhaDaLegenda(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             itemVerticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                Modifier
-                    .size(PONTO)
-                    .clip(Pill)
-                    .background(cor)
-                    .border(OutlineWidth, Tema.ink, Pill),
+            AvatarDeCategoria(
+                colorArgb = cor.toArgb(),
+                iconKey = iconKey,
+                tamanho = ADESIVO_DA_LEGENDA,
             )
             Text(nome, style = BodyStrong, color = Tema.ink, modifier = Modifier.weight(1f))
             MoneyText(cents = fatia.totalCents, style = MoneyCaption)
@@ -268,10 +278,18 @@ private fun Maiores(state: ReportsState, onEditar: (Long) -> Unit) {
 
 /**
  * A pizza começa no topo e anda no sentido do relógio, como todo mundo desenha.
- * O contorno vem depois do preenchimento, e por fatia: sem ele, duas categorias
- * de cor parecida viram uma mancha só.
+ *
+ * **O separador é vão, não traço.** Ele já foi um contorno em `ink`, e no tema
+ * escuro isso é uma teia branca por cima do gráfico — a linha ficava mais forte
+ * que as próprias fatias. Riscando em `paper`, a separação vira o fundo
+ * aparecendo entre elas, que é o que o olho lê como "duas fatias" sem que nada
+ * novo seja desenhado.
+ *
+ * 2dp em vez de 1: um vão de um pixel some no antialiasing de um arco, que foi
+ * onde a versão anterior tentou economizar e acabou precisando do branco para
+ * ser visível.
  */
-private fun DrawScope.desenharPizza(varreduras: List<Float>, cores: List<Color>, tinta: Color) {
+private fun DrawScope.desenharPizza(varreduras: List<Float>, cores: List<Color>, papel: Color) {
     val lado = size.minDimension
     val canto = Offset((size.width - lado) / 2f, (size.height - lado) / 2f)
     val quadrado = Size(lado, lado)
@@ -279,13 +297,13 @@ private fun DrawScope.desenharPizza(varreduras: List<Float>, cores: List<Color>,
     varreduras.forEachIndexed { i, varredura ->
         drawArc(cores[i], inicio, varredura, useCenter = true, topLeft = canto, size = quadrado)
         drawArc(
-            color = tinta,
+            color = papel,
             startAngle = inicio,
             sweepAngle = varredura,
             useCenter = true,
             topLeft = canto,
             size = quadrado,
-            style = Stroke(width = OutlineWidth.toPx()),
+            style = Stroke(width = VAO_DA_PIZZA.toPx()),
         )
         inicio += varredura
     }
@@ -351,7 +369,11 @@ private const val CEM = 100L
 
 private val ALTURA_PIZZA = 220.dp
 private val ALTURA_LINHA = 140.dp
-private val PONTO = 14.dp
+/** O vão entre fatias. Um pixel some no antialiasing de um arco. */
+private val VAO_DA_PIZZA = 2.dp
+
+/** O adesivo da legenda: 28dp dispensa o anel de REQ-DS-006. */
+private val ADESIVO_DA_LEGENDA = 28.dp
 private val TRACO = 2.dp
 private val TRACEJADO = floatArrayOf(12f, 10f)
 

@@ -283,7 +283,11 @@ private fun Lista(
 @Composable
 private fun CabecalhoDoDia(dia: DiaDeTransacoes) {
     Row(
-        Modifier.fillMaxWidth().padding(top = 8.dp),
+        // O mesmo recuo lateral da linha: sem ele o total do dia encostava na
+        // borda da tela enquanto os valores paravam 12dp antes, e a coluna de
+        // dinheiro — que existe para ser conferida de cima a baixo — ficava com
+        // um degrau em cada cabeçalho.
+        Modifier.fillMaxWidth().padding(top = 8.dp, start = 12.dp, end = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

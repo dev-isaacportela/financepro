@@ -68,5 +68,68 @@ val DE_1_PARA_2 = object : Migration(1, 2) {
     }
 }
 
+/**
+ * v2 → v3 — cada despesa padrão ganha a própria cor.
+ *
+ * A distribuição anterior usava seis acentos para nove despesas e repetia três.
+ * Numa lista dá para conviver, porque o nome vem ao lado; no gráfico de pizza do
+ * relatório, duas fatias da mesma cor viram uma mancha só e a legenda deixa de
+ * explicar qual é qual — foi ali que o defeito apareceu.
+ *
+ * **Cada id tem duas cores "de antes", e não uma.** É a armadilha desta
+ * migração, e a primeira versão caiu nela: quem instalou depois da troca de
+ * paleta foi semeado com a distribuição intermediária, enquanto quem já tinha o
+ * app recebeu o resultado de [DE_1_PARA_2] — que partiu das cores do sistema
+ * visual antigo e chegou em outros valores. Casar só com a primeira fazia a
+ * migração não encostar em nenhuma linha do segundo grupo, em silêncio, e a
+ * repetição continuava exatamente onde incomodava.
+ *
+ * **Só mexe em quem o app atribuiu.** O `WHERE` casa `id` **e** uma das duas
+ * cores que o app poderia ter posto ali. Se o usuário escolheu outra, a linha
+ * não casa e fica como está — é a diferença entre corrigir o que o app fez e
+ * sobrescrever o que a pessoa fez.
+ *
+ * Categoria criada pelo usuário nunca entra: os ids 1 a 10 são os do seed, e
+ * `Seed.kt` os declara explicitamente por essa razão.
+ */
+val DE_2_PARA_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        val teal = -16734082L
+        val azul = -16745534L
+        val verde = -12417511L
+        val amarelo = -5206016L
+        val laranja = -1278464L
+        val rosa = -1696183L
+        val vermelho = -1950902L
+        val marrom = -7115422L
+        val violeta = -11972641L
+
+        // id, as duas cores que o app pode ter posto, e a de agora.
+        val troca = listOf(
+            Cor(1, listOf(teal, azul), teal), // Alimentação
+            Cor(2, listOf(verde, rosa), violeta), // Transporte
+            Cor(3, listOf(marrom, violeta), rosa), // Moradia
+            Cor(4, listOf(azul, teal), marrom), // Saúde
+            Cor(5, listOf(rosa, amarelo), laranja), // Lazer
+            Cor(6, listOf(amarelo, laranja), amarelo), // Educação
+            Cor(7, listOf(verde, rosa), verde), // Compras
+            Cor(8, listOf(azul, teal), azul), // Assinaturas
+            Cor(9, listOf(amarelo), teal), // Salário
+            Cor(10, listOf(teal, azul), vermelho), // Outros
+        )
+
+        troca.forEach { (id, antes, agora) ->
+            val marcadores = antes.joinToString(",") { "?" }
+            db.execSQL(
+                "UPDATE category SET colorArgb = ? WHERE id = ? AND colorArgb IN ($marcadores)",
+                (listOf<Any>(agora, id) + antes).toTypedArray(),
+            )
+        }
+    }
+}
+
+/** Uma troca de cor: o id, o que o app pode ter posto ali, e o que fica. */
+private data class Cor(val id: Long, val antes: List<Long>, val agora: Long)
+
 /** Na ordem, para o builder não depender de alguém lembrar de listá-las. */
-val MIGRACOES = arrayOf(DE_1_PARA_2)
+val MIGRACOES = arrayOf(DE_1_PARA_2, DE_2_PARA_3)

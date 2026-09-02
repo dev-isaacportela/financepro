@@ -77,37 +77,19 @@ class SeedTest {
     }
 
     @Test
-    fun `nenhuma categoria vizinha no grid repete a cor`() {
-        // São seis stickers para dez categorias, então repetir é inevitável — o
-        // que não pode é repetir *lado a lado*. Enquanto todo `useCount` é zero
-        // o grid sai em ordem alfabética, que é o que o usuário novo vê.
-        val grid = CATEGORIAS_PADRAO
-            .filter { it.kind == CategoryKind.EXPENSE }
-            .sortedBy { it.nome }
+    fun `cada despesa padrao tem a propria cor`() {
+        // Já foram seis acentos para nove despesas, com três repetições
+        // distribuídas o mais longe possível uma da outra. Numa lista isso passa,
+        // porque o nome vem ao lado; no gráfico de pizza do relatório duas fatias
+        // da mesma cor viram uma mancha só, e a legenda deixa de explicar qual é
+        // qual — foi assim que o defeito apareceu, olhando o relatório.
+        //
+        // São nove acentos e nove despesas: a igualdade é o que garante que
+        // acrescentar uma décima categoria padrão sem acrescentar uma cor faça
+        // este teste falhar, em vez de reintroduzir a repetição em silêncio.
+        val grid = CATEGORIAS_PADRAO.filter { it.kind == CategoryKind.EXPENSE }
 
-        val vizinhasIguais = grid.zipWithNext()
-            .filter { (a, b) -> a.corArgb == b.corArgb }
-            .map { (a, b) -> "${a.nome} e ${b.nome}" }
-
-        assertEquals(emptyList<String>(), vizinhasIguais)
-    }
-
-    @Test
-    fun `as cores repetidas ficam o mais longe possivel`() {
-        // Com 6 cores e 9 despesas, a distância máxima possível entre duas
-        // iguais é 6. Menos que isso significa que alguém atribuiu por id de
-        // novo, em vez de pela ordem em que o grid aparece.
-        val grid = CATEGORIAS_PADRAO
-            .filter { it.kind == CategoryKind.EXPENSE }
-            .sortedBy { it.nome }
-
-        val perto = grid.indices.flatMap { i ->
-            (i + 1 until grid.size)
-                .filter { j -> grid[i].corArgb == grid[j].corArgb && j - i < ciclo }
-                .map { j -> "${grid[i].nome} e ${grid[j].nome} a ${j - i} posições" }
-        }
-
-        assertEquals(emptyList<String>(), perto)
+        assertEquals(grid.size, grid.map { it.corArgb }.toSet().size)
     }
 
     @Test
@@ -124,7 +106,6 @@ class SeedTest {
     }
 
     /** Tamanho da paleta de stickers (design.md §4). */
-    private val ciclo = 6
 
     private fun contar(banco: AppDatabase, tabela: String): Int =
         banco.openHelper.readableDatabase.query("SELECT COUNT(*) FROM $tabela").use {
