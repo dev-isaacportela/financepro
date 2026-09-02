@@ -427,7 +427,10 @@ private fun LinhaDaRevisao(
                     items(state.categorias.filter { it.kind == esperado }, key = { it.id }) { c ->
                         CategorySticker(
                             category = c,
-                            selecionado = c.id == linha.categoriaId,
+                            // Nunca marcado, e não por esquecimento: escolher preenche
+                            // `categoriaId`, o `if` acima vira falso e a fileira sai de
+                            // cena. Chip visível e chip não escolhido são a mesma coisa.
+                            selecionado = false,
                             onClick = { onCategoria(c.id) },
                         )
                     }
