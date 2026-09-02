@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Color
  * — [SurfaceElevated] no escuro, [SurfaceSoft] no claro. Profundidade é a troca
  * de canvas e esse degrau de luminância, nunca sombra (REQ-DS-004).
  *
- * As oito cores de acento são **idênticas nos dois temas** (REQ-DS-008), pela
+ * As nove cores de acento são **idênticas nos dois temas** (REQ-DS-008), pela
  * mesma razão de sempre: uma delas é a identidade de uma categoria, e categoria
  * não muda de cor quando anoitece. O que inverte é o canvas e a tinta.
  */
@@ -55,24 +55,30 @@ val HairlineLight = Color(0xFFE2E2E7)
 val HairlineDark = Color(0x1FFFFFFF)
 
 /**
- * O carimbo da marca. **Escasso por regra**, não por gosto.
+ * Cobalto, o carimbo da marca — e no app ele quase não aparece.
  *
- * Cobalto é preenchimento de um card em destaque por tela, e o par branco sobre
- * ele é o único texto permitido sobre cor saturada — 6.06:1. Como cor de texto
- * ele reprova nos dois fundos escuros (3.47:1 sobre preto, 2.94:1 sobre o card),
- * e por isso está fora de [Acentos]: não é cor de categoria, é assinatura.
+ * O sistema de origem gasta cobalto num card em destaque por página, e o app não
+ * tem esse card: não há plano, nível nem preço aqui. Sobrou o papel que o
+ * protótipo lhe deu nas telas, e é o único honesto — **cor de categoria, como as
+ * outras**, e por isso ele está dentro de [Acentos] e não numa gaveta à parte.
+ *
+ * Já foi preenchimento do bloco de saldo, por um motivo ruim: o sistema anterior
+ * tinha um bloco cheio ali e a troca de paleta o recoloriu em vez de perguntar se
+ * ele ainda fazia sentido. Não fazia — a profundidade agora vem do degrau, e a
+ * ênfase do saldo vem do tamanho.
+ *
+ * Como texto ele reprova sobre o card escuro (2.94:1), igual aos outros oito.
  */
 val Cobalt = Color(0xFF494FDF)
-val CobaltDeep = Color(0xFF3A40C4)
 
 /**
  * Acentos. **Preenchimento, nunca cor de texto** (REQ-DS-006).
  *
- * Sobre preto puro as oito passam em 4.5:1 — e é exatamente aí que a regra
- * seria perdida por descuido, porque *parece* que dá para usar qualquer uma
- * como texto. Sobre o card [SurfaceElevated], que é onde o conteúdo real vive,
- * cinco delas reprovam: Light Blue 3.91, Pink 3.94, Light Green 3.95, Brown
- * 3.90 e Danger 4.20.
+ * Sobre preto puro oito das nove passam em 4.5:1 — e é exatamente aí que a
+ * regra seria perdida por descuido, porque *parece* que dá para usar quase
+ * qualquer uma como texto. Sobre o card [SurfaceElevated], que é onde o conteúdo
+ * real vive, **seis** reprovam: Cobalto 2.94, Light Blue 3.91, Brown 3.90, Pink
+ * 3.94, Light Green 3.95 e Danger 4.20.
  *
  * A regra única elimina a classe de erro em vez de administrar a tabela por
  * superfície. `ContrastTest` mede os dois fundos e guarda esse flanco.
@@ -86,8 +92,8 @@ val Pink = Color(0xFFE61E49)
 val Danger = Color(0xFFE23B4A)
 val Brown = Color(0xFF936D62)
 
-/** As oito, para quem precisa percorrer o conjunto — `ContrastTest`, por exemplo. */
-val Acentos = listOf(Teal, LightBlue, LightGreen, Yellow, Warning, Pink, Danger, Brown)
+/** As nove, para quem precisa percorrer o conjunto — `ContrastTest`, por exemplo. */
+val Acentos = listOf(Teal, LightBlue, LightGreen, Yellow, Warning, Pink, Danger, Brown, Cobalt)
 
 /**
  * Como cada cor se chama em voz alta. REQ-A11Y-001
@@ -100,7 +106,7 @@ val Acentos = listOf(Teal, LightBlue, LightGreen, Yellow, Warning, Pink, Danger,
  * escolhendo a cor da categoria, não lendo o guia de marca.
  *
  * Mapa e não lista paralela — índices desalinhados renomeariam cores em
- * silêncio. `TokenLintTest` prova que as oito estão aqui.
+ * silêncio. `TokenLintTest` prova que as nove estão aqui.
  */
 val NomesDeAcento = mapOf(
     Teal to "Verde-azulado",
@@ -111,4 +117,5 @@ val NomesDeAcento = mapOf(
     Pink to "Rosa",
     Danger to "Vermelho",
     Brown to "Marrom",
+    Cobalt to "Violeta",
 )

@@ -60,7 +60,7 @@ internal fun categoriasSemeadas(): List<CategoryEntity> = CATEGORIAS_PADRAO.map 
  * `data/` não importa nada de Compose — o tema declara os mesmos hex do lado
  * dele (T-010), e `TokenLintTest` reprova o build se os dois divergirem.
  *
- * São **seis** para dez categorias, e não as oito da paleta: Laranja e Vermelho
+ * São **seis** para dez categorias, e não as nove da paleta: Laranja e Vermelho
  * ficam de fora do sorteio porque também são estado de orçamento (REQ-BUD-003).
  * Um ponto vermelho de categoria ao lado de uma barra vermelha de estouro faz o
  * usuário ler significado onde só há identidade. As duas continuam no seletor,

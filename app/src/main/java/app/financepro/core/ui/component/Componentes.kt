@@ -205,15 +205,15 @@ fun Fab(
  * `tnum` os valores não alinham na vertical, e uma coluna de dinheiro
  * desalinhada é mais difícil de conferir contra o extrato.
  *
- * [cor] existe por **um** motivo: valor sobre preenchimento saturado, onde a
- * tinta obrigatória é `onFill` — branco sobre Cobalto passa em 6.06:1, e `ink`
- * no tema claro reprovaria. Não é porta para verde e vermelho: receita e despesa
- * continuam se distinguindo pelo **sinal** e pelo rótulo da categoria, nunca por
- * cor (REQ-A11Y-003).
+ * **Não há parâmetro de cor**, e a ausência é a regra: todo valor sai em `ink`.
+ * Receita e despesa se distinguem pelo **sinal** e pelo rótulo da categoria,
+ * nunca por cor (REQ-DS-007, REQ-A11Y-003).
  *
  * E a medição diz que não é preciosismo. Sobre o card `surface`, Pink dá 3.94:1
  * e Danger 4.20:1 — um par verde/vermelho de valores reprovaria justamente na
- * metade vermelha, que é a que avisa. `ContrastTest` guarda o resto.
+ * metade vermelha, que é a que avisa. Existiu aqui um parâmetro `cor`, para o
+ * saldo sobre preenchimento saturado; o preenchimento saiu, e o parâmetro com
+ * ele, antes de virar a porta por onde o verde entra.
  *
  * E é aqui que REQ-A11Y-006 se resolve de uma vez: a `contentDescription` traz
  * o valor por extenso, de [spokenBRL]. O texto na tela continua `−R$ 18,50`,
@@ -228,13 +228,12 @@ fun MoneyText(
     cents: Long,
     modifier: Modifier = Modifier,
     style: TextStyle = MoneyBody,
-    cor: Color = Tema.ink,
 ) {
     val falado = spokenBRL(cents)
     Text(
         text = formatBRL(cents),
         modifier = modifier.semantics { contentDescription = falado },
-        color = cor,
+        color = Tema.ink,
         style = style,
     )
 }

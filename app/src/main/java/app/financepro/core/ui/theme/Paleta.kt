@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
  * moldura: no escuro é branco a 12%, e some assim que houver diferença de
  * luminância para fazer o trabalho.
  *
- * As oito cores de acento não aparecem aqui de propósito: elas são idênticas
+ * As nove cores de acento não aparecem aqui de propósito: elas são idênticas
  * nos dois temas (REQ-DS-008) e vivem soltas em `Color.kt`. O que muda por tema
  * é o canvas, o degrau, a tinta e o fio.
  */
@@ -26,7 +26,6 @@ data class Paleta(
     val ink: Color, // texto primário
     val inkMute: Color, // texto secundário; passa em 4.5:1 sobre paper e surface
     val hairline: Color, // fio de 1dp entre superfícies de mesmo tom
-    val onFill: Color, // texto sobre preenchimento saturado — só sobre Cobalt
 )
 
 /**
@@ -42,7 +41,6 @@ val PaletaEscura = Paleta(
     ink = CanvasLight,
     inkMute = MuteDark,
     hairline = HairlineDark,
-    onFill = CanvasLight,
 )
 
 val PaletaClara = Paleta(
@@ -51,5 +49,4 @@ val PaletaClara = Paleta(
     ink = InkLight,
     inkMute = MuteLight,
     hairline = HairlineLight,
-    onFill = CanvasLight,
 )

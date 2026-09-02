@@ -1092,32 +1092,33 @@ quebra em mais linhas, e o contêiner cresce.
 
 `F0` · `MUST` · Teste: `ContrastTest`
 
-O SISTEMA DEVE usar as oito cores de acento — Verde-azulado, Azul, Verde,
-Amarelo, Laranja, Rosa, Vermelho e Marrom — exclusivamente como preenchimento de
-ponto, ícone, barra ou superfície.
+O SISTEMA DEVE usar as nove cores de acento — Verde-azulado, Azul, Verde,
+Amarelo, Laranja, Rosa, Vermelho, Marrom e Violeta — exclusivamente como
+preenchimento de ponto, ícone, barra ou superfície.
 
 O SISTEMA NÃO DEVE usar nenhuma delas como cor de texto, cor de link ou cor de
 ação.
 
-**A medição é contra `surface`, não contra `paper`.** Sobre preto puro as oito
-passam de 4.5:1, e é exatamente aí que a regra se perderia por descuido — parece
-que dá para usar qualquer uma como texto. Sobre o card, que é onde o conteúdo de
-fato mora, cinco reprovam: Azul 3.91, Rosa 3.94, Verde 3.95, Marrom 3.90 e
-Vermelho 4.20. E nenhuma das oito passa nos **dois** temas: Verde-azulado dá 5.85
-no escuro e 2.77 no claro. A regra única elimina a classe de erro em vez de
-administrar uma tabela por superfície e por tema.
+**A medição é contra `surface`, não contra `paper`.** Sobre preto puro oito das
+nove passam de 4.5:1, e é exatamente aí que a regra se perderia por descuido —
+parece que dá para usar quase qualquer uma como texto. Sobre o card, que é onde o
+conteúdo de fato mora, **seis** reprovam: Violeta 2.94, Marrom 3.90, Azul 3.91,
+Rosa 3.94, Verde 3.95 e Vermelho 4.20. E nenhuma das nove passa nos **dois**
+temas: Verde-azulado dá 5.85 no escuro e 2.77 no claro. A regra única elimina a
+classe de erro em vez de administrar uma tabela por superfície e por tema.
 
 SE um preenchimento de acento tiver menos de 24dp, ENTÃO O SISTEMA DEVE
-contorná-lo com 1dp de `ink`. Sobre a superfície clara, Verde-azulado dá 2.77:1 e
-Laranja 2.53:1 — abaixo dos 3:1 de elemento não textual da WCAG. Vale para o
-ponto da linha de transação e para a amostra do seletor de cores.
+contorná-lo com 1dp de `ink`, **nos dois temas**. Cada tema derruba acentos
+diferentes abaixo dos 3:1 de elemento não textual da WCAG: no claro, Laranja
+2.53:1, Verde-azulado 2.77:1 e Amarelo 2.79:1; no escuro, Violeta 2.94:1. Um anel
+condicional ao tema deixaria metade dos casos descoberta. Vale para o ponto da
+linha de transação e para a amostra do seletor de cores.
 
-Único padrão permitido com texto sobre preenchimento saturado: **branco sobre
-Cobalto** (6.06:1). Branco sobre Vermelho reprova (4.24:1), e os dois parecem
-igualmente seguros a olho.
-
-Cobalto é o carimbo da marca e fica **fora** da paleta de acento: é preenchimento
-de no máximo um bloco em destaque por tela, nunca cor de categoria.
+O SISTEMA NÃO DEVE usar preenchimento saturado com texto por cima. O único par
+legível seria **branco sobre Violeta** (6.06:1) — branco sobre Vermelho reprova
+com 4.24:1, e os dois parecem igualmente seguros a olho. Nenhuma tela precisa
+desse padrão, e mantê-lo disponível é manter a porta pela qual a versão ilegível
+entra.
 
 ### REQ-DS-007 — Valor monetário em tinta neutra
 
@@ -1169,16 +1170,17 @@ anoitece.
 
 O SISTEMA DEVE reduzir a expressão visual conforme a densidade de dados da tela.
 
-| Tela | Display type | Bloco em Cobalto |
-|---|---|---|
-| Onboarding | `DisplayXl` (64sp) | não |
-| Estados vazios | `Display` (44sp) | não |
-| Dashboard, cartão, orçamento | `DisplaySm` (34sp) | um, no saldo |
-| Lista de transações, importação, ajustes | **nenhum** | não |
+| Tela | Display type |
+|---|---|
+| Onboarding | `DisplayXl` (64sp) |
+| Estados vazios | `Display` (44sp) |
+| Dashboard, cartão, orçamento | `DisplaySm` (34sp) |
+| Lista de transações, importação, ajustes | **nenhum** |
 
-O SISTEMA NÃO DEVE exibir mais de um bloco em Cobalto por tela. Cobalto é
-assinatura; dois na mesma viewport e ele vira tema de cor, que é o oposto do que
-a marca faz com ele.
+O SISTEMA DEVE dar ênfase ao número herói por **tamanho e vazio ao redor**, e NÃO
+DEVE assentá-lo sobre preenchimento colorido. A profundidade do sistema é o
+degrau de luminância; um retângulo saturado atrás do saldo é a resposta que o
+sistema anterior dava, e sobreviveu à troca por recoloração em vez de decisão.
 
 O SISTEMA NÃO DEVE usar display type em listas roláveis de dados. Uma lista de 100
 transações em 64sp violaria o caminho de 5 segundos do Art. 18.

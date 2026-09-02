@@ -1,6 +1,5 @@
 package app.financepro.feature.home
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -33,9 +31,7 @@ import app.financepro.core.ui.theme.Label
 import app.financepro.core.ui.theme.MoneyBody
 import app.financepro.core.ui.theme.MoneyLg
 import app.financepro.core.ui.theme.Tema
-import app.financepro.core.ui.theme.Formas
 import app.financepro.core.ui.theme.Subheading
-import app.financepro.core.ui.theme.Cobalt
 import app.financepro.domain.model.Txn
 import app.financepro.domain.usecase.Comparativo
 
@@ -104,32 +100,29 @@ fun HomeScreen(
 }
 
 /**
- * O saldo, e o único bloco preenchido do dashboard.
+ * O saldo. **Tipo sobre o canvas, sem bloco.**
  *
- * A ênfase vai **onde o número importa**, e vai de uma vez: adesivo Voltage
- * Violet cheio, tinta `onFill`, sem contorno — preenchimento saturado já separa,
- * e um traço por cima seria a segunda resposta para a mesma pergunta.
+ * A ênfase vem do tamanho e do vazio ao redor, não de um retângulo colorido: em
+ * 34sp com entrelinha travada, o número já é a única coisa grande da tela. Um
+ * preenchimento saturado atrás dele seria uma segunda ênfase para a mesma
+ * informação, e gastaria o cobalto, que o sistema pede escasso.
  *
- * Violet é a única das seis que aceita branco por cima (6.02:1, medido em
- * `ContrastTest`); as outras exigiriam tinta preta e, no tema escuro, uma ilha de
- * tema invertido no meio da tela. E o adesivo é **idêntico nos dois temas**
- * (REQ-DS-008), então isto não custa token novo nem par claro/escuro.
+ * A versão anterior era um bloco cheio, herdado do sistema visual antigo e
+ * recolorido junto com a paleta. **Recolorir não é traduzir**: o bloco existia lá
+ * porque a profundidade vinha de banda de cor, e aqui ela vem do degrau de
+ * luminância — o retângulo não tinha mais trabalho para fazer.
  *
- * Os blocos abaixo ficam em papel de propósito. Duas cores lado a lado não são
- * duas ênfases: são duas coisas disputando, e nenhuma vence.
+ * Sem padding horizontal próprio: o alinhamento é o da coluna, o mesmo dos
+ * títulos "Cartões" e "Este mês" logo abaixo.
  */
 @Composable
 private fun Saldo(cents: Long) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(Formas.extraLarge)
-            .background(Cobalt)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text("SALDO TOTAL", style = Caption, color = Tema.onFill)
-        MoneyText(cents = cents, style = MoneyLg, cor = Tema.onFill)
+        Text("SALDO TOTAL", style = Caption, color = Tema.inkMute)
+        MoneyText(cents = cents, style = MoneyLg)
     }
 }
 

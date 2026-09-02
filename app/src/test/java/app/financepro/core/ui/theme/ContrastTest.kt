@@ -19,9 +19,9 @@ import kotlin.math.pow
  * virar cor de texto, o build cai aqui.
  *
  * **A medição é contra `surface`, não contra `paper`.** É a diferença que a
- * troca de sistema visual trouxe: sobre preto puro os oito acentos passam de
- * 4.5:1 e a regra *parece* desnecessária. Sobre o card — que é onde o conteúdo
- * de fato mora — cinco reprovam. Medir o fundo fácil seria escrever um teste que
+ * troca de sistema visual trouxe: sobre preto puro oito dos nove acentos passam
+ * de 4.5:1 e a regra *parece* desnecessária. Sobre o card — que é onde o conteúdo
+ * de fato mora — seis reprovam. Medir o fundo fácil seria escrever um teste que
  * concorda com o erro.
  */
 @Req("REQ-DS-006", "REQ-DS-007", "REQ-DS-008")
@@ -62,26 +62,32 @@ class ContrastTest {
     }
 
     @Test
-    fun `branco sobre Cobalto passa e sobre Danger reprova`() {
-        // O par que parece igual e não é: os dois são preenchimento saturado com
-        // texto por cima, e só um deles é legível. Cobalto é o único fundo
-        // colorido que aceita texto no sistema inteiro.
-        assertTrue(contrast(CanvasLight, Cobalt) >= TEXTO)
-        assertTrue(contrast(CanvasLight, Danger) < TEXTO)
+    fun `cobalto obedece a mesma regra dos outros acentos`() {
+        // Cobalto é o carimbo da marca, e por um tempo foi tratado como exceção:
+        // preenchimento do bloco de saldo, com texto branco por cima. O bloco
+        // saiu, e com ele a exceção — hoje ele é cor de categoria como as outras,
+        // e reprova como texto sobre o card (2.94:1) igual a cinco delas.
+        assertTrue("cobalto ficou fora da paleta", Cobalt in Acentos)
+        assertTrue(contrast(Cobalt, PaletaEscura.surface) < TEXTO)
     }
 
     @Test
-    fun `acento sozinho nao separa da superficie clara, e por isso leva anel`() {
+    fun `acento sozinho nao separa da superficie, e por isso leva anel`() {
         // Este é o teste que justifica um desenho, e não o contrário. O ponto de
         // categoria e a amostra do seletor levam anel de `ink` de 1dp porque a
-        // cor sozinha não chega aos 3:1 de elemento não textual da WCAG: sobre a
-        // superfície clara, Verde-azulado dá 2.77 e Laranja 2.53.
+        // cor sozinha não chega aos 3:1 de elemento não textual da WCAG.
         //
-        // Se um dia a paleta escurecer a ponto de as oito passarem, é aqui que
-        // se descobre — e aí o anel vira decoração, que é hora de removê-lo.
-        val fracos = Acentos.filter { contrast(it, PaletaClara.surface) < NAO_TEXTO }
+        // Os dois temas têm vítimas diferentes, e é por isso que o anel não pode
+        // ser condicional: no claro somem Laranja (2.53), Verde-azulado (2.77) e
+        // Amarelo (2.79); no escuro some Cobalto (2.94).
+        //
+        // Se um dia a paleta inteira passar nos dois, é aqui que se descobre — e
+        // aí o anel vira decoração, que é hora de removê-lo.
+        val fracosNoClaro = Acentos.filter { contrast(it, PaletaClara.surface) < NAO_TEXTO }
+        val fracosNoEscuro = Acentos.filter { contrast(it, PaletaEscura.surface) < NAO_TEXTO }
 
-        assertTrue("nenhum acento é fraco: o anel virou decoração", fracos.isNotEmpty())
+        assertTrue("nenhum acento é fraco no claro", fracosNoClaro.isNotEmpty())
+        assertTrue("nenhum acento é fraco no escuro", fracosNoEscuro.isNotEmpty())
     }
 
     @Test
@@ -103,8 +109,8 @@ class ContrastTest {
         assertEquals(21.00, contrast(CanvasLight, CanvasDark), 0.01)
         assertEquals(17.80, contrast(CanvasLight, SurfaceElevated), 0.01)
         assertEquals(17.11, contrast(InkLight, CanvasLight), 0.01)
-        assertEquals(6.06, contrast(CanvasLight, Cobalt), 0.01)
         assertEquals(3.47, contrast(Cobalt, CanvasDark), 0.01)
+        assertEquals(2.94, contrast(Cobalt, SurfaceElevated), 0.01)
         assertEquals(5.85, contrast(Teal, SurfaceElevated), 0.01)
         assertEquals(2.77, contrast(Teal, SurfaceSoft), 0.01)
         assertEquals(3.94, contrast(Pink, SurfaceElevated), 0.01)

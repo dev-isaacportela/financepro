@@ -31,7 +31,7 @@ descartaria a identidade. A tradução é por intensidade:
 |---|---|---|
 | Onboarding | **Pôster completo** | `DisplayXl` 64sp, canvas preto sangrado |
 | Estados vazios | **Pôster** | `Display` 44sp, um preenchimento de acento |
-| Dashboard | Média | saldo em `DisplaySm`, **um** bloco em Cobalto, cards de 20dp |
+| Dashboard | Média | saldo em `DisplaySm` sobre o canvas, cards de 20dp |
 | Cartão / fatura | Média | fatura em `DisplaySm`, card de 20dp |
 | Orçamento | Média | anel do teto, barras de acento, sem display type nas linhas |
 | Lançamento rápido | Baixa | chips pill, grid de categorias como preenchimento |
@@ -42,9 +42,11 @@ A regra: **quanto mais denso o dado, menos pôster**. Uma lista de 100 transaç�
 com tipografia de 64sp não é ousada, é inutilizável — e violaria o Art. 18, que
 protege o caminho de 5 segundos.
 
-A segunda regra, e a que é mais fácil de perder: **um bloco em Cobalto por tela,
-no máximo**. Cobalto é assinatura. Dois na mesma viewport e ele deixa de ser
-carimbo para virar tema de cor, que é o oposto do que o sistema faz com ele.
+A segunda regra, e a que é mais fácil de perder: **o número herói é tipo, não
+bloco**. A ênfase do saldo vem do tamanho e do vazio ao redor. Um retângulo
+saturado atrás dele é a resposta que o sistema anterior dava, quando a
+profundidade vinha de banda de cor — aqui ela vem do degrau, e o retângulo não
+tem mais trabalho para fazer.
 
 ## 2. Três conflitos com o que já está especificado
 
@@ -74,12 +76,13 @@ desenho tem.
 
 ### 2.2 A paleta reprova em contraste — e o fundo fácil esconde isso
 
-Medido (ver §5): sobre **preto puro**, as oito cores de acento passam de 4.5:1.
-Parece que qualquer uma serve como cor de texto.
+Medido (ver §5): sobre **preto puro**, oito das nove cores de acento passam de
+4.5:1. Parece que quase qualquer uma serve como cor de texto.
 
-Sobre `#16181A`, que é onde o conteúdo de fato mora, cinco reprovam: Azul 3.91,
-Rosa 3.94, Verde 3.95, Marrom 3.90 e Vermelho 4.20. E nenhuma das oito passa nos
-**dois** temas — Verde-azulado dá 5.85 no escuro e 2.77 no claro.
+Sobre `#16181A`, que é onde o conteúdo de fato mora, **seis** reprovam: Cobalto
+2.94, Marrom 3.90, Azul 3.91, Rosa 3.94, Verde 3.95 e Vermelho 4.20. E nenhuma
+das nove passa nos **dois** temas — Verde-azulado dá 5.85 no escuro e 2.77 no
+claro.
 
 **Resolução.** Uma regra que vale nos dois temas e não depende de tabela:
 
@@ -91,15 +94,19 @@ por superfície e por tema. O risco aqui é específico e vale nomear: um teste 
 medisse contra `paper` passaria, e estaria concordando com o erro que a regra
 existe para impedir. `ContrastTest` mede contra `surface`.
 
-Cobalto é a única exceção permitida, e só num sentido: **branco sobre Cobalto**
-(6.06:1) passa. Branco sobre Vermelho (4.24:1) **reprova**, e os dois parecem
+Não há exceção. Houve uma — o saldo em preenchimento de Cobalto com texto branco
+por cima, que passa em 6.06:1 — e ela saiu junto com o bloco: era herança do
+sistema anterior recolorida, não uma decisão deste. Fica o registro de que o par
+existe e é legível, para o dia em que um preenchimento saturado com texto for
+mesmo necessário. Branco sobre Vermelho (4.24:1) **reprova**, e os dois parecem
 igualmente seguros a olho.
 
 Há uma segunda consequência, menor e mais fácil de esquecer: **preenchimento de
-acento com menos de 24dp leva anel de `ink` de 1dp**. Sozinho, Verde-azulado dá
-2.77:1 sobre a superfície clara e Laranja 2.53:1, abaixo dos 3:1 de elemento não
-textual da WCAG. Vale para o ponto da linha de transação e para a amostra do
-seletor de cores — os dois lugares onde a cor aparece pequena.
+acento com menos de 24dp leva anel de `ink` de 1dp**. E o anel não pode ser
+condicional ao tema, porque cada tema tem vítimas diferentes: no claro somem
+Laranja (2.53:1), Verde-azulado (2.77) e Amarelo (2.79); no escuro some Cobalto
+(2.94). Vale para o ponto da linha de transação e para a amostra do seletor de
+cores — os dois lugares onde a cor aparece pequena.
 
 ### 2.3 O app de finanças quer verde e vermelho; a medição não deixa
 
@@ -198,19 +205,18 @@ data class Paleta(
     val ink: Color,       // texto primario
     val inkMute: Color,   // texto secundario
     val hairline: Color,  // fio entre superficies de mesmo tom
-    val onFill: Color,    // texto sobre preenchimento saturado — so sobre Cobalto
 )
 
 val PaletaEscura = Paleta(
     paper = CanvasDark, surface = SurfaceElevated,
     ink = CanvasLight, inkMute = MuteDark,
-    hairline = HairlineDark, onFill = CanvasLight,
+    hairline = HairlineDark,
 )
 
 val PaletaClara = Paleta(
     paper = CanvasLight, surface = SurfaceSoft,
     ink = InkLight, inkMute = MuteLight,
-    hairline = HairlineLight, onFill = CanvasLight,
+    hairline = HairlineLight,
 )
 
 val LocalPaleta = staticCompositionLocalOf { PaletaEscura }
@@ -325,7 +331,7 @@ Calculado com a fórmula de luminância relativa da WCAG 2.1. **A coluna que dec
 | Ink `#191c1f` | 1.23:1 | 1.04:1 | 15.56:1 | texto no **claro** |
 | Mute escuro `#b8b8b8` | 10.59:1 | 8.97:1 | — | texto secundário escuro |
 | Mute claro `#505a63` | — | — | 6.40:1 | texto secundário claro |
-| Cobalto `#494fdf` | 3.47:1 | 2.94:1 | 5.51:1 | preenchimento; **texto branco sobre ele** |
+| Cobalto `#494fdf` | 3.47:1 | 2.94:1 | 5.51:1 | **preenchimento apenas** |
 | Laranja `#ec7e00` | 7.55:1 | 6.40:1 | 2.53:1 | **preenchimento apenas** |
 | Verde-azul `#00a87e` | 6.90:1 | 5.85:1 | 2.77:1 | **preenchimento apenas** |
 | Amarelo `#b09000` | 6.84:1 | 5.79:1 | 2.79:1 | **preenchimento apenas** |
@@ -337,16 +343,17 @@ Calculado com a fórmula de luminância relativa da WCAG 2.1. **A coluna que dec
 
 Duas leituras que a tabela torna óbvias e que o olho não daria:
 
-1. **A coluna de preto puro mente.** As oito passam de 4.5:1 ali, e nenhuma passa
-   nos dois temas. Medir esse fundo autorizaria a regra que a próxima coluna
+1. **A coluna de preto puro mente.** Oito das nove passam de 4.5:1 ali, e nenhuma
+   passa nos dois temas. Medir esse fundo autorizaria a regra que a próxima coluna
    proíbe.
-2. **Sobre a superfície clara, três acentos caem abaixo de 3:1** — Laranja 2.53,
-   Verde-azulado 2.77 e Amarelo 2.79. É por isso que preenchimento pequeno leva
-   anel de `ink`.
+2. **Cada tema derruba acentos diferentes abaixo de 3:1** — no claro, Laranja
+   2.53, Verde-azulado 2.77 e Amarelo 2.79; no escuro, Cobalto 2.94. É por isso
+   que preenchimento pequeno leva anel de `ink`, e que o anel não é condicional
+   ao tema.
 
 Branco sobre preenchimento saturado: **Cobalto 6.06:1 passa**, Vermelho 4.24:1
-**reprova**. Os dois parecem igualmente seguros a olho, e é exatamente o par que
-`ContrastTest` registra.
+**reprova**. Nenhuma tela usa esse padrão hoje; o par fica registrado porque os
+dois parecem igualmente seguros a olho.
 
 Os números vivem em `ContrastTest`, que recalcula a partir dos tokens e falha se
 alguém mudar um hex ou usar um acento como cor de texto. Uma tabela em Markdown
@@ -424,7 +431,7 @@ visual fica, o alvo é ampliado por `Modifier.minimumInteractiveComponentSize()`
 
 ### 6.2 Sticker de categoria
 
-Onde a paleta de oito cores mais rende. Cada categoria já tem cor e ícone
+Onde a paleta de nove cores mais rende. Cada categoria já tem cor e ícone
 próprios, então o grid do lançamento rápido é uma cartela:
 
 ```kotlin
@@ -443,7 +450,7 @@ e usá-la também para estado a tornaria sinal único duplamente sobrecarregado.
 Presença lê melhor que espessura, que era como o sistema anterior sinalizava.
 
 O nome fica **fora** do preenchimento: a paleta é preenchimento e nunca cor de
-texto, e sobre o card cinco dos oito acentos reprovam em 4.5:1.
+texto, e sobre o card seis dos nove acentos reprovam em 4.5:1.
 
 A amostra do seletor de cores é o caso oposto e merece nota: lá a cor **é** o
 conteúdo, então ela leva anel de 1dp mesmo não selecionada (§2.2) e leva também
@@ -502,23 +509,27 @@ A escala de animação do sistema continua valendo: quem desliga animações nas
 opções de acessibilidade recebe as telas sem transição, sem nada no código
 perguntar — o Compose lê a preferência no recompositor.
 
-## 7. O bloco em Cobalto
+## 7. Cobalto, e por que ele quase não aparece
 
 Cobalto é a assinatura da marca, e o sistema de origem o gasta em um lugar por
-página: o card em destaque. Aqui ele é o **saldo total** do dashboard —
-preenchimento cheio, texto `onFill`, sem contorno, porque o preenchimento saturado
-já separa do canvas.
+página: o card em destaque. **O app não tem esse card** — não há plano, nível nem
+preço aqui, e é justamente essa a razão de ele existir sem rede.
 
-**Um por tela, no máximo.** Está em
-[REQ-DS-009](spec.md#req-ds-009--intensidade-proporcional-à-densidade) como
-`NÃO DEVE`, e não como recomendação, porque é a regra que se perde primeiro: cada
-tela nova tem um elemento que "também merecia destaque", e ao terceiro Cobalto o
-carimbo virou paleta.
+Por um tempo ele foi o preenchimento do bloco de saldo. Foi um erro, e vale
+registrar como aconteceu: o sistema anterior tinha um bloco cheio ali, a troca de
+paleta o recoloriu junto com o resto, e a documentação foi escrita depois para
+justificar o que já estava na tela. **Recolorir não é traduzir.** O bloco existia
+porque lá a profundidade vinha de banda de cor; aqui ela vem do degrau de
+luminância, e o retângulo não tinha mais trabalho para fazer.
 
-**O que não entra:** Cobalto como cor de botão, de link ou de texto. Ele reprova
-como texto nos dois fundos escuros (3.47:1 sobre preto, 2.94:1 sobre o card), e no
-slot `primary` do Material viraria a cor de todo botão do app — que é exatamente
-por que `primary` recebe `ink`.
+Hoje o saldo é tipo sobre o canvas, e Cobalto é o que o protótipo lhe deu nas
+telas do app: **cor de categoria, como as outras oito**. Está dentro de `Acentos`
+e obedece à mesma regra — preenchimento, nunca texto. Como texto ele reprova
+sobre o card (2.94:1) e sobre o canvas preto (3.47:1).
+
+**O que não entra:** Cobalto como cor de botão, de link ou de bloco. No slot
+`primary` do Material ele viraria a cor de todo botão do app — que é exatamente
+por que `primary` recebe `ink`, e a ação mais forte da tela é uma pílula branca.
 
 ## 8. O que não foi portado, e por quê
 

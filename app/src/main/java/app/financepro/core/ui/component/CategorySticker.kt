@@ -43,12 +43,12 @@ import app.financepro.domain.model.Category
  *
  * **Seleção é um anel de `ink`, não a cor.** A cor já é a identidade da
  * categoria; usá-la também para estado a tornaria sinal único duplamente
- * sobrecarregado, e quem não distingue as oito cores perderia as duas
+ * sobrecarregado, e quem não distingue as nove cores perderia as duas
  * informações de uma vez. Não selecionado não tem anel nenhum — a presença do
  * contorno é o sinal, e presença lê melhor que espessura.
  *
  * O nome fica **fora** do preenchimento porque a paleta é preenchimento e nunca
- * cor de texto (REQ-DS-006): sobre o card, cinco dos oito acentos reprovam em
+ * cor de texto (REQ-DS-006): sobre o card, seis dos nove acentos reprovam em
  * 4.5:1, e Rosa daria 3.94:1.
  *
  * **O toque afunda o quadrado, e não borra tinta nele.** O ripple do Material é
