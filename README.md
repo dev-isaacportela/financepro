@@ -108,7 +108,7 @@ inexistente, se algum `@Req` no código aponta para requisito que não existe, o
 se as dependências entre tasks formam ciclo.
 
 ```bash
-python tools/trace.py --phase F0
+python tools/trace.py --phase F2
 ```
 
 Exige, além disso, que todo `MUST` até a F0 tenha `@Req` no código. É o modo do CI

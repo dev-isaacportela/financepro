@@ -36,7 +36,7 @@ revisão vai recusar por um motivo que já estava escrito.
 Rode as mesmas três verificações que o CI roda.
 
 ```bash
-python tools/trace.py --phase F0
+python tools/trace.py --phase F2
 ```
 
 ```bash

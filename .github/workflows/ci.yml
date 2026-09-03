@@ -31,10 +31,17 @@ jobs:
         # um grep cru não distingue código de comentário. Agora rodam dentro do
         # trace.py, que remove comentários antes de varrer.
         #
-        # `--phase F0` cobra, além disso, @Req no código para todo MUST da F0 —
-        # a fase está fechada, e sem isto um requisito entregue poderia perder
-        # o teste sem ninguém notar. Cada fase concluída avança este argumento.
-        run: python tools/trace.py --phase F0
+        # `--phase F2` cobra, além disso, @Req no código para todo MUST da F0
+        # à F2 — as três fases entraram inteiras na v0.1.0, e sem isto um
+        # requisito entregue poderia perder o teste sem ninguém notar. Cada fase
+        # concluída avança este argumento.
+        #
+        # Ficou em F0 por uma release inteira porque a F1 reprovava por um erro
+        # só, e de escrituração: `REQ-BUD-003` nomeava o `BudgetProgressTest`
+        # desde sempre, o teste sempre exerceu as duas faixas de alerta, e a
+        # citação nunca foi acrescentada à anotação. Um portão que não avança
+        # deixa de ser portão.
+        run: python tools/trace.py --phase F2
 
   build:
     name: Build e testes

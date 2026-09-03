@@ -13,11 +13,19 @@ import java.time.LocalDate
 import java.time.YearMonth
 
 /**
- * REQ-BUD-002 · REQ-BUD-004 — o que entra no consumo, e o que sobra por dia.
+ * REQ-BUD-002 · REQ-BUD-003 · REQ-BUD-004 — o que entra no consumo, o percentual
+ * com as duas faixas de alerta, e o que sobra por dia.
  *
  * Agosto de 2026, teto de R$ 600 em Alimentação, que tem "Delivery" por filha.
+ *
+ * REQ-BUD-003 nomeia esta classe como seu teste desde a F1, e `percentual
+ * acompanha o gasto, e as duas faixas de alerta` sempre o exerceu — faltava só a
+ * citação aqui, e `trace.py --phase F1` reprovava por isso. O que este teste
+ * cobre é a metade calculável do requisito: o percentual e os limiares. O
+ * preenchimento e o ícone obrigatório (cor não é sinal único) são de tela, e
+ * quem os confere é a auditoria de acessibilidade.
  */
-@Req("REQ-BUD-002", "REQ-BUD-004")
+@Req("REQ-BUD-002", "REQ-BUD-003", "REQ-BUD-004")
 class BudgetProgressTest {
 
     private val alimentacao = UMA_CATEGORIA.copy(id = 1, name = "Alimentação")

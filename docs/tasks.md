@@ -750,6 +750,12 @@ leitor pela `contentDescription` do sticker.
       contorno do card. Antes deles, `REQ-CAT-005` foi fechado pela T-016 —
       esta linha ficou desatualizada entre dois commits, que é o que o Art. 3
       não quer
+- [x] Portão em `--phase F2`, e não mais em F0. A v0.1.0 entregou as três fases
+      inteiras, e o argumento continuou em F0 por uma release porque a F1
+      reprovava por um erro só — `REQ-BUD-003` nomeia o `BudgetProgressTest`
+      desde a F1, o teste sempre exerceu as duas faixas de alerta, e a citação
+      nunca entrou na anotação. F3 e F4 seguem reprovando de propósito: não
+      foram implementadas, e é isso que o argumento existe para dizer
 
 ### T-050 — Editar transação
 **Fase** F0 · **Depende de** T-013, T-014 · **REQ** REQ-TXN-001, REQ-TXN-003, REQ-TXN-005
