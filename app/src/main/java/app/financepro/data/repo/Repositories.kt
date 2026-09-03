@@ -27,7 +27,9 @@ import app.financepro.domain.model.Txn
 import app.financepro.domain.usecase.RecurringRule
 import app.financepro.domain.usecase.occurrenceAt
 import app.financepro.domain.usecase.pendingOccurrences
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import app.financepro.data.db.toYearMonthInt
 import java.time.LocalDate
@@ -313,8 +315,17 @@ class TxnRepository @Inject constructor(
      * O intervalo chega como `LocalDate` e vira `epochDay` aqui: a conversão é
      * de borda, e nenhuma tela precisa saber que a coluna é inteiro.
      */
+    /**
+     * O Room roda o `SELECT` no executor dele, mas o `.map` para o domínio roda
+     * em quem coleta — e quem coleta é o `viewModelScope`, na thread principal.
+     * Com o histórico inteiro (REQ-ACC-003) isso é uma alocação por linha por
+     * emissão, na thread que desenha. `flowOn` empurra o mapeamento para trás
+     * dele; a emissão continua chegando ao coletor onde sempre chegou.
+     */
     fun observeBetween(de: LocalDate, ate: LocalDate): Flow<List<Txn>> =
-        dao.observeBetween(de.toEpochDay(), ate.toEpochDay()).map { l -> l.map { it.toDomain() } }
+        dao.observeBetween(de.toEpochDay(), ate.toEpochDay())
+            .map { l -> l.map { it.toDomain() } }
+            .flowOn(Dispatchers.Default)
 
     /**
      * O histórico inteiro, para quem calcula saldo.
@@ -328,6 +339,7 @@ class TxnRepository @Inject constructor(
     fun observeByAccount(accountId: Long, de: LocalDate, ate: LocalDate): Flow<List<Txn>> =
         dao.observeByAccount(accountId, de.toEpochDay(), ate.toEpochDay())
             .map { l -> l.map { it.toDomain() } }
+            .flowOn(Dispatchers.Default)
 
     suspend fun byId(id: Long): Txn? = dao.byId(id)?.toDomain()
 
@@ -340,8 +352,9 @@ class TxnRepository @Inject constructor(
      *
      * Com `id != 0` isto é uma **edição**, e a linha antiga é lida antes de ser
      * sobrescrita. Montar a entidade do zero, como no caminho de criação, zeraria
-     * `notes`, `recurringRuleId`, `importBatchId` e `dedupeKey` — as quatro
-     * colunas que o domínio não carrega (Art. 8) — e reescreveria o `createdAt`.
+     * `recurringRuleId`, `importBatchId` e `dedupeKey` — as três colunas que o
+     * domínio não carrega (Art. 8) — e reescreveria o `createdAt`. `notes` saiu
+     * dessa lista na T-052, quando a folha ganhou onde escrevê-la.
      * O `@Upsert` faria isso em silêncio: um `UPDATE` bem-sucedido, com quatro
      * colunas a menos. É o mesmo cuidado de [excluir], pela mesma razão: uma
      * `dedupeKey` perdida faz a importação da F2 recriar a transação como nova.
@@ -384,9 +397,9 @@ class TxnRepository @Inject constructor(
      * Exclui, guardando a linha para o desfazer de 5s. REQ-TXN-010
      *
      * A entidade fica **aqui**, e não no ViewModel, por uma razão concreta:
-     * `TxnEntity` tem `notes`, `recurringRuleId`, `importBatchId`, `dedupeKey` e
+     * `TxnEntity` tem `recurringRuleId`, `importBatchId`, `dedupeKey` e
      * `createdAt`, que o modelo de domínio não carrega. Desfazer a partir de um
-     * `Txn` apagaria as cinco em silêncio — e uma `dedupeKey` perdida faria a
+     * `Txn` apagaria as quatro em silêncio — e uma `dedupeKey` perdida faria a
      * próxima importação (F2) recriar a transação como se fosse nova.
      *
      * Subir as colunas para o domínio quebraria o Art. 8; devolver a entidade
@@ -565,6 +578,7 @@ private fun TxnEntity.aplicar(txn: Txn, agora: Long) = copy(
     amountCents = txn.amountCents,
     date = txn.date.toEpochDay(),
     description = txn.description,
+    notes = txn.notes,
     cleared = txn.cleared,
     installmentGroupId = txn.installmentGroupId,
     installmentIndex = txn.installmentIndex,
@@ -581,6 +595,7 @@ private fun Txn.toEntity(agora: Long) = TxnEntity(
     amountCents = amountCents,
     date = date.toEpochDay(),
     description = description,
+    notes = notes,
     cleared = cleared,
     installmentGroupId = installmentGroupId,
     installmentIndex = installmentIndex,

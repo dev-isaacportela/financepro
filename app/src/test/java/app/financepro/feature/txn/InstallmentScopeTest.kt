@@ -143,6 +143,24 @@ class InstallmentScopeTest : DbTest() {
     }
 
     @Test
+    fun `observacao nao vaza de uma parcela para as irmas`() {
+        val segunda = grupo().first { it.installmentIndex == 2 }
+        runBlocking {
+            val linha = db.txnDao().byId(segunda.id)!!
+            db.txnDao().upsert(linha.copy(notes = "cupom da segunda"))
+        }
+
+        // Escopo TODAS propaga o que `aplicarNasParcelas` lista, e a lista não
+        // inclui `notes` de propósito: valor e categoria são da compra, mas a
+        // observação é do que aconteceu naquela parcela. Espalhá-la escreveria
+        // "cupom da segunda" nas doze — e a T-052 subiu `notes` ao domínio, que
+        // é justamente a mudança capaz de fazer isso acontecer sem ninguém ver.
+        editarSegunda(EscopoDeParcela.TODAS)
+
+        assertEquals(listOf(null, "cupom da segunda", null), grupo().map { it.notes })
+    }
+
+    @Test
     fun `editar parcela preserva as colunas que o dominio nao carrega`() {
         val segunda = grupo().first { it.installmentIndex == 2 }
         runBlocking {

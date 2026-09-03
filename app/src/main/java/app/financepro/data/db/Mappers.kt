@@ -78,6 +78,7 @@ fun TxnEntity.toDomain() = Txn(
     counterAccountId = counterAccountId,
     categoryId = categoryId,
     description = description,
+    notes = notes,
     cleared = cleared,
     installmentGroupId = installmentGroupId,
     installmentIndex = installmentIndex,
