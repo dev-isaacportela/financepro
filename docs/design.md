@@ -531,8 +531,17 @@ gradiente (REQ-DS-004):
 pergunta que o app faz a quem só queria lançar uma despesa. Os três existem para
 serem comparados no aparelho por quem desenha, e o escolhido fica.
 
+**A duração caiu de 320ms para 240ms.** O deslize é de largura inteira e a tela
+que entra fica visível o percurso todo — não há fade escondendo a chegada, que é
+o que deixa 300ms confortável no padrão do Material. O número que sobrava virava
+tempo de sobra para qualquer hesitação do primeiro quadro aparecer. Encurtar não
+foi o conserto da hesitação, e não deve ser lido como tal: a causa era estado
+derivado recalculando por leitura, e está em
+[REQ-PERF-001](spec.md#req-perf-001--valor-derivado-calculado-uma-vez). Isto aqui
+é o palco ficando do tamanho certo depois que a peça foi arrumada.
+
 **Cada destino pinta o próprio papel.** É o preço de o movimento ser de espaço:
-durante os 320ms as duas telas estão desenhadas ao mesmo tempo, uma por cima da
+durante os 240ms as duas telas estão desenhadas ao mesmo tempo, uma por cima da
 outra. O `containerColor` do `Scaffold` está atrás das duas e não separa nada — e
 um fundo no `NavHost` também não, porque ele é um `AnimatedContent` e o modifier
 vai no pai comum. Tela sem fundo próprio aparece somada à vizinha, e o que se lê

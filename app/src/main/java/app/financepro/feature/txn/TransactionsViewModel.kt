@@ -72,16 +72,16 @@ data class TransactionsState(
      * ponytail: `monthStartDay` fixo em 1 até existir tela de ajustes.
      * `monthRange` já aceita o parâmetro (REQ-CORE-003); falta só de onde lê-lo.
      */
-    val periodo: MonthRange get() = monthRange(mes)
+    val periodo: MonthRange by lazy { monthRange(mes) }
 
-    val doPeriodo: List<Txn> get() = if (periodoTodo) todas else todas.filter { it.date in periodo }
+    val doPeriodo: List<Txn> by lazy { if (periodoTodo) todas else todas.filter { it.date in periodo } }
 
-    val visiveis: List<Txn> get() = filtrar(doPeriodo, filtro)
+    val visiveis: List<Txn> by lazy { filtrar(doPeriodo, filtro) }
 
-    val dias: List<DiaDeTransacoes> get() = agruparPorDia(visiveis, filtro.contaId)
+    val dias: List<DiaDeTransacoes> by lazy { agruparPorDia(visiveis, filtro.contaId) }
 
     /** A conta do filtro, quando há exatamente uma — é o que liga o extrato. */
-    val conta: Account? get() = filtro.contaId?.let { id -> contas.firstOrNull { it.id == id } }
+    val conta: Account? by lazy { filtro.contaId?.let { id -> contas.firstOrNull { it.id == id } } }
 
     /**
      * Saldo corrente por transação, só no extrato de uma conta. REQ-ACC-005
@@ -89,11 +89,12 @@ data class TransactionsState(
      * Sai de [extrato] sobre o histórico **inteiro** da conta; recortar o mês
      * antes de acumular daria um saldo que não bate com nenhum extrato de banco.
      */
-    val saldos: Map<Long, Long>
-        get() = conta?.let { c ->
+    val saldos: Map<Long, Long> by lazy {
+        conta?.let { c ->
             extrato(c, todas.filter { it.accountId == c.id || it.counterAccountId == c.id })
                 .associate { it.txn.id to it.saldoCents }
         }.orEmpty()
+    }
 
     fun contaDe(id: Long?): Account? = contas.firstOrNull { it.id == id }
 

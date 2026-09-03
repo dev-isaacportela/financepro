@@ -329,7 +329,12 @@ fun MoneyText(
     style: TextStyle = MoneyBody,
     porSinal: Boolean = false,
 ) {
-    val falado = spokenBRL(cents)
+    // As duas alocam por chamada — `spokenBRL` monta a frase por extenso, e
+    // `formatBRL` inverte e fatia a string. Numa lista de transações são duas
+    // por linha, e recompunham a cada quadro da transição. A frase existe só
+    // para o leitor de tela (REQ-A11Y-006) e era montada com ele desligado.
+    val falado = remember(cents) { spokenBRL(cents) }
+    val texto = remember(cents) { formatBRL(cents) }
     // Zero fica em `ink`: não entrou nem saiu, e pintá-lo de qualquer uma das
     // duas seria afirmar algo que o número não diz.
     val cor = when {
@@ -338,7 +343,7 @@ fun MoneyText(
         else -> Tema.negativo
     }
     Text(
-        text = formatBRL(cents),
+        text = texto,
         modifier = modifier.semantics { contentDescription = falado },
         color = cor,
         style = style,

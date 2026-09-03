@@ -48,22 +48,23 @@ data class HomeState(
      * `@Query`. Duas fontes para a regra mais sensível do app divergiriam, e a
      * que estaria certa seria a que ninguém testou.
      */
-    val saldoCents: Long get() = totalBalance(contas, txns)
+    val saldoCents: Long by lazy { totalBalance(contas, txns) }
 
-    val cartoes: List<Account> get() = contas.filter { it.isCard && !it.archived }
+    val cartoes: List<Account> by lazy { contas.filter { it.isCard && !it.archived } }
 
     /** Positivo para exibição: é dívida, e o bloco já diz isso por escrito. */
-    val dividaCents: Long get() = cardDebt(contas, txns)
+    val dividaCents: Long by lazy { cardDebt(contas, txns) }
 
-    val comparativo: Comparativo get() = comparativoDe(txns, mes)
+    val comparativo: Comparativo by lazy { comparativoDe(txns, mes) }
 
     /**
      * As últimas por **data e depois id**: dois lançamentos do mesmo dia saem na
      * ordem em que foram criados, que é a que a pessoa acabou de ver acontecer.
      */
-    val ultimas: List<Txn>
-        get() = txns.sortedWith(compareByDescending<Txn> { it.date }.thenByDescending { it.id })
+    val ultimas: List<Txn> by lazy {
+        txns.sortedWith(compareByDescending<Txn> { it.date }.thenByDescending { it.id })
             .take(ULTIMAS)
+    }
 
     /**
      * REQ-REC-008 — o que vence nos próximos 7 dias e ainda não foi efetivado.
@@ -72,7 +73,7 @@ data class HomeState(
      * aqui: o bloco do dashboard e qualquer outro lugar que venha a mostrar
      * previstas precisam concordar sobre o que é "próxima conta".
      */
-    val proximas: List<Txn> get() = proximasContas(txns, hoje)
+    val proximas: List<Txn> by lazy { proximasContas(txns, hoje) }
 
     val vazio: Boolean get() = txns.isEmpty()
 

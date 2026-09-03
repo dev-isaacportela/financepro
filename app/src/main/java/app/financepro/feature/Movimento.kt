@@ -57,7 +57,7 @@ val MOVIMENTO = Movimento.Papel
 // Os números do movimento em um lugar só: são o que se ajusta quando a
 // transição "parece lenta" ou "parece nervosa", e caçá-los dentro de cinco
 // lambdas é o que faz ninguém ajustar.
-private const val MS = 320
+private const val MS = 240
 private const val PARALLAX = 4 // fração da largura que a tela de saída percorre
 private const val EMPURRAO = 6 // idem, no preset de mola: quase no lugar, só o empurrão
 private const val ESCALA_ENTRA = 0.94f

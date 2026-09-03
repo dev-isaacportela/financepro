@@ -426,9 +426,22 @@ sendo `MUST`, e a auditoria de acessibilidade (T-020) é a task que os fecha.
 
 ## 10. Performance
 
-Nada de otimização especulativa. Os dois pontos que já se sabe que importam:
+Nada de otimização especulativa. Os três pontos que já se sabe que importam:
 
-1. **Saldo não é recalculado a cada frame.** É um `Flow` do Room que só re-emite
-   quando `txn` muda.
-2. **O grid de categorias do lançamento rápido** ordena por `useCount`, que é
+1. **Saldo não é recalculado a cada frame.** O `Flow` do Room só re-emite quando
+   `txn` muda, e a derivação sobre a emissão roda **uma vez**, não a cada leitura
+   da composição.
+
+   Este item esteve escrito aqui e errado desde a F0. O `Flow` re-emitia pouco, é
+   verdade, mas `saldoCents`, `comparativo`, `ultimas`, `proximas` e `cartoes`
+   eram `get() =` e recalculavam a cada **leitura** — e a composição lê várias
+   vezes por emissão, `ultimas` reordenando o histórico inteiro em cada uma. A
+   prosa afirmava a regra certa e nada a segurava. Virou
+   [REQ-PERF-001](spec.md#req-perf-001--valor-derivado-calculado-uma-vez), com
+   teste, que é a diferença entre uma regra e uma intenção.
+2. **Derivação de estado de tela é `by lazy`, não `get() =`.** Uma vez por
+   instância; a instância morre na emissão seguinte, então não há cache a
+   invalidar. Fora quando a derivação é uma comparação sobre lista curta —
+   `mostraParcelas` olha duas contas, e o delegate custaria mais que ela.
+3. **O grid de categorias do lançamento rápido** ordena por `useCount`, que é
    incrementado no salvamento. Sem cálculo em tempo de render.

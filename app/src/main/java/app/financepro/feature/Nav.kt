@@ -389,7 +389,7 @@ private fun Abas(nav: NavHostController, bloqueio: Boolean, onAlternarBloqueio: 
  * Um destino, sobre papel próprio.
  *
  * O movimento entre telas é de espaço e não de opacidade (design.md §6.4): por
- * 320ms as duas telas estão compostas ao mesmo tempo, uma deslizando por cima da
+ * 240ms as duas telas estão compostas ao mesmo tempo, uma deslizando por cima da
  * outra. O `containerColor` do `Scaffold` está **atrás das duas** — e um fundo no
  * modifier do `NavHost` também estaria, porque ele é um `AnimatedContent` e o
  * modifier vai no pai comum. Então quem não pinta o próprio papel deixa a tela
