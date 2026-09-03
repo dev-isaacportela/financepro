@@ -51,21 +51,22 @@ data class BudgetState(
      * respeita — falta só de onde lê-lo, e é o mesmo `ponytail:` da lista de
      * transações e do resumo do período.
      */
-    val periodo: MonthRange get() = monthRange(mes)
+    val periodo: MonthRange by lazy { monthRange(mes) }
 
-    val progresso: List<BudgetProgress>
-        get() = budgetProgress(tetos, categorias, todas, periodo, hoje)
+    val progresso: List<BudgetProgress> by lazy {
+        budgetProgress(tetos, categorias, todas, periodo, hoje)
+    }
 
     /** Só despesa: orçar receita seria orçar o que não se controla gastando. */
-    private val orcaveis: List<Category>
-        get() = categorias.filter { it.kind == CategoryKind.EXPENSE && !it.archived }
+    private val orcaveis: List<Category> by lazy {
+        categorias.filter { it.kind == CategoryKind.EXPENSE && !it.archived }
+    }
 
     /** As que ainda não têm teto **neste** mês. */
-    val semTeto: List<Category>
-        get() {
-            val comTeto = tetos.filter { it.month == mes }.map { it.categoryId }.toSet()
-            return orcaveis.filter { it.id !in comTeto }
-        }
+    val semTeto: List<Category> by lazy {
+        val comTeto = tetos.filter { it.month == mes }.map { it.categoryId }.toSet()
+        orcaveis.filter { it.id !in comTeto }
+    }
 
     /** REQ-BUD-005 — só faz sentido oferecer a cópia se há o que copiar. */
     val temMesAnterior: Boolean get() = tetos.any { it.month == mes.minusMonths(1) }

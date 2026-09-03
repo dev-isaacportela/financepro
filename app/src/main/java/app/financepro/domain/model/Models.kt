@@ -119,6 +119,11 @@ data class Txn(
     val counterAccountId: Long? = null,
     val categoryId: Long? = null,
     val description: String = "",
+    /**
+     * A observação livre (REQ-TXN-001). Nula é "não escreveu"; `""` seria uma
+     * segunda forma de dizer o mesmo, e a borda que grava converte uma na outra.
+     */
+    val notes: String? = null,
     val cleared: Boolean = true,
     val installmentGroupId: String? = null,
     val installmentIndex: Int? = null,

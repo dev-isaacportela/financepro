@@ -750,6 +750,12 @@ leitor pela `contentDescription` do sticker.
       contorno do card. Antes deles, `REQ-CAT-005` foi fechado pela T-016 —
       esta linha ficou desatualizada entre dois commits, que é o que o Art. 3
       não quer
+- [x] Portão em `--phase F2`, e não mais em F0. A v0.1.0 entregou as três fases
+      inteiras, e o argumento continuou em F0 por uma release porque a F1
+      reprovava por um erro só — `REQ-BUD-003` nomeia o `BudgetProgressTest`
+      desde a F1, o teste sempre exerceu as duas faixas de alerta, e a citação
+      nunca entrou na anotação. F3 e F4 seguem reprovando de propósito: não
+      foram implementadas, e é isso que o argumento existe para dizer
 
 ### T-050 — Editar transação
 **Fase** F0 · **Depende de** T-013, T-014 · **REQ** REQ-TXN-001, REQ-TXN-003, REQ-TXN-005
@@ -815,6 +821,98 @@ Não conferido: a **frase** que o TalkBack fala ao focar a linha. O
 `uiautomator dump` nem no `dumpsys accessibility`, e ler a fala exigiria
 instrumentação que a F0 não tem. O que dá para afirmar é que com o TalkBack
 ligado a linha continua ativável e abre a folha.
+
+### T-052 — Descrição e observação no lançamento
+**Fase** F0 · **Depende de** T-013, T-050 · **REQ** REQ-TXN-001, REQ-UI-002
+
+REQ-TXN-001 exige "conta, tipo, valor, data, categoria, **descrição e
+observação**". A folha da T-013 nunca teve campo de texto: o `QuickEntryViewModel`
+já tinha o estado `descricao`, o setter, a carga e a gravação, e o único chamador
+do setter era um teste. Toda transação ia ao banco com `description = ""`, e a
+lista caía no `ifBlank` que empresta o nome da categoria — que é a razão de todos
+os lançamentos de uma categoria aparecerem com o mesmo nome.
+
+O `ifBlank` de `TxnRow` **fica**: quem não quis digitar continua tendo um título.
+O defeito era não haver onde digitar.
+
+`notes` sobe ao domínio nesta task. Não fere o Art. 8, que proíbe importar
+`android.*` em `domain/` e não campo a mais, e não mexe no formato de backup —
+`Export` serializa entidades, então a coluna já saía no arquivo.
+
+**Pronto quando**
+- [x] Um lançamento com descrição aparece na lista com **ela** no título, e a
+      categoria desce para o subtítulo. Conferido na S26 (Medium_Phone_API_36.1):
+      "Padaria do Ze", com "Alimentação · Carteira" embaixo
+- [x] Descrição e observação reabrem preenchidas na edição, e salvar não muda a
+      data nem duplica a linha — a guarda de `TxnRepository.salvar` continua
+      valendo, agora com uma coluna a menos para preservar às cegas. Conferido no
+      emulador: a folha reabre com "Padaria do Ze" e "pao e leite", vindos do
+      banco cifrado
+- [x] `notes` vazia grava `null`, e não `""`: "sem observação" tem um valor só
+- [x] Observação **não** se propaga entre parcelas. `aplicarNasParcelas` tem lista
+      branca justamente para isso, e a observação de uma parcela é dela. Com teste,
+      porque subir `notes` ao domínio é o que torna esse vazamento possível
+- [x] Art. 18 intacto: os dois campos são opcionais, nenhum recebe foco, e o
+      caminho de três toques não ganha toque — a folha abre com o teclado numérico
+      no valor, como antes. Com a fonte a **200%** os dois campos aparecem
+      inteiros e "Salvar" fica a uma rolagem, acima do teclado (REQ-A11Y-004):
+      nada truncado, nada sobreposto
+- [x] Regressão em `QuickEntryViewModelTest`: o que se digita chega ao banco. Sem
+      ela o defeito volta calado — foi exatamente assim que passou da primeira vez
+
+O que o teste de JVM **não** cobre, e por que a conferência no aparelho não era
+opcional aqui: o defeito era a ausência do campo na folha. `vm.descricao(...)`
+sempre funcionou, e era chamado por um teste e por mais ninguém — um teste de
+ViewModel ficaria verde com o app quebrado, que é exatamente o que aconteceu por
+duas tasks. Quem fecharia esse buraco por máquina é teste instrumentado, que a
+F0 não tem.
+
+### T-053 — Valor derivado calculado uma vez
+**Fase** F0 · **Depende de** T-013, T-014, T-017 · **REQ** REQ-PERF-001
+
+Todo `*State` expunha valor derivado como `get() =`, recalculado a cada leitura
+em composição, sobre o histórico inteiro. Numa passada do dashboard: `proximas`
+três vezes, `comparativo` duas, `cartoes` três, e `ultimas` **ordenando a lista
+toda** para mostrar cinco linhas. Em `TransactionsState` era pior — `dias` →
+`visiveis` → `doPeriodo` → `periodo`, cada nível refazendo os pais.
+
+Nada disso aparece parado. Aparece na transição, quando o `NavHost` mantém as
+duas telas compostas e a que entra faz a primeira composição inteira dentro da
+janela da animação.
+
+O conserto é `by lazy` no lugar de `get()`: mesma expressão, mesmo lugar, e o
+cálculo passa a acontecer uma vez por instância de estado — que só nasce quando o
+banco emite. Sem `derivedStateOf` e sem `remember` na tela: a regra continua onde
+o Art. 9 a quer.
+
+**Pronto quando**
+- [x] `EstadoDerivadoTest` verde, com `@Req("REQ-PERF-001")`. Ele compara por
+      identidade (`===`), que é o que cai no dia em que alguém devolver o `get()`.
+      **Visto vermelho antes de verde**: devolvendo só `HomeState.ultimas` para
+      `get()`, ele falha no `assertSame`. Teste que nunca falhou não prova nada
+- [x] O mapeamento entidade → domínio das transações sai da thread principal com
+      `flowOn`. O Room já roda o SQL fora dela; era o `.map` que voltava
+- [x] `MoneyText` memoriza `formatBRL` e `spokenBRL` por `cents`. A frase por
+      extenso existe para o leitor de tela e era montada com ou sem ele, duas
+      vezes por linha de lista
+- [x] O movimento entre telas cai de 320ms para 240ms, com design.md §6.4 dizendo
+      o mesmo número que o código
+- [x] **Medido no `assembleRelease`, e não no debug.** O debug do Compose roda
+      sem R8 e com literais instrumentados, e mediria o build errado. Assinado com
+      a chave da v0.1.0 — conferida por impressão digital antes de compilar, e não
+      depois — e instalado **por cima** da v0.1.0 sem desinstalar, que é o teste
+      que prova a chave e o `versionCode` de uma vez.
+
+      Percorrendo as quatro abas seis vezes: 1264 quadros, **2,37% com engasgo**,
+      percentil 50 em 17ms, 90 em 19ms, 95 em 22ms, 99 em 34ms. O mesmo percurso
+      no debug deu 4,09% e 65ms no percentil 99.
+
+      **O que este número não diz**, e a franqueza aqui vale mais que a caixa
+      marcada: a base estava vazia, porque instalar a v0.1.0 do zero para testar a
+      atualização apagou os dados do emulador. Base vazia não exercita o que esta
+      task conserta — derivação sobre histórico grande. Ele mede o custo de
+      navegação do build que sai, e mais nada. Falta também o **antes**: o que
+      sustenta a mudança é o `EstadoDerivadoTest`, não este número
 
 ---
 

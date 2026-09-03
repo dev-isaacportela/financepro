@@ -16,9 +16,9 @@ import kotlin.math.abs
 /**
  * Exportação. REQ-BAK-001
  *
- * Serializa **entidades**, não modelos de domínio: `notes`, `dedupeKey`,
- * `importBatchId`, `createdAt` e `lastGeneratedDate` não sobem para o domínio
- * (Art. 8), e um backup que os perde não é backup — a restauração da T-035
+ * Serializa **entidades**, não modelos de domínio: `dedupeKey`, `importBatchId`,
+ * `createdAt` e `lastGeneratedDate` não sobem para o domínio (Art. 8), e um
+ * backup que os perde não é backup — a restauração da T-035
  * recriaria transações que a importação já conhecia, e o dedupe da F2 acharia
  * que são novas.
  *

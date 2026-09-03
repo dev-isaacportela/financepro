@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -152,6 +153,17 @@ private fun Formulario(state: QuickEntryState, vm: QuickEntryViewModel) {
 
         if (state.mostraCategoria) Categorias(state, vm)
 
+        TextoLivre(
+            valor = state.descricao,
+            onValor = vm::descricao,
+            rotulo = "Descrição",
+        )
+        TextoLivre(
+            valor = state.observacao,
+            onValor = vm::observacao,
+            rotulo = "Observação",
+        )
+
         if (state.mostraParcelas) {
             Rotulo("Parcelas")
             Chips(
@@ -191,6 +203,30 @@ private fun <T> Chips(itens: List<Pair<T, String>>, selecionado: T?, onClick: (T
             }
         }
     }
+}
+
+/**
+ * Descrição e observação (REQ-TXN-001).
+ *
+ * Opcionais, e nenhum recebe foco: `autoFocus` é do [MoneyField] e continua
+ * sendo, porque o caminho de três toques do Art. 18 começa no valor. Dois campos
+ * a mais deixam a folha mais alta, e ela já rolava — não acrescentam **passo**,
+ * que é o que a métrica de REQ-UI-002 conta.
+ *
+ * Sem eles a descrição não tinha onde ser digitada, e `TxnRow` emprestava o nome
+ * da categoria a toda linha — dez despesas de "Alimentação" com o mesmo título.
+ * O empréstimo continua valendo para quem não quis escrever; o que faltava era
+ * poder escrever.
+ */
+@Composable
+private fun TextoLivre(valor: String, onValor: (String) -> Unit, rotulo: String) {
+    OutlinedTextField(
+        value = valor,
+        onValueChange = onValor,
+        label = { Text(rotulo) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable

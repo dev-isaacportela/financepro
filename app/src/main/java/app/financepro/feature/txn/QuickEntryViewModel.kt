@@ -48,6 +48,7 @@ data class QuickEntryState(
     val porTipo: Map<CategoryKind, List<Category>> = emptyMap(),
     val categoriaId: Long? = null,
     val descricao: String = "",
+    val observacao: String = "",
     val parcelas: Int = 1,
     /** A linha carregada do banco, quando isto é uma edição. Nula ao criar. */
     val original: Txn? = null,
@@ -157,6 +158,7 @@ class QuickEntryViewModel @Inject constructor(
                 destinoId = txn.counterAccountId,
                 categoriaId = txn.categoryId,
                 descricao = txn.description,
+                observacao = txn.notes.orEmpty(),
                 parcelas = 1,
                 grupo = txn.installmentGroupId?.let { txns.grupoDeParcelas(it) }.orEmpty(),
                 escopo = EscopoDeParcela.SO_ESTA,
@@ -171,6 +173,8 @@ class QuickEntryViewModel @Inject constructor(
     fun valor(cents: Long) = _state.update { it.copy(cents = cents, erros = emptyList()) }
 
     fun descricao(texto: String) = _state.update { it.copy(descricao = texto) }
+
+    fun observacao(texto: String) = _state.update { it.copy(observacao = texto) }
 
     fun parcelas(n: Int) = _state.update { it.copy(parcelas = n) }
 
@@ -216,6 +220,9 @@ class QuickEntryViewModel @Inject constructor(
                 counterAccountId = atual.destinoId,
                 categoryId = atual.categoriaId,
                 description = atual.descricao,
+                // Em branco grava nulo: "sem observação" precisa de um valor só,
+                // ou a exportação mostra `""` e `null` dizendo a mesma coisa.
+                notes = atual.observacao.ifBlank { null },
                 // O que a folha não edita, o original decide. `cleared` é o caso
                 // com consequência visível: um previsto virando pago sozinho
                 // (REQ-TXN-006) mudaria o saldo sem ninguém pedir.

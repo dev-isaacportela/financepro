@@ -35,7 +35,7 @@ jobs:
       # As mesmas guardas do CI. A tag não passa pelo workflow de push em `main`,
       # e publicar sem elas é publicar sem revisão.
       - name: trace.py
-        run: python tools/trace.py --phase F0
+        run: python tools/trace.py --phase F2
 
       - uses: gradle/actions/wrapper-validation@v4
 

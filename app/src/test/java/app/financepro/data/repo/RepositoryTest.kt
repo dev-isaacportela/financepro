@@ -70,8 +70,8 @@ class RepositoryTest : DbTest() {
      * REQ-TXN-010 — o desfazer devolve a linha **inteira**.
      *
      * É o teste que justifica o repositório guardar a `TxnEntity` em vez de o
-     * ViewModel guardar o `Txn`: `notes`, `dedupeKey`, `importBatchId` e
-     * `createdAt` não existem no modelo de domínio, e um desfazer que os apaga
+     * ViewModel guardar o `Txn`: `dedupeKey`, `importBatchId` e `createdAt` não
+     * existem no modelo de domínio, e um desfazer que os apaga
      * é pior que não ter desfazer — a `dedupeKey` perdida faria a próxima
      * importação recriar a transação como se fosse nova.
      *
@@ -108,8 +108,8 @@ class RepositoryTest : DbTest() {
      *
      * Os dois erros que este teste existe para pegar são invisíveis na revisão:
      * um `insert` no lugar do `update` duplica dinheiro na tela, e uma entidade
-     * montada do zero apaga `notes`, `dedupeKey`, `importBatchId` e
-     * `recurringRuleId` num `UPDATE` que retorna sucesso.
+     * montada do zero apaga `dedupeKey`, `importBatchId` e `recurringRuleId` num
+     * `UPDATE` que retorna sucesso.
      *
      * `importBatchId` e `recurringRuleId` ficam nulos porque as tabelas-pai só
      * ganham DAO na F1/F2 — mas o `assertEquals` do objeto **inteiro** cobre as

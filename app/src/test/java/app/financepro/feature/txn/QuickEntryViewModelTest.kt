@@ -231,6 +231,58 @@ class QuickEntryViewModelTest : DbTest() {
         assertFalse(vm.state.value.mostraParcelas)
     }
 
+    @Test
+    fun `descricao e observacao digitadas chegam ao banco`() {
+        vm.valor(18_50)
+        vm.categoria(alimentacao)
+        vm.descricao("Padaria do Zé")
+        vm.observacao("pão e leite, com o troco")
+
+        vm.salvar(hoje)
+        esperar("a gravação terminar") { vm.state.value.salvo }
+
+        // O defeito que este teste existe para pegar não era de gravação: era a
+        // folha não ter onde digitar, então `descricao` chegava sempre vazia e a
+        // lista caía no nome da categoria — todos os lançamentos de "Alimentação"
+        // com o mesmo título. O caminho do dado sempre funcionou; faltava origem.
+        val gravada = gravadas().single()
+        assertEquals("Padaria do Zé", gravada.description)
+        assertEquals("pão e leite, com o troco", gravada.notes)
+    }
+
+    @Test
+    fun `observacao em branco grava nulo, e nao string vazia`() {
+        vm.valor(18_50)
+        vm.categoria(alimentacao)
+
+        vm.salvar(hoje)
+        esperar("a gravação terminar") { vm.state.value.salvo }
+
+        // "Sem observação" tem um valor só. Deixar `""` e `null` significarem o
+        // mesmo daria duas formas de dizer nada, e a exportação mostraria as duas.
+        assertNull(gravadas().single().notes)
+    }
+
+    @Test
+    fun `editar reabre com descricao e observacao preenchidas`() {
+        val id = runBlocking {
+            db.txnDao().insert(
+                LANCAMENTO.copy(
+                    accountId = carteira,
+                    categoryId = alimentacao,
+                    description = "Padaria",
+                    notes = "com o troco",
+                ),
+            )
+        }
+
+        vm.editar(id)
+        esperar("a transação carregar na folha") { vm.state.value.editando }
+
+        assertEquals("Padaria", vm.state.value.descricao)
+        assertEquals("com o troco", vm.state.value.observacao)
+    }
+
     private fun gravadas() =
         runBlocking { db.txnDao().observeBetween(dia(2026, 1, 1), dia(2026, 12, 31)).first() }
 

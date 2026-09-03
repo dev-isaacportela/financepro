@@ -49,6 +49,7 @@ a task correspondente (Art. 5).
 | [`REQ-RPT`](#rpt--relatórios) | Relatórios | 4 |
 | [`REQ-INV`](#inv--investimentos) | Investimentos e rendimento | 6 |
 | [`REQ-UI`](#ui--interface) | Navegação e telas | 7 |
+| [`REQ-PERF`](#perf--fluidez) | Fluidez da interface | 1 |
 | [`REQ-DS`](#ds--sistema-visual) | Sistema visual | 10 |
 | [`REQ-A11Y`](#a11y--acessibilidade) | Acessibilidade | 6 |
 | [`REQ-SEC`](#sec--segurança) | Segurança | 7 |
@@ -1091,6 +1092,29 @@ dependem de hexadecimais conhecidos.
 
 O mapeamento entre os dois temas está em
 [REQ-DS-008](#req-ds-008--tema-escuro-preserva-a-lógica-de-acento).
+
+---
+
+# PERF — fluidez
+
+O app não tem servidor nem rede no caminho de nenhuma tela: tudo que pesa, pesa
+na thread principal, e aparece como engasgo no primeiro quadro da tela que entra.
+
+### REQ-PERF-001 — Valor derivado calculado uma vez
+
+`F0` · `MUST` · Teste: `EstadoDerivadoTest`
+
+O SISTEMA DEVE calcular cada valor derivado do estado de tela no máximo uma vez
+por emissão, independentemente de quantas vezes a interface o leia.
+
+Aceite: duas leituras da mesma propriedade na mesma instância de estado devolvem
+o mesmo objeto.
+
+O estado de tela é lido de dentro da composição, e a composição roda muitas vezes
+por emissão — durante uma transição, com as duas telas compostas ao mesmo tempo.
+Uma propriedade que recalcula a cada leitura percorre o histórico inteiro por
+quadro, e é o dashboard, que ordena a lista toda para mostrar cinco linhas, quem
+paga a conta mais cara.
 
 ---
 

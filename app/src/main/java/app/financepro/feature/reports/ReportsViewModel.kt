@@ -44,19 +44,19 @@ data class ReportsState(
      * da lista, do orçamento e do dashboard. `monthRange` já aceita o parâmetro
      * (REQ-CORE-003); falta só de onde lê-lo.
      */
-    val periodo: MonthRange get() = monthRange(mes)
+    val periodo: MonthRange by lazy { monthRange(mes) }
 
     /** REQ-RPT-001 */
-    val fatias: List<GrupoDeCategoria> get() = despesasPorCategoria(todas, periodo)
+    val fatias: List<GrupoDeCategoria> by lazy { despesasPorCategoria(todas, periodo) }
 
     /** REQ-RPT-002 */
-    val evolucao: List<PontoMensal> get() = evolucaoMensal(todas, mes)
+    val evolucao: List<PontoMensal> by lazy { evolucaoMensal(todas, mes) }
 
     /** REQ-RPT-003 */
-    val maiores: List<Txn> get() = maioresDespesas(todas, periodo)
+    val maiores: List<Txn> by lazy { maioresDespesas(todas, periodo) }
 
     /** O denominador dos percentuais da legenda. Zero quando não há despesa. */
-    val totalCents: Long get() = fatias.sumOf { it.totalCents }
+    val totalCents: Long by lazy { fatias.sumOf { it.totalCents } }
 
     val vazio: Boolean get() = fatias.isEmpty()
 

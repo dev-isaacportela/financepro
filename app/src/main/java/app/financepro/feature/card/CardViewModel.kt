@@ -49,11 +49,11 @@ data class CardState(
     /** Centavos digitados na folha de pagamento. `null` com a folha fechada. */
     val pagando: Long? = null,
 ) {
-    val fatura: Invoice? get() = cartao?.let { invoiceFor(it, todas, mes, hoje) }
+    val fatura: Invoice? by lazy { cartao?.let { invoiceFor(it, todas, mes, hoje) } }
 
-    val grupos: List<GrupoDeCategoria> get() = agruparPorCategoria(fatura?.items.orEmpty())
+    val grupos: List<GrupoDeCategoria> by lazy { agruparPorCategoria(fatura?.items.orEmpty()) }
 
-    val limiteDisponivelCents: Long? get() = cartao?.let { availableLimitFor(it, todas) }
+    val limiteDisponivelCents: Long? by lazy { cartao?.let { availableLimitFor(it, todas) } }
 
     /** A conta que quita, quando o cartão tem uma configurada (REQ-CARD-001). */
     val contaDePagamento: Account?

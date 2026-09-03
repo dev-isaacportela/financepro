@@ -74,16 +74,16 @@ data class InvestmentsState(
     val erro: String? = null,
     val carregado: Boolean = false,
 ) {
-    val investimentos: List<Account> get() = contas.filter { it.isInvestimento && !it.archived }
+    val investimentos: List<Account> by lazy { contas.filter { it.isInvestimento && !it.archived } }
 
-    val linhas: List<LinhaDeInvestimento> get() = investimentos.map(::linhaDe)
+    val linhas: List<LinhaDeInvestimento> by lazy { investimentos.map(::linhaDe) }
 
-    val totalCents: Long get() = linhas.sumOf { it.saldoCents }
+    val totalCents: Long by lazy { linhas.sumOf { it.saldoCents } }
 
-    val lancadoNoMesCents: Long get() = linhas.sumOf { it.lancadoCents }
+    val lancadoNoMesCents: Long by lazy { linhas.sumOf { it.lancadoCents } }
 
     /** REQ-INV-004 — os 12 meses do gráfico e da lista, somando as contas. */
-    val serie: List<MesDeInvestimento> get() = serieSomada(todas, investimentos, mes)
+    val serie: List<MesDeInvestimento> by lazy { serieSomada(todas, investimentos, mes) }
 
     val vazio: Boolean get() = investimentos.isEmpty()
 
