@@ -897,17 +897,22 @@ o Art. 9 a quer.
       vezes por linha de lista
 - [x] O movimento entre telas cai de 320ms para 240ms, com design.md §6.4 dizendo
       o mesmo número que o código
-- [ ] **Medido no `assembleRelease`, e não no debug.** Continua aberto, e não é
-      formalidade: o debug do Compose roda sem R8 e com literais instrumentados,
-      então mede o build errado. A trava é concreta — `assembleRelease` sai **não
-      assinado** sem o `keystore.properties`, que por definição não está no
-      repositório, e APK não assinado não instala. A medição é de quem tem a chave.
+- [x] **Medido no `assembleRelease`, e não no debug.** O debug do Compose roda
+      sem R8 e com literais instrumentados, e mediria o build errado. Assinado com
+      a chave da v0.1.0 — conferida por impressão digital antes de compilar, e não
+      depois — e instalado **por cima** da v0.1.0 sem desinstalar, que é o teste
+      que prova a chave e o `versionCode` de uma vez.
 
-      O que se mediu, no debug e no emulador, percorrendo as quatro abas seis
-      vezes: 1246 quadros, **4,09% com engasgo**, percentil 50 em 17ms, 90 em
-      19ms, 95 em 24ms. Vale como piso — o release só melhora —, não como a
-      medição que esta caixa pede. Falta também o **antes**, então o número não é
-      comparação: o que sustenta a mudança é o teste de identidade, não ele
+      Percorrendo as quatro abas seis vezes: 1264 quadros, **2,37% com engasgo**,
+      percentil 50 em 17ms, 90 em 19ms, 95 em 22ms, 99 em 34ms. O mesmo percurso
+      no debug deu 4,09% e 65ms no percentil 99.
+
+      **O que este número não diz**, e a franqueza aqui vale mais que a caixa
+      marcada: a base estava vazia, porque instalar a v0.1.0 do zero para testar a
+      atualização apagou os dados do emulador. Base vazia não exercita o que esta
+      task conserta — derivação sobre histórico grande. Ele mede o custo de
+      navegação do build que sai, e mais nada. Falta também o **antes**: o que
+      sustenta a mudança é o `EstadoDerivadoTest`, não este número
 
 ---
 
