@@ -7,6 +7,47 @@ bater.
 
 ## [Não lançado]
 
+## [0.2.0] - 2026-09-03
+
+### Adicionado
+
+- **Descrição e observação no lançamento.** A folha de lançamento rápido nunca
+  teve campo de texto: `REQ-TXN-001` pedia os dois desde a F0, e nenhum chegou à
+  tela. Toda transação era gravada sem descrição, e a lista emprestava o nome da
+  categoria — uma categoria inteira aparecia como linhas de mesmo título. Os dois
+  campos são opcionais e nenhum recebe foco: o caminho de três toques continua
+  três toques.
+
+  A observação (`notes`) já existia na tabela e já saía no backup; o que faltava
+  era ela subir ao modelo de domínio para a folha poder gravá-la. Editar uma
+  parcela **não** propaga a observação para as irmãs — valor e categoria são da
+  compra, a observação é do que aconteceu naquela parcela.
+
+### Corrigido
+
+- **Transições entre telas engasgavam.** Todo estado de tela expunha valor
+  derivado como `get()`, recalculado a cada leitura durante a composição, sobre o
+  histórico inteiro. Numa passada do dashboard: as próximas contas três vezes, o
+  comparativo do mês duas, e a lista toda **ordenada** para mostrar cinco linhas.
+  Isso caía no primeiro quadro da tela que entrava, com as duas telas compostas
+  ao mesmo tempo. Agora cada derivação é calculada uma vez por emissão do banco
+  (`REQ-PERF-001`, com teste que falha se alguém desfizer).
+
+- **Mapeamento de transações saía da thread principal.** O Room já rodava o SQL
+  fora dela; era a conversão para o domínio que voltava para a thread que
+  desenha, uma alocação por linha do histórico a cada emissão.
+
+- **Valores monetários eram reformatados a cada quadro.** A leitura por extenso
+  para o leitor de tela era montada mesmo com ele desligado, duas vezes por linha
+  de lista.
+
+### Alterado
+
+- O movimento entre telas passou de 320ms para 240ms. O deslize é de largura
+  inteira e sem fade, e o tempo que sobrava era palco para qualquer hesitação
+  aparecer. Não é o conserto do engasgo — esse está acima —, é o palco ficando do
+  tamanho da peça.
+
 ## [0.1.0] - 2026-09-02
 
 Primeira versão pública. As fases F0, F1 e F2 do
@@ -67,5 +108,6 @@ Primeira versão pública. As fases F0, F1 e F2 do
 - Migrações de schema são explícitas e versionadas em `app/schemas/`.
   `fallbackToDestructiveMigration` não existe no projeto e não vai existir.
 
-[Não lançado]: https://github.com/dev-isaacportela/financepro/compare/v0.1.0...HEAD
+[Não lançado]: https://github.com/dev-isaacportela/financepro/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/dev-isaacportela/financepro/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/dev-isaacportela/financepro/releases/tag/v0.1.0

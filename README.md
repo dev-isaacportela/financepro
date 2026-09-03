@@ -58,7 +58,7 @@ O APK assinado de cada versão está em
 `.sha256` ao lado. Confira antes de instalar:
 
 ```bash
-sha256sum -c financepro-v0.1.0.apk.sha256
+sha256sum -c financepro-v0.2.0.apk.sha256
 ```
 
 Android 8.0 (API 26) ou mais novo. Não está na Play Store, então o aparelho vai
@@ -74,12 +74,12 @@ Leia nesta ordem:
 | Documento | O que é | Quando consultar |
 |---|---|---|
 | [constitution.md](docs/constitution.md) | 18 regras invioláveis | Antes do primeiro commit. Uma vez. |
-| [spec.md](docs/spec.md) | 126 requisitos `REQ-*` em EARS | Sempre. É a fonte de verdade. |
-| [tasks.md](docs/tasks.md) | 51 tasks ordenadas, com "pronto quando" | Ao escolher o que fazer |
+| [spec.md](docs/spec.md) | 127 requisitos `REQ-*` em EARS | Sempre. É a fonte de verdade. |
+| [tasks.md](docs/tasks.md) | 53 tasks ordenadas, com "pronto quando" | Ao escolher o que fazer |
 | [arquitetura.md](docs/arquitetura.md) | Camadas, schema, queries, testes | Ao implementar |
 | [design.md](docs/design.md) | Sistema visual Slush traduzido para Compose | Ao construir qualquer tela |
 | [ingestao.md](docs/ingestao.md) | Design das 3 camadas de importação | Nas fases F2–F4 |
-| [decisoes.md](docs/decisoes.md) | 11 ADRs com o porquê e o que se perdeu | Antes de propor mudar uma decisão |
+| [decisoes.md](docs/decisoes.md) | 12 ADRs com o porquê e o que se perdeu | Antes de propor mudar uma decisão |
 
 ## O ciclo
 
@@ -121,11 +121,11 @@ python tools/trace.py --report
 Só o inventário, sem falhar. Estado atual:
 
 ```
-spec.md   126 requisitos
-tasks.md  51 tasks, cobrindo 126
-codigo    93 requisitos com @Req
+spec.md   127 requisitos
+tasks.md  53 tasks, cobrindo 127
+codigo    96 requisitos com @Req
 
-  F0   61 requisitos (53 MUST, 37 com teste automatizado)
+  F0   62 requisitos (54 MUST, 38 com teste automatizado)
   F1   39 requisitos (33 MUST, 35 com teste automatizado)
   F2   16 requisitos (14 MUST, 13 com teste automatizado)
   F3    6 requisitos (5 MUST, 4 com teste automatizado)
